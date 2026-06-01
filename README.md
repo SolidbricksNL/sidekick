@@ -103,6 +103,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.2.0** — Claude Cowork plugin. Installed from the private GitHub repo;
-hardened and documented across the `plan/` units. Run the manual-test
-checklist in Cowork before wider rollout.
+**0.2.1** — Claude Cowork plugin. Installed from the private GitHub repo;
+hardened and documented across the `plan/` units (0.2.1 adds the
+`commands/` wrappers so the explicit skills get typed `/sidekick:<skill>`
+commands). Run the manual-test checklist in Cowork before wider rollout.

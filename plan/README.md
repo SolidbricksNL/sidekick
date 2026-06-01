@@ -13,7 +13,7 @@ planning have been **resolved** (see the decisions section below).
 
 | # | Plan file | Purpose | Depends on | Status |
 |---|-----------|---------|------------|--------|
-| 01 | [01-structure-validation.md](01-structure-validation.md) | Verify plugin structure for Cowork; add a re-runnable validator script. | — | [ ] not started |
+| 01 | [01-structure-validation.md](01-structure-validation.md) | Verify plugin structure for Cowork; add a re-runnable validator script. | — | [x] done |
 | 02 | [02-skill-prompt-review.md](02-skill-prompt-review.md) | Review each SKILL.md as a prompt (triggers, gatekeeper clarity, contradictions); propose diffs, don't apply. | 01 | [ ] not started |
 | 03 | [03-settings-and-init-flow.md](03-settings-and-init-flow.md) | Validate the init questionnaire end to end; finalize the `sidekick.settings.md` field spec. | 01, 02 | [ ] not started |
 | 04 | [04-project-model-and-scaffolding.md](04-project-model-and-scaffolding.md) | Nail down the on-disk project model + folder contract; finalize the CLAUDE.md and agenda templates. | 01, 03 | [ ] not started |
@@ -48,10 +48,18 @@ this row and the **Status:** line at the top of the plan file when a unit moves.
 
 ## Validator
 
-Plan 01 introduces `scripts/validate-structure.*` — a zero-dependency checker for
-the plugin's structural correctness (manifest, skill frontmatter, reference
-paths, dead links). Run it before starting a unit and again before release
-(plan 13).
+Plan 01 introduces `scripts/validate-structure.mjs` — a zero-dependency Node
+checker for the plugin's structural correctness (manifest, skill frontmatter,
+reference paths, dead links). Run it before starting a unit and again before
+release (plan 13):
+
+```
+node scripts/validate-structure.mjs
+```
+
+It prints PASS / WARN / FAIL per check and exits non-zero on any FAIL. On the
+current tree it is clean (0 fail; 4 warns are the optional manifest fields
+deferred to plan 13).
 
 ## Resolved decisions (user review, 2026-06-01)
 

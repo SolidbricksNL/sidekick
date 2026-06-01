@@ -1,6 +1,6 @@
 # Structure validation
 
-**Status:** not started
+**Status:** done
 **Depends on:** none
 
 ## Goal
@@ -26,7 +26,7 @@ any failure.
   finds — it records them; fixes belong to the targeted plans (02, 03, 04…).
 
 ## Tasks
-1. [ ] Confirm the current tree against ARCHITECTURE §12. Expected:
+1. [x] Confirm the current tree against ARCHITECTURE §12. Expected:
    - `.claude-plugin/plugin.json` and nothing else under `.claude-plugin/`.
    - `skills/<name>/SKILL.md` for all five skills.
    - `skills/sidekick/references/` has exactly: `interaction-style.md`,
@@ -35,28 +35,28 @@ any failure.
    - `skills/sidekick-init/references/settings-template.md`.
    - `skills/sidekick-triage/references/triage-template.md`.
    - `docs/ARCHITECTURE.md`, `README.md`.
-2. [ ] Validate `plugin.json`: parses as JSON; has `name`, `version`,
+2. [x] Validate `plugin.json`: parses as JSON; has `name`, `version`,
    `description`, `author`. Confirm whether Cowork requires any further fields
    (see open questions) and that `name` (`sidekick`) is consistent with the repo
    and the main skill folder.
-3. [ ] For each `SKILL.md`, parse the YAML frontmatter and check:
+3. [x] For each `SKILL.md`, parse the YAML frontmatter and check:
    - It has `name` and `description`.
    - `name` exactly equals the parent folder name (`sidekick` →
      `skills/sidekick/`, etc.).
    - `description` is non-empty and within a sane length.
-4. [ ] Extract every `references/...` (and `../sidekick/references/...`) path
+4. [x] Extract every `references/...` (and `../sidekick/references/...`) path
    mentioned in any `SKILL.md` body and confirm each target file exists. Record
    any that resolve across skill boundaries (e.g. init pointing at the
    `sidekick` skill's templates) for plan 03/04 to resolve — see open questions.
-5. [ ] Check for dead links between skills: every `/sidekick-*` slash command
+5. [x] Check for dead links between skills: every `/sidekick-*` slash command
    referenced in a body corresponds to an existing skill folder.
-6. [ ] Write `scripts/validate-structure.mjs` (Node, zero-dependency) — or a
+6. [x] Write `scripts/validate-structure.mjs` (Node, zero-dependency) — or a
    POSIX `scripts/validate-structure.sh` if Node is undesirable — that performs
    tasks 1–5 and prints a PASS/FAIL line per check, exiting non-zero on any
    failure. Keep it dependency-free so it runs anywhere.
-7. [ ] Add a one-line "how to run the validator" note to `plan/README.md` and
+7. [x] Add a one-line "how to run the validator" note to `plan/README.md` and
    (later, in plan 13) to the repo README.
-8. [ ] Run the validator; record the actual output and any failures in the
+8. [x] Run the validator; record the actual output and any failures in the
    "Notes / open questions" section of the relevant downstream plan.
 
 ## Acceptance criteria
@@ -67,6 +67,22 @@ any failure.
 - Every `references/...` path in every `SKILL.md` resolves to a real file, OR
   the unresolved ones are explicitly logged as open questions for plan 03/04.
 - No dead `/sidekick-*` command references.
+
+## Execution result (2026-06-01)
+- `scripts/validate-structure.mjs` written (Node, zero-dep; Node v24 + Python
+  3.11 both confirmed in-env — Node chosen per plan preference).
+- Run on the current tree: **PASS, exit 0** — 0 fail, 4 warn. All 4 warns are
+  the optional manifest fields (`repository`, `license`, `keywords`, `homepage`)
+  intentionally deferred to plan 13. No downstream-blocking failures to log.
+- Cross-skill `../sidekick/references/...` reads (init ×3, triage/checkin/archive
+  ×1) all resolve — confirms decision 2's no-duplication convention is wired
+  correctly on disk.
+- Negative test: temporarily renaming `agenda-template.md` produced 3 FAILs and
+  **exit 1**, then restored. Acceptance criterion (clean on correct tree,
+  non-zero on broken tree) is met.
+- Residual (carried, not a failure): the exact USER-typed command form
+  (`/sidekick:<skill>` vs bare `/<skill>`) is still verify-on-install — the
+  validator LISTS both forms and does not assert either (→ plan 12).
 
 ## Notes / open questions (resolved 2026-06-01)
 - **Cowork manifest fields — RESOLVED.** Cowork uses the same plugin format as

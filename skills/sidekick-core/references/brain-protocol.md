@@ -36,6 +36,14 @@ Anything relevant — a document, a note, an article, a report — is shared
 in the chat. That is the entry point; there is no separate folder to dump
 into.
 
+**Fork on the input's shape first.** If what arrives is **tabular or
+repeating-record data** (a spreadsheet, CSV, exported table, a list of
+same-shaped items), the rows do **not** belong in the brain or a log —
+propose a **database table** and load them (see `database-discipline.md`).
+Only the prose *insights* drawn from that data follow the brain
+distillation below. For free-form prose, notes, and reports, continue with
+Step 2.
+
 ### Step 2 — Distill into `brain/`
 
 Processing is **not copying** — it is summarizing to the essence:

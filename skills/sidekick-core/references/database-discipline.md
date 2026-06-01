@@ -24,6 +24,17 @@ will plausibly want to filter, count, sort, or relate it. Signals:
 - The same fields recur across many entries.
 - The user asks questions like "how many", "which ones", "sorted by".
 
+**A shared spreadsheet, CSV, or exported table is structured by default.**
+When the user hands you tabular data — rows with consistent columns — the
+correct first move is to **propose a table and load the rows**, not to
+write the data into a log file and chat a summary. Classify the input's
+shape on arrival; if it is tabular, the database is the destination for
+the rows. (The prose *insights* you draw from it still go to `brain/`, the
+original file to `archive/`, and the process to `log/` — but the rows
+themselves belong in `data.sqlite`.) Defaulting tabular input into a log +
+summary, with no table proposed, is the failure this discipline exists to
+prevent.
+
 Do **not** force unstructured or one-off information into tables. A single
 fact is a brain line, not a table.
 

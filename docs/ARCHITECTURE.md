@@ -130,6 +130,18 @@ three principles:
    `brain/data-model.md`, so that Sidekick (and the user) can later
    easily write clear queries.
 
+**Recognizing structured input — classify on arrival.** The routing
+decision happens the moment input *arrives*, not only when Sidekick later
+picks where to write. A shared spreadsheet, CSV, exported table, or any
+tabular/repeating-record data is structured **by default**: the first
+response is to **propose a table** (a structure change → confirm in plain
+language), not to fold the rows into a log file or the brain. The brain
+still receives the prose *insights* drawn from the data, the original file
+goes to `archive/`, and the process is logged — but the rows themselves
+live in `data.sqlite`. Folding a clearly tabular input straight into a
+log + chat summary, with no table proposed, is the exact failure mode this
+layer exists to prevent.
+
 **Gatekeeper:** every schema change (new table, new column, removed
 column) is presented to the user **non-technically**. Example: *"You're
 now also sharing phone numbers with contacts. Shall I add those to the

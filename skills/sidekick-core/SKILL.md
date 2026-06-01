@@ -110,6 +110,18 @@ Use the slug convention: `kebab-case`, short, descriptive.
 
 Before writing anything, classify it. This is the core of Sidekick.
 
+**Classify the input's shape first.** When the user shares something, ask
+"what shape is this?" before defaulting to log + brain. If it is
+**tabular or repeating-record data** — a spreadsheet, a CSV, an exported
+table, a list of items with the same fields — it is structured **by
+default**: propose a **database table** (a structure change → confirm in
+plain language), put the **rows** in `data.sqlite`, distil only the prose
+*insights* into `brain/`, archive the original, and log the process. Do
+**not** fold a clearly tabular input straight into a log file with a chat
+summary and no table — that is the failure mode the database layer exists
+to prevent. Free-form prose, notes, and one-off facts route to log/brain
+as usual.
+
 | What you are writing | Where | What you must do |
 |---|---|---|
 | Process, work-in-progress, session notes | `log/` | **Write freely.** No permission needed. |
@@ -171,8 +183,9 @@ the question.
 
 ## The database, in brief
 
-One `data.sqlite` per project for genuinely structured data. You design
-and maintain the schema yourself, you **extend existing tables before
+One `data.sqlite` per project for genuinely structured data. A shared
+spreadsheet/CSV/table is the trigger — propose a table on arrival rather
+than logging the rows. You design and maintain the schema yourself, you **extend existing tables before
 adding new ones** to avoid a tangle, and you document the schema in plain
 language in `brain/data-model.md` so queries stay easy. Reading and
 fitting-records-in is free; structure changes need confirmation. Full

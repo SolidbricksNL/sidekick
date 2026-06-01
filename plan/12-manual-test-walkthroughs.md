@@ -81,6 +81,14 @@ specifies:
 - **Single ~30-min checklist (task 5)** — assembled with an overall PASS/FAIL line
   and tester/date fields.
 
+### Install path corrected (2026-06-01)
+
+First Cowork install attempt failed: *"This repository isn't a marketplace — no
+manifest found at `.claude-plugin/marketplace.json`."* Cowork adds **marketplaces**,
+not bare plugin repos. Fixed by adding `.claude-plugin/marketplace.json` (self-
+referencing, name `solidbricks`, plugin `sidekick` with `source: "./"`). The
+checklist now starts at **0a** (add marketplace → install plugin) before **0b**.
+
 ### What remains the user's to execute (not blockers for the artifact)
 
 - **Command-name verification (0b in the checklist).** Install in Cowork, open

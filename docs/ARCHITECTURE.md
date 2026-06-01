@@ -265,7 +265,8 @@ standard Cowork plugin layout:
 ```
 sidekick/
 ├── .claude-plugin/
-│   └── plugin.json                ← manifest (only this inside .claude-plugin/)
+│   ├── plugin.json                ← plugin manifest
+│   └── marketplace.json           ← self-marketplace; lists this plugin, source "./"
 ├── skills/
 │   ├── sidekick/                  ← always-on main skill
 │   │   ├── SKILL.md
@@ -289,10 +290,18 @@ sidekick/
 └── README.md
 ```
 
-Skills invoke each other via slash commands (e.g. `/sidekick-init`,
-`/sidekick-checkin`). The main skill `sidekick` fires automatically when
-relevant; the others are explicit actions. The triage skill is intended
-to be attached to a Cowork **scheduled task**.
+**Distribution.** Cowork installs *plugins* from *marketplaces*, so the repo
+carries its own marketplace catalog at `.claude-plugin/marketplace.json`
+(name `solidbricks`) listing this one plugin with `source: "./"` (the plugin
+root is the repo root). Users add the repo as a marketplace, then install the
+`sidekick` plugin from it.
+
+Skills invoke each other via slash commands. Per the plugin docs, plugin skills
+are namespaced as `/<plugin>:<skill>` — e.g. `/sidekick:sidekick-init` — though
+the SKILL.md/README references currently use the bare `/sidekick-init` form
+pending the live `/`-menu check (see §13). The main skill `sidekick` fires
+automatically when relevant; the others are explicit actions. The triage skill
+is intended to be attached to a Cowork **scheduled task**.
 
 A plugin-wide interaction principle applies across all skills: when
 putting a choice to the user, ask with **multiple choice** by default
@@ -316,11 +325,16 @@ Resolved:
   `skills/sidekick/scripts/db.py`, not the `sqlite3` CLI (plan 06).
 - **Archive move primitive** — true rename/move, else copy → verify →
   remove; never delete before verified (plan 10).
+- **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
+  plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
+  referencing, `source: "./"`) so it installs cleanly. Discovered during the
+  first install attempt, 2026-06-01.
 
 Remaining (verify-on-install):
 
-- **Command form in Cowork** — whether the explicit skills appear as
-  `/sidekick:<skill>` (namespaced), `/<skill>` (bare), or not as `/`
-  commands at all. Settled by the install check in `docs/MANUAL-TESTS.md`
-  (step 0b); fallback is thin `commands/<skill>.md` wrappers. Command
-  references are left in the bare form until this is observed.
+- **Command form in Cowork** — the plugin docs namespace plugin skills as
+  `/<plugin>:<skill>` (e.g. `/sidekick:sidekick-init`), which is strong
+  evidence the bare `/sidekick-init` references need a mechanical rewrite.
+  Confirm against the live `/` menu (`docs/MANUAL-TESTS.md` step 0b) before
+  rewriting; fallback if skills don't register as `/` commands is thin
+  `commands/<skill>.md` wrappers. References stay bare until observed.

@@ -25,6 +25,7 @@ const SKILLS = ['sidekick', 'sidekick-init', 'sidekick-triage', 'sidekick-checki
 
 const EXPECTED_TREE = [
   '.claude-plugin/plugin.json',
+  '.claude-plugin/marketplace.json',
   'skills/sidekick/SKILL.md',
   'skills/sidekick/references/interaction-style.md',
   'skills/sidekick/references/database-discipline.md',
@@ -48,11 +49,12 @@ for (const p of EXPECTED_TREE) {
   if (existsSync(join(ROOT, p))) pass(p);
   else fail(`${p} is missing`);
 }
-// Nothing other than plugin.json inside .claude-plugin/
+// Only the two manifests belong inside .claude-plugin/
 const cpDir = join(ROOT, '.claude-plugin');
+const CP_ALLOWED = new Set(['plugin.json', 'marketplace.json']);
 if (existsSync(cpDir)) {
-  const extras = readdirSync(cpDir).filter((f) => f !== 'plugin.json');
-  if (extras.length === 0) pass('.claude-plugin/ holds only plugin.json');
+  const extras = readdirSync(cpDir).filter((f) => !CP_ALLOWED.has(f));
+  if (extras.length === 0) pass('.claude-plugin/ holds only plugin.json + marketplace.json');
   else fail(`.claude-plugin/ has unexpected entries: ${extras.join(', ')}`);
 }
 
@@ -82,6 +84,43 @@ if (manifest) {
   for (const f of ['repository', 'license', 'keywords', 'homepage']) {
     if (manifest[f] === undefined) warn(`optional ${f} absent (add at release, plan 13)`);
   }
+}
+
+// --- Check 2b: marketplace manifest ----------------------------------------
+console.log('\n# Check 2b — marketplace.json');
+const mpPath = join(ROOT, '.claude-plugin/marketplace.json');
+let marketplace = null;
+try {
+  marketplace = JSON.parse(readFileSync(mpPath, 'utf8'));
+  pass('marketplace.json parses as JSON');
+} catch (e) {
+  fail(`marketplace.json does not parse: ${e.message}`);
+}
+if (marketplace) {
+  if (typeof marketplace.name === 'string' && marketplace.name.length > 0) pass(`marketplace name present ("${marketplace.name}")`);
+  else fail('marketplace name is missing or empty (required)');
+  if (marketplace.owner && typeof marketplace.owner.name === 'string') pass('owner.name present');
+  else fail('owner.name is missing (required)');
+  if (Array.isArray(marketplace.plugins) && marketplace.plugins.length > 0) {
+    pass(`plugins[] present (${marketplace.plugins.length})`);
+    for (const p of marketplace.plugins) {
+      if (!p.name) { fail('a plugin entry is missing name'); continue; }
+      if (p.source === undefined) { fail(`plugin "${p.name}" is missing source`); continue; }
+      // Relative-path source must start with ./ and resolve to a plugin root.
+      if (typeof p.source === 'string') {
+        if (!p.source.startsWith('./')) fail(`plugin "${p.name}" source "${p.source}" must start with "./"`);
+        const target = join(ROOT, p.source, '.claude-plugin/plugin.json');
+        if (existsSync(target)) pass(`plugin "${p.name}" → ${p.source} (resolves to ${rel(target)})`);
+        else fail(`plugin "${p.name}" source "${p.source}" has no .claude-plugin/plugin.json`);
+      } else {
+        pass(`plugin "${p.name}" uses a non-relative source (${p.source.source || 'object'}) — not checked here`);
+      }
+      // Consistency: the self-referenced plugin name should match plugin.json.
+      if (manifest && p.source === './' && p.name !== manifest.name) {
+        warn(`marketplace lists "${p.name}" but plugin.json name is "${manifest.name}"`);
+      }
+    }
+  } else fail('plugins[] is missing or empty (required)');
 }
 
 // --- frontmatter parse helper ----------------------------------------------

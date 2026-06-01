@@ -17,10 +17,23 @@ release.
    leaks between scenarios.
 3. Confirm `/sandbox/` is git-ignored (`git status` shows nothing under it).
 
-## 0b. Command-name verification — DO THIS FIRST (settles plans 01/02)
+## 0a. Install via marketplace
 
-Before scenario A, install the plugin in a real Cowork workspace, open the `/`
-menu, type `/sidekick`, and **record how each skill actually appears**:
+Cowork adds **marketplaces**, not bare plugin repos. The repo is its own
+marketplace (`.claude-plugin/marketplace.json`, name `solidbricks`):
+
+1. **Add the marketplace** pointing at the GitHub repo `boezelaere/sidekick`.
+2. **Install the `sidekick` plugin** from it.
+3. Confirm it installs without the "isn't a marketplace" error.
+
+- [ ] Marketplace added; `sidekick` plugin installed.
+
+## 0b. Command-name verification — DO THIS NEXT (settles plans 01/02)
+
+Open the `/` menu, type `/sidekick`, and **record how each skill actually
+appears**. The plugin docs namespace skills as `/<plugin>:<skill>`, so the
+**expected** form is `/sidekick:sidekick-init` etc. — confirm whether Cowork
+matches that, uses the bare form, or doesn't list them:
 
 - [ ] `sidekick` (always-on) — model-invoked; need NOT appear in `/`.
 - [ ] `sidekick-init` appears as: ☐ `/sidekick:sidekick-init` (namespaced)

@@ -52,9 +52,13 @@ the schema are free; only structure changes are confirmed.
 
 ## Install in Cowork
 
-Sidekick installs from its **private GitHub repo** (`boezelaere/sidekick`):
+Sidekick installs from its **private GitHub repo** (`boezelaere/sidekick`),
+which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
 
-1. **Add the plugin** in Cowork from the GitHub repository.
+1. **Add the marketplace**, then **install the plugin**. Point Cowork at the
+   GitHub repo `boezelaere/sidekick` as a marketplace, then install the
+   `sidekick` plugin from it. (Adding a plugin repo directly fails — Cowork
+   adds *marketplaces*, which then list installable plugins.)
 2. **Run `/sidekick-init`** — a short multiple-choice setup for your role,
    chat language, default output language, and which connections you want.
    It writes `sidekick.settings.md` and scaffolds your first project. It

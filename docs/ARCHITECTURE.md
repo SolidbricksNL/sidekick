@@ -441,6 +441,11 @@ Resolved:
   a stray recreate emptied the table. Files are inspectable + diffable, the
   helper snapshots before every write, queries run over a throwaway in-memory
   SQLite (no live DB to drop), and the check-in takes a dated backup.
+  **Keep `data.py` small.** Cowork truncated the helper on install once it grew
+  past ~16 KB (the installed copy was cut mid-line, breaking it and forcing the
+  model back to raw JSON). It was rewritten lean (~15.8 KB, prose moved to
+  `data-discipline.md`); don't reintroduce large docstrings/examples in the
+  script — put guidance in the reference instead.
 - **Archive move primitive** — true rename/move, else copy → verify →
   remove; never delete before verified (plan 10).
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare

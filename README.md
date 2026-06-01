@@ -105,9 +105,10 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.2.2** — Claude Cowork plugin (package name `solidbricks`; skills are
+**0.2.3** — Claude Cowork plugin (package name `solidbricks`; skills are
 `/sidekick-*`). Installed from the private GitHub repo; hardened and documented
-across the `plan/` units. 0.2.2 renames the plugin package away from `sidekick`
-so Cowork resolves the skills as bare `/sidekick-init` commands (a plugin named
-`sidekick` collided with its own skill namespace). Run the manual-test checklist
-in Cowork before wider rollout.
+across the `plan/` units. Cowork command support follows the working SolidCortex
+pattern: flat `commands/<name>.md` files give the typed `/sidekick-init` etc.,
+and the plugin package is named `solidbricks` (not `sidekick`, which collided
+with its own skill namespace). Run the manual-test checklist in Cowork before
+wider rollout.

@@ -39,14 +39,20 @@ const EXPECTED_TREE = [
   'skills/sidekick-triage/references/triage-template.md',
   'skills/sidekick-checkin/SKILL.md',
   'skills/sidekick-archive/SKILL.md',
+  'commands/sidekick-init.md',
+  'commands/sidekick-triage.md',
+  'commands/sidekick-checkin.md',
+  'commands/sidekick-archive.md',
   'docs/ARCHITECTURE.md',
   'README.md',
 ];
 
-// Skill folder name → bare `/`-command Cowork exposes. The plugin is named
-// `solidbricks` (NOT `sidekick`) on purpose: a plugin named `sidekick` made
-// Cowork namespace every invocation as `sidekick:<skill>`, which it could not
-// resolve. With a non-colliding plugin name the bare skill names resolve.
+// The four explicit-action skills. Each needs a flat commands/<name>.md file —
+// that is what Cowork turns into a typed `/<name>` command (skills/ alone only
+// gives model-invocation + a menu entry). Modeled on the working solidcortex
+// plugin. The plugin is named `solidbricks` (NOT `sidekick`): a plugin named
+// `sidekick` collided with its own skills (`sidekick:sidekick`) and broke command
+// resolution. The always-on `sidekick` skill is model-invoked (no command).
 const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
 
 // --- Check 1: expected tree exists -----------------------------------------
@@ -199,10 +205,22 @@ for (const cmd of [...derived].sort()) {
   else fail(`${cmd} referenced but skills/${folder}/ does not exist`);
 }
 
+// --- Check 6: commands/ files back each explicit skill ---------------------
+console.log('\n# Check 6 — commands/ files (typed /<skill>, solidcortex pattern)');
+for (const skill of EXPLICIT_SKILLS) {
+  const cmdPath = join(ROOT, 'commands', `${skill}.md`);
+  if (!existsSync(cmdPath)) { fail(`missing commands/${skill}.md`); continue; }
+  const fm = parseFrontmatter(readFileSync(cmdPath, 'utf8'));
+  if (!fm) { fail(`commands/${skill}.md has no frontmatter`); continue; }
+  if (fm.name !== skill) fail(`commands/${skill}.md name "${fm.name}" != "${skill}"`);
+  else if (!fm.description) fail(`commands/${skill}.md missing description`);
+  else pass(`commands/${skill}.md → /${skill}`);
+}
+
 // --- Informational: command forms ------------------------------------------
-console.log('\n# Info — Cowork command forms (skills-only, like the reference plugin)');
-info('Always-on (model-invoked): sidekick');
-info('Explicit skills resolve as BARE names (plugin name must not be "sidekick"):');
+console.log('\n# Info — Cowork command forms (modeled on the solidcortex plugin)');
+info('Always-on (model-invoked, no command file): sidekick');
+info('Explicit skills: commands/<name>.md → bare /<name> (plugin name ≠ "sidekick"):');
 for (const skill of EXPLICIT_SKILLS) {
   info(`  ${skill}  →  /${skill}`);
 }

@@ -61,6 +61,9 @@ _IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 # JSON -> SQLite column affinity for the in-memory query database.
 _TYPES = {"text", "number", "integer", "real", "bool", "boolean", "date"}
 _SNAPSHOT_KEEP = 20
+# A column with at most this many distinct values is treated as categorical;
+# `info` lists those values so the model can match exact spellings.
+_ENUM_MAX = 12
 
 
 def _die(msg):
@@ -366,6 +369,24 @@ def _sqlval(v):
     return v
 
 
+def _distinct_values(rows, name):
+    """Distinct non-null values of a column, or None if there are more than
+    _ENUM_MAX (high-cardinality - not a category worth listing)."""
+    out, seen = [], set()
+    for r in rows:
+        v = r.get(name)
+        if v is None:
+            continue
+        key = v if isinstance(v, (str, int, float, bool)) else json.dumps(v, ensure_ascii=False)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(v)
+        if len(out) > _ENUM_MAX:
+            return None
+    return sorted(out, key=lambda x: str(x)) if out else None
+
+
 def cmd_info(args):
     data_dir = _data_dir(args.project)
     if not data_dir.exists():
@@ -379,10 +400,21 @@ def cmd_info(args):
             continue
         table = f.stem
         rows = json.loads(f.read_text(encoding="utf-8"))
-        cols = (schema[table]["columns"] if table in schema
+        rows = rows if isinstance(rows, list) else []
+        base = (schema[table]["columns"] if table in schema
                 else [{"name": c, "type": "text"} for c in _table_columns(args.project, table, schema)])
-        tables.append({"name": table, "columns": cols,
-                       "rowcount": len(rows) if isinstance(rows, list) else None})
+        cols = []
+        for c in base:
+            col = dict(c)
+            vals = _distinct_values(rows, c["name"])
+            # Only categorical (low-cardinality) columns carry a value list, so
+            # the model can match exact spellings (e.g. "ON-PREM", not "ONPREM")
+            # instead of guessing. High-cardinality columns (names, emails) get
+            # none — listing them would be noise.
+            if vals is not None:
+                col["values"] = vals
+            cols.append(col)
+        tables.append({"name": table, "columns": cols, "rowcount": len(rows)})
     _emit({"ok": True, "action": "info", "project": args.project,
            "exists": True, "tables": tables})
 

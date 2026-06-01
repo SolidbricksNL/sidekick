@@ -1,6 +1,6 @@
 ---
 name: sidekick-core
-description: Always-on personal advisor and work-structuring layer for any role (Managing Director, consultant, marketer, etc.). Activates on ANY substantive work conversation. Anchors all work in projects under the Cowork root, and enforces three write disciplines — free logging to log/, gated distillation to brain/ (diff + approval), and confirmed deliverables in output/ and structure changes to the data/ store. Use this skill to decide which project a conversation belongs to, to keep the chat from filling up (log to disk, summarize in chat), to store genuinely structured data as queryable JSON tables (via scripts/data.py), and to maintain a per-project brain. Triggers on starting work, sharing a document, asking for analysis or a deliverable, or any "let's work on X" intent. Does NOT activate for casual chit-chat, greetings, or one-off factual questions unrelated to the user's projects. Reads sidekick.settings.md for role, chat language, and default output language.
+description: Always-on personal advisor and work-structuring layer for any role (Managing Director, consultant, marketer, etc.). Activates on substantive work. Anchors all work in projects under the Cowork root, and enforces three write disciplines — free logging to log/, gated distillation to brain/ (diff + approval), and confirmed deliverables in output/ and structure changes to the data/ store. Use this skill to decide which project a conversation belongs to, to keep the chat from filling up (log to disk, summarize in chat), to store genuinely structured data as queryable JSON tables (via scripts/data.py), and to maintain a per-project brain. Triggers on starting work, sharing a document, asking for analysis or a deliverable, asking a question about a project's records or stored data, or any "let's work on X" intent. Does NOT activate for casual chit-chat, greetings, or one-off factual questions unrelated to the user's projects. Reads sidekick.settings.md for role, chat language, and default output language.
 ---
 
 # Sidekick
@@ -195,8 +195,13 @@ rows. **All access goes through the helper `scripts/data.py`** — never the
 Invoke it by plugin root:
 `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" <cmd> --project projects/<slug> …`.
 `query` runs SQL over a throwaway in-memory copy (reads can't touch disk);
-writes snapshot the file first. You design the tables, **extend existing
-tables before adding new ones**, and document them in plain language in
+writes snapshot the file first. **To answer any question about stored data,
+run `data.py query` — do not read or `grep` the JSON files, even "just to
+look".** Before filtering on a category/text column, check its exact values
+with `data.py info` (it lists the distinct values of low-cardinality
+columns) or `SELECT DISTINCT`, so you match the real spelling (e.g.
+`ON-PREM`, not `ONPREM`). You design the tables, **extend existing tables
+before adding new ones**, and document them in plain language in
 `brain/data-model.md`. Reading and fitting-records-in is free; structure
 changes need confirmation. Full protocol: `references/data-discipline.md`.
 

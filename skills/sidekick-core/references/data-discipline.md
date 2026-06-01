@@ -46,7 +46,10 @@ helper exists so that:
 
 Reading the raw JSON "just to look" is the start of the failure mode — it
 leads to hand-edits that desync the data and the schema. Resist it; use
-`query` and `info`.
+`query` and `info`. **This includes answering questions:** to find out "how
+many", "which", or "what's the total", run `data.py query`, never `cat`/
+`grep` the JSON. A `SELECT` is more reliable than eyeballing the file (it
+won't miss a row or mis-match a value) and it scales when the table is large.
 
 ### Emergency fallback (only when the helper truly fails)
 
@@ -191,6 +194,15 @@ on-disk files are read only for loading and never written, so a query
   `log/`, not the chat. If a result becomes a deliverable (an exported
   sheet), that is an `output/` action and needs confirmation.
 
+**Match exact values on category columns.** A filter like
+`WHERE section = 'ONPREM'` silently returns nothing if the stored value is
+`ON-PREM`. Before filtering on a text/category column whose spelling you are
+not certain of, check the real values first: `data.py info` lists the
+**distinct values of every low-cardinality column** (so you'd see `ON-PREM`,
+`CLOUD`, `SOFTWARE`), or run `SELECT DISTINCT section FROM …`. Record those
+allowed values in `brain/data-model.md` so the next session doesn't have to
+rediscover them.
+
 ## Safety: snapshots and backups
 
 - **Per-write snapshots.** Before every `insert`/`update`/`delete`/`addcol`,
@@ -220,10 +232,17 @@ Stores people we deal with in this project.
 | role     | text   | their job title                  |
 | email    | text   | primary email                    |
 | phone    | text   | primary phone (added 2026-06-01) |
+| segment  | text   | category: `CLOUD`, `ON-PREM`, `SOFTWARE` |
 
 Typical queries: list all contacts at a given company; find contacts
 without an email.
 ```
+
+For **category columns** (a small fixed set of values), write the exact
+allowed values into the `meaning` cell, as `segment` shows above — that is
+what stops the next `WHERE` from guessing `ONPREM` instead of `ON-PREM`.
+`data.py info` reports those distinct values, so you can fill or refresh this
+from the live data.
 
 When you change the structure, update this file in the same step (after
 approval). Regenerate it from the live structure with `info` if it drifts.

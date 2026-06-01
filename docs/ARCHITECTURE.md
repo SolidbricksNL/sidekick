@@ -136,10 +136,15 @@ read/edit of the JSON. Two reasons the helper is mandatory:
 - **Reads** (`query`) run real SQL over a *throwaway in-memory SQLite*
   loaded from the files and discarded — full filter/sort/count power
   without pulling the whole file into context, and a read physically
-  cannot touch the disk.
+  cannot touch the disk. **Answering any question about the data goes
+  through `query`** — never a raw read/`grep` of the JSON. `info` reports
+  the distinct values of low-cardinality columns, so a filter matches the
+  real spelling (`ON-PREM`, not `ONPREM`) instead of guessing.
 - **Writes** (`insert`/`update`/`delete`/`addcol`) are validated against
   the table's columns and **snapshot the file first** (a ring of the last
-  20 under `data/.snapshots/`), so a mistaken edit is always recoverable.
+  20 under `data/.snapshots/`); snapshotting is best-effort, so a sandbox
+  that blocks it never aborts the write. A whole sheet inserts in one call
+  (`--json` takes an array).
 
 Sidekick manages the store under three principles:
 

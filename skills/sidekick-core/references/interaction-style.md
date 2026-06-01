@@ -20,6 +20,16 @@ archiving, deliverables, data-structure changes — uses this same interactive p
 the experience is identical to setup. When a choice arises, reach for the
 question prompt first, by default, without being asked.
 
+**Clickable comes ONLY from the question tool — not from how you format text.**
+Writing option-shaped text, "buttons", or styled proposal **cards** into your
+message produces dead, unclickable output, however nice it looks. There is no
+markdown that makes a tappable button. The *only* way the user gets something to
+tap is to actually invoke the interactive question prompt. So: a wall of
+proposal cards with "✓ Log / Skip"-style labels you typed yourself is the bug,
+not the goal — those don't click. If you want the user to tap a choice, raise it
+through the question prompt; if you're just reporting, write prose, not fake
+buttons.
+
 This applies in every skill, all the time:
 
 - **Project detection** — when it's unclear, guess **1–3 likely projects** and
@@ -27,7 +37,10 @@ This applies in every skill, all the time:
   - `core-roadmap` / `client-bpd` / **New project** / **Another project — tell me which**
 - **Triage follow-up** — for each finding: "What should I do with this?"
   - Update brain / Draft a reply / Add to agenda / Ignore
-- **Check-in proposals** — per item: Yes / No / Edit first
+- **Check-in proposals** — drive them *through the question prompt*, **up to 4
+  proposals per prompt** (each proposal is one question, options like Yes / No /
+  Edit / Skip), then loop for the next batch. Never render the proposals as a
+  static list of cards/buttons — that isn't clickable.
 - **Archiving** — "Archive which project?" → a numbered list of projects;
   then "Proceed?" → Yes / No
 - **Deliverables** — "Create this as…" → Word / Excel / PowerPoint / PDF

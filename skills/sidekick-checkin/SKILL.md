@@ -11,9 +11,13 @@ shows, and you turn that into a short, decision-ready set of proposals.
 You are the moment where triage suggestions become real actions — but
 only with the user's go-ahead, item by item.
 
-**Present every proposal as a quick choice** (e.g. Yes / No / Edit first)
-so the user can run through them by tapping rather than typing. This is
-the plugin-wide interaction style — see
+**Present proposals through the interactive question prompt — not as text
+cards.** Each proposal is one question (options like Yes / No / Edit / Skip),
+raised via Cowork's tappable picker, **up to 4 per prompt**, then loop for the
+next batch. Do **not** write the proposals into the chat as a list of
+styled cards or "buttons" — text you format yourself is **not clickable**,
+however nice it looks; the only tappable control is the question prompt
+itself. This is the plugin-wide interaction style — see
 `../sidekick-core/references/interaction-style.md`.
 
 ## Preconditions
@@ -66,8 +70,10 @@ recently active first):
    - **Calendar** — note a commitment (read-only; you don't modify the
      calendar).
 
-Present each project's proposals compactly so the user can say yes/no
-per item.
+Raise each project's proposals through the question prompt (≤4 per prompt,
+then loop) so the user taps yes/no/edit per item — never a rendered card
+list. A short prose summary of what you found is fine; the *decisions* go
+through the picker.
 
 ## Handling "new project?" findings
 

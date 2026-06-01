@@ -161,10 +161,11 @@ Input arrives through the chat — there is no separate inbox folder.
 
 **Logs feed the brain too (the write-back safety net).** Besides writing
 insights back to `brain/` inline during a session, durable insights captured in
-`log/` are surfaced systematically: the triage flags undistilled logs and the
-check-in folds them into the brain (with the usual diff + approval). So a good
-discussion that landed in a log is never lost, even if the inline write-back was
-missed. See §6, §10, §11.
+`log/` are surfaced systematically: the **check-in** scans each project's `log/`
+for files lacking the distilled stamp and folds them into the brain (with the
+usual diff + approval), then stamps them. (The triage only reports an
+undistilled-log count as a heads-up.) So a good discussion that landed in a log is
+never lost, even if the inline write-back was missed. See §6, §10, §11.
 
 ---
 
@@ -190,11 +191,14 @@ appends a footer line to that log file:
 > distilled to brain: 2026-06-01
 ```
 
-The **triage** uses this stamp to find work: any `log/*.md` **without** the stamp
-(except a log still being written today) is a log whose insights may not be in
-the brain yet, so triage flags it for the check-in. This closes the loop
-`log → brain` without relying on remembering to write back inline. Only the
-check-in writes the stamp (triage never writes outside `_triage/`).
+The **check-in** finds the work: it scans each project's `log/` for files
+**without** the stamp (except a log still being actively written), and distills
+each into the brain (diff + approval), then writes the stamp. This closes the
+loop `log → brain` without relying on remembering to write back inline. The
+**triage** only reports an undistilled-log **count** per project as a heads-up —
+it does not list or process them (so the same log can't pile up across triage
+runs). Only the check-in writes the stamp (triage never writes outside
+`_triage/`).
 
 ---
 
@@ -245,15 +249,16 @@ it.
 
 ## 10. The triage layer (`sidekick-triage`, scheduled)
 
-A single bundled skill that scans email + chat + calendar **and the project
-logs**. Runs as a **scheduled task** (frequency set by the user in Cowork, not in
-the plugin). Operation, at the top level:
+A single bundled skill that scans email + chat + calendar. Runs as a **scheduled
+task** (frequency set by the user in Cowork, not in the plugin). Operation, at the
+top level:
 
 1. Review recent messages, emails, and calendar items (external sources).
-2. **Scan each non-archived project's `log/`** for entries **not yet distilled
-   to the brain** — files lacking the `> distilled to brain:` stamp (skip a log
-   still being written today). These are internal findings: durable insights to
-   fold into the brain.
+2. **Note the undistilled-log count per project** (a heads-up only): how many
+   `log/*.md` files lack the `> distilled to brain:` stamp. This is informational
+   — a current snapshot, regenerated each run — **not** a per-log finding. The
+   **check-in** is what actually detects and distills undistilled logs (§11), so
+   the same log never piles up as a finding across multiple triage runs.
 3. Write all findings to **`_triage/YYYYMMDD-HHMM-triage.md`** at the top level —
    a **timestamped file per run**, so triage can run **several times a day**
    without overwriting an earlier run.
@@ -280,16 +285,17 @@ The user starts the check-in themselves. Operation:
 2. Read each project's `agenda.md`.
 3. Cross-reference it with the triage findings in `_triage/` and — if
    connected — the calendar.
-4. Propose concrete actions per project: update the brain, perform an
+4. **Scan the project's `log/` for undistilled logs** — files lacking the
+   `> distilled to brain:` stamp (skip a log still being actively written).
+   This is the check-in's own scan; it does not depend on the triage.
+5. Propose concrete actions per project: update the brain, perform an
    action, create something in `output/`, reply to an email/chat, tick
-   off an agenda item, **and distill the triage-flagged undistilled logs
-   into the brain.**
-5. All proposed changes follow the normal gatekeeper rules (brain = diff
+   off an agenda item, **and distill each undistilled log into the brain.**
+6. All proposed changes follow the normal gatekeeper rules (brain = diff
    + approval, output/db = confirmation).
-6. **After distilling a log into the brain (on approval), stamp that log
-   file** with `> distilled to brain: <date>` so the triage stops flagging
-   it. If the user defers a log, leave it unstamped (it resurfaces next
-   triage).
+7. **After distilling a log into the brain (on approval), stamp that log
+   file** with `> distilled to brain: <date>`. If the user defers a log,
+   leave it unstamped (it resurfaces at the next check-in).
 
 The per-project `agenda.md` is deliberately simple (markdown): a list of
 live items with status, so the check-in can work with it well.

@@ -1,6 +1,6 @@
 ---
 name: sidekick-triage
-description: Scheduled scan of connected email, chat, and calendar — plus each project's undistilled logs — bundled into one skill. Use when the user runs /sidekick-triage or when this skill runs as a scheduled Cowork task. Reviews recent messages, emails, and calendar items, and flags project log files not yet distilled to the brain, writing a timestamped findings file to _triage/YYYYMMDD-HHMM-triage.md at the Cowork root (one per run, so it can run several times a day). It NEVER writes to any project brain or log and never takes action on the user's behalf — its output is purely input for the user-initiated /sidekick-checkin. The human stays the gatekeeper.
+description: Scheduled scan of connected email, chat, and calendar, bundled into one skill. Use when the user runs /sidekick-triage or when this skill runs as a scheduled Cowork task. Reviews recent messages, emails, and calendar items, and notes a per-project count of undistilled logs as a heads-up (the check-in does the actual log distilling), writing a timestamped findings file to _triage/YYYYMMDD-HHMM-triage.md at the Cowork root (one per run, so it can run several times a day). It NEVER writes to any project brain or log and never takes action on the user's behalf — its output is purely input for the user-initiated /sidekick-checkin. The human stays the gatekeeper.
 ---
 
 # Sidekick — Triage
@@ -55,23 +55,18 @@ use a sensible default such as the last 7 days. Times are local to the workspace
 
 Do not try to be exhaustive on volume; be selective on **relevance**.
 
-## Also scan project logs (internal source)
+## Note undistilled-log counts (heads-up only)
 
-Besides the external sources, scan each **non-archived** project's `log/` for
-durable insights that may not be in the brain yet — this is how a good logged
-discussion makes it back into the brain:
+Per **non-archived** project, count how many `log/*.md` files lack the
+`> distilled to brain:` footer stamp (ignore a log modified within the last hour
+— it is still being written). Report this as a **one-line heads-up per project**,
+e.g. "Undistilled logs: 2" — a current snapshot, regenerated each run.
 
-- List `projects/<slug>/log/*.md`.
-- A log is **undistilled** if it has **no** `> distilled to brain:` footer line.
-  **Skip** a log that is still being actively written (e.g. modified within the
-  last hour), so an in-progress discussion is not flagged mid-write.
-- For each undistilled log, capture a finding under that project: a one-line
-  summary of the durable point(s) it holds, with suggested action **"distill to
-  brain"** and a note of the source log filename.
-
-You only **flag** these — you never write to `brain/` or stamp the log. The
-check-in does the brain write (diff + approval) and writes the stamp. Reading
-logs is read-only, consistent with the hard boundaries above.
+Do **not** list or analyse the individual logs, and do **not** create per-log
+findings. The **check-in** is what detects and distills the actual logs (it scans
+`log/` itself and writes the stamp), so the same log never piles up as a finding
+across multiple triage runs. Counting is read-only; you never write to `brain/`
+or `log/`.
 
 ## How to decide relevance
 

@@ -36,12 +36,17 @@ recently active first):
    check-in) and the brain index from its `CLAUDE.md` for context.
 2. Pull any triage findings tagged to this project.
 3. Pull any calendar items related to this project (by topic/people).
-4. Synthesize: what's moved, what's stuck, what's new, what's due.
-5. Propose **concrete actions**, each tagged with its type and its
+4. **Scan the project's `log/` for undistilled logs** — files lacking the
+   `> distilled to brain:` stamp (skip a log modified within the last hour,
+   still being written). This is the check-in's own scan; the triage only
+   reports a count, so the check-in is the single place that detects and
+   processes them.
+5. Synthesize: what's moved, what's stuck, what's new, what's due.
+6. Propose **concrete actions**, each tagged with its type and its
    gatekeeper:
    - **Update brain** — durable fact/decision → will show a diff and need
      approval.
-   - **Distill a log** — a triage-flagged undistilled `log/` file whose
+   - **Distill a log** — an undistilled `log/` file found in step 4 whose
      insights belong in the brain → show a diff and need approval, then
      stamp the log (see "Acting on approvals").
    - **Do an action** — a task to perform now in this session.
@@ -70,11 +75,12 @@ disciplines:
 
 - **Brain:** show the diff, write after approval, move any processed
   source into `archive/`.
-- **Distilled logs:** for a triage-flagged log, show the brain diff and
-  write after approval, then **append `> distilled to brain: <today>` to
-  that `log/` file** so triage stops flagging it. If the user defers a log,
-  leave it unstamped — it resurfaces at the next triage. (The original log
-  stays in `log/`; only the stamp is added.)
+- **Distilled logs:** for an undistilled log found in the per-project scan,
+  show the brain diff and write after approval, then **append
+  `> distilled to brain: <today>` to that `log/` file** so it is not
+  re-detected. If the user defers a log, leave it unstamped — it resurfaces
+  at the next check-in. (The original log stays in `log/`; only the stamp is
+  added.)
 - **Output/database structure:** confirm, then create/edit; record what
   was produced.
 - **Agenda:** update `agenda.md` directly (this is bookkeeping, written

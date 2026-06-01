@@ -1,8 +1,9 @@
 # Triage — {{DATE}}
 
 > Findings from the scheduled scan of connected email, chat, and calendar,
-> **plus undistilled project logs**. This is **input for `/sidekick-checkin`** —
-> nothing here has been acted on. Suggestions only.
+> with a per-project **undistilled-log count** as a heads-up (the check-in
+> distills the logs). This is **input for `/sidekick-checkin`** — nothing here
+> has been acted on. Suggestions only.
 
 _Run at: {{TIMESTAMP}}_
 _Scanned sources: {{SOURCES}}_
@@ -12,18 +13,14 @@ _Window: since {{LAST_RUN_OR_WINDOW}}_
 
 ## Project: {{project-slug}}
 
+_Undistilled logs: {{N}}_  <!-- heads-up only; the check-in distills these -->
+
 ### {{source}} — {{short identifier}}
 - **Why it matters:** {{one line}}
-- **Suggested action:** {{update brain / distill to brain / action / deliverable / reply / agenda / calendar}}
+- **Suggested action:** {{update brain / action / deliverable / reply / agenda / calendar}}
 - **Notes:** {{optional, e.g. quoted snippet kept in original language}}
 
 <!-- repeat per finding, grouped under the project it likely belongs to -->
-
-<!-- internal-log finding (undistilled log → brain), example: -->
-### log — {{YYYYMMDD-slug.md}}
-- **Why it matters:** {{one line — the durable insight(s) in this log}}
-- **Suggested action:** distill to brain
-- **Notes:** undistilled log (no `distilled to brain:` stamp)
 
 ---
 

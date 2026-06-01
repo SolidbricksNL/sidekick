@@ -24,8 +24,8 @@ planning have been **resolved** (see the decisions section below).
 | 09 | [09-checkin-skill.md](09-checkin-skill.md) | Finalize the check-in; scripted 2–3 project walkthrough proposals→approvals→writes. | 04, 05, 07, 08 | [x] done (scripted walkthrough) |
 | 10 | [10-archive-skill.md](10-archive-skill.md) | Verify archive = move-never-delete + restore; scripted move-and-restore. | 04 | [x] done (Diff C applied; move/restore verified on real FS) |
 | 11 | [11-interaction-style.md](11-interaction-style.md) | Ensure plugin-wide multiple-choice is applied everywhere; choice-point checklist. | 02 | [x] done (checklist; no deviations) |
-| 12 | [12-manual-test-walkthroughs.md](12-manual-test-walkthroughs.md) | End-to-end human-judged scenarios in a disposable Cowork sandbox; ~30-min checklist. | 03–11 | [ ] not started |
-| 13 | [13-docs-and-release.md](13-docs-and-release.md) | Final docs pass, INSTALL section, version bump to 0.2.0 + git tag, rollout note. | 01–12 | [ ] not started |
+| 12 | [12-manual-test-walkthroughs.md](12-manual-test-walkthroughs.md) | End-to-end human-judged scenarios in a disposable Cowork sandbox; ~30-min checklist. | 03–11 | [x] checklist written (`docs/MANUAL-TESTS.md`); run in Cowork = user |
+| 13 | [13-docs-and-release.md](13-docs-and-release.md) | Final docs pass, INSTALL section, version bump to 0.2.0 + git tag, rollout note. | 01–12 | [x] docs done; 0.2.0 set; **tag held** |
 
 Status legend: `[ ] not started` · `[~] in progress` · `[x] done`. Update both
 this row and the **Status:** line at the top of the plan file when a unit moves.

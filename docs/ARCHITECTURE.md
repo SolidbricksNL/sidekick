@@ -300,10 +300,27 @@ putting a choice to the user, ask with **multiple choice** by default
 
 ---
 
-## 13. Open items (to be filled in during build)
+## 13. Build status (resolved during the plan units)
 
-- Exact wording of the init questionnaire (multiple choice) — next build
-  step.
-- Definitive `agenda.md` template.
-- Optional MCP connector configuration (`.mcp.json`) for
-  mail/chat/calendar — depends on what the user connects.
+Resolved:
+
+- **Init questionnaire** — finalized as seven multiple-choice questions
+  mapped 1:1 to `sidekick.settings.md` (plan 03; field spec there).
+- **`agenda.md` template** — finalized (plan 04), alongside the
+  `project-claude-template.md` fix (brain read-line commented until the
+  first brain file exists).
+- **Connectors** — the **user** enables connectors in Cowork; the plugin
+  only records intent and guides. There is **no `.mcp.json` auto-config**
+  (superseded; the earlier open item is dropped).
+- **SQLite execution** — via the bundled stdlib helper
+  `skills/sidekick/scripts/db.py`, not the `sqlite3` CLI (plan 06).
+- **Archive move primitive** — true rename/move, else copy → verify →
+  remove; never delete before verified (plan 10).
+
+Remaining (verify-on-install):
+
+- **Command form in Cowork** — whether the explicit skills appear as
+  `/sidekick:<skill>` (namespaced), `/<skill>` (bare), or not as `/`
+  commands at all. Settled by the install check in `docs/MANUAL-TESTS.md`
+  (step 0b); fallback is thin `commands/<skill>.md` wrappers. Command
+  references are left in the bare form until this is observed.

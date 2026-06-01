@@ -50,15 +50,36 @@ the schema are free; only structure changes are confirmed.
 | `sidekick-checkin` | `/sidekick-checkin` | Walks all projects, cross-references triage + calendar, proposes actions. |
 | `sidekick-archive` | `/sidekick-archive` | Moves a project to `_archive/` (never deletes). |
 
-## Getting started
+## Install in Cowork
 
-1. Install the plugin in Cowork.
-2. Run `/sidekick-init` to set your role, languages, and connections, and
-   create your first project.
-3. Just start working — the always-on `sidekick` skill picks the right
-   project and keeps everything structured.
-4. Optionally schedule `sidekick-triage` as a Cowork scheduled task, and
-   run `/sidekick-checkin` to review across projects.
+Sidekick installs from its **private GitHub repo** (`boezelaere/sidekick`):
+
+1. **Add the plugin** in Cowork from the GitHub repository.
+2. **Run `/sidekick-init`** — a short multiple-choice setup for your role,
+   chat language, default output language, and which connections you want.
+   It writes `sidekick.settings.md` and scaffolds your first project. It
+   does **not** turn any connector on.
+3. **Enable connectors** you said yes to (email / messages / storage /
+   calendar) in **Cowork's connector settings** — the plugin only records
+   intent; you enable the actual connections.
+4. **Schedule triage (optional):** attach `sidekick-triage` to a Cowork
+   **scheduled task** and pick a frequency (e.g. daily). It writes findings
+   to `_triage/`; the plugin does not set the frequency.
+5. **Just start working** — the always-on `sidekick` skill picks the right
+   project and keeps everything structured. Run `/sidekick-checkin` to
+   review across projects, `/sidekick-archive` to retire one.
+
+## For contributors
+
+- **Validate structure** before changing or releasing the plugin:
+  ```
+  node scripts/validate-structure.mjs
+  ```
+  It checks the manifest, every skill's frontmatter, and all reference
+  paths, exiting non-zero on any failure.
+- **Manual tests:** [`docs/MANUAL-TESTS.md`](docs/MANUAL-TESTS.md) is a
+  ~30-minute human-judged checklist for verifying behavior in a disposable
+  Cowork sandbox.
 
 ## Design
 
@@ -78,4 +99,6 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-Early. Built as a Claude Cowork plugin.
+**0.2.0** — Claude Cowork plugin. Installed from the private GitHub repo;
+hardened and documented across the `plan/` units. Run the manual-test
+checklist in Cowork before wider rollout.

@@ -30,10 +30,11 @@ marketplace (`.claude-plugin/marketplace.json`, name `solidbricks`):
 
 ## 0b. Command-name verification — DO THIS NEXT (settles plans 01/02)
 
-Open the `/` menu, type `/sidekick`, and **record how each skill actually
-appears**. The plugin docs namespace skills as `/<plugin>:<skill>`, so the
-**expected** form is `/sidekick:sidekick-init` etc. — confirm whether Cowork
-matches that, uses the bare form, or doesn't list them:
+The first install test (2026-06-01) showed `skills/*/SKILL.md` does **not**
+register as a typed `/` command (`/sidekick:sidekick-init` → "Unknown command").
+The four explicit skills now ship `commands/<skill>.md` wrappers that provide the
+typed `/sidekick:<skill>` command. After pulling/refreshing the plugin, open the
+`/` menu, type `/sidekick`, and **record what appears**:
 
 - [ ] `sidekick` (always-on) — model-invoked; need NOT appear in `/`.
 - [ ] `sidekick-init` appears as: ☐ `/sidekick:sidekick-init` (namespaced)

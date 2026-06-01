@@ -89,6 +89,17 @@ not bare plugin repos. Fixed by adding `.claude-plugin/marketplace.json` (self-
 referencing, name `solidbricks`, plugin `sidekick` with `source: "./"`). The
 checklist now starts at **0a** (add marketplace → install plugin) before **0b**.
 
+### Command form settled — wrappers added (2026-06-01)
+
+Scenario-A test showed the namespaced skill command `/sidekick:sidekick-init`
+returns **"Unknown command"**: Cowork does not expose `skills/*/SKILL.md` as typed
+`/` commands (the #41842 path). Applied the planned fallback — shipped
+`commands/<skill>.md` wrappers for the four explicit skills (init/triage/checkin/
+archive), each a thin file that invokes its skill. This gives the typed
+`/sidekick:<skill>` form; the always-on `sidekick` stays model-invoked. Existing
+`/sidekick-*` references remain valid (no find-replace). Re-run step 0b after the
+push to confirm the wrappers list and fire.
+
 ### What remains the user's to execute (not blockers for the artifact)
 
 - **Command-name verification (0b in the checklist).** Install in Cowork, open

@@ -285,6 +285,11 @@ sidekick/
 │   │   └── references/triage-template.md
 │   ├── sidekick-checkin/SKILL.md
 │   └── sidekick-archive/SKILL.md
+├── commands/                      ← typed-command wrappers (one per explicit skill)
+│   ├── sidekick-init.md           ← /sidekick:sidekick-init → invokes the skill
+│   ├── sidekick-triage.md
+│   ├── sidekick-checkin.md
+│   └── sidekick-archive.md
 ├── docs/
 │   └── ARCHITECTURE.md            ← this document
 └── README.md
@@ -296,12 +301,13 @@ carries its own marketplace catalog at `.claude-plugin/marketplace.json`
 root is the repo root). Users add the repo as a marketplace, then install the
 `sidekick` plugin from it.
 
-Skills invoke each other via slash commands. Per the plugin docs, plugin skills
-are namespaced as `/<plugin>:<skill>` — e.g. `/sidekick:sidekick-init` — though
-the SKILL.md/README references currently use the bare `/sidekick-init` form
-pending the live `/`-menu check (see §13). The main skill `sidekick` fires
-automatically when relevant; the others are explicit actions. The triage skill
-is intended to be attached to a Cowork **scheduled task**.
+Skills invoke each other via slash commands. Cowork does **not** surface
+`skills/*/SKILL.md` as typed `/` commands (an install test on 2026-06-01 returned
+*"Unknown command: /sidekick:sidekick-init"*), so each explicit-action skill
+ships a thin `commands/<skill>.md` wrapper that gives the typed
+`/sidekick:<skill>` command and simply invokes the underlying skill. The
+always-on `sidekick` skill is model-invoked and needs no command. The triage
+skill is also intended to be attached to a Cowork **scheduled task**.
 
 A plugin-wide interaction principle applies across all skills: when
 putting a choice to the user, ask with **multiple choice** by default
@@ -330,11 +336,16 @@ Resolved:
   referencing, `source: "./"`) so it installs cleanly. Discovered during the
   first install attempt, 2026-06-01.
 
+- **Command form in Cowork — RESOLVED via wrappers (2026-06-01).** The first
+  install test showed `skills/*/SKILL.md` does **not** register as a typed `/`
+  command (`/sidekick:sidekick-init` → "Unknown command"). Fixed by shipping
+  `commands/<skill>.md` wrappers for the four explicit skills, giving the typed
+  `/sidekick:<skill>` form (and the bare `/sidekick-init` the user types, which
+  Cowork expands to the namespaced form). Existing `/sidekick-*` references stay
+  valid; no find-replace needed. Re-verify the wrappers appear in the `/` menu
+  after this push (`docs/MANUAL-TESTS.md` step 0b).
+
 Remaining (verify-on-install):
 
-- **Command form in Cowork** — the plugin docs namespace plugin skills as
-  `/<plugin>:<skill>` (e.g. `/sidekick:sidekick-init`), which is strong
-  evidence the bare `/sidekick-init` references need a mechanical rewrite.
-  Confirm against the live `/` menu (`docs/MANUAL-TESTS.md` step 0b) before
-  rewriting; fallback if skills don't register as `/` commands is thin
-  `commands/<skill>.md` wrappers. References stay bare until observed.
+- **Wrapper appearance** — confirm the four wrappers list in Cowork's `/` menu
+  and that invoking one runs its skill (re-run step 0b after pushing).

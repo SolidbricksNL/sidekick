@@ -39,9 +39,19 @@ const EXPECTED_TREE = [
   'skills/sidekick-triage/references/triage-template.md',
   'skills/sidekick-checkin/SKILL.md',
   'skills/sidekick-archive/SKILL.md',
+  'commands/sidekick-init.md',
+  'commands/sidekick-triage.md',
+  'commands/sidekick-checkin.md',
+  'commands/sidekick-archive.md',
   'docs/ARCHITECTURE.md',
   'README.md',
 ];
+
+// The four explicit-action skills. Cowork does not surface skills/*/SKILL.md as
+// typed `/` commands, so each ships a thin commands/<name>.md wrapper that gives
+// the typed `/sidekick:<name>` form. The always-on `sidekick` skill is excluded
+// (model-invoked only).
+const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
 
 // --- Check 1: expected tree exists -----------------------------------------
 console.log('\n# Check 1 — expected tree (ARCHITECTURE §12)');
@@ -193,11 +203,21 @@ for (const cmd of [...derived].sort()) {
   else fail(`${cmd} referenced but skills/${folder}/ does not exist`);
 }
 
-// --- Informational: derived command names (form not asserted, plan 12) -----
-console.log('\n# Info — derived command names (form verified on install, plan 12)');
-info('Skills present (model-invocable regardless of typed form):');
-for (const skill of SKILLS) {
-  info(`  ${skill}  →  namespaced /sidekick:${skill}  |  bare /${skill}`);
+// --- Check 6: command wrappers for the explicit skills ---------------------
+console.log('\n# Check 6 — commands/ wrappers (typed /sidekick:<skill>)');
+for (const skill of EXPLICIT_SKILLS) {
+  const cmdPath = join(ROOT, 'commands', `${skill}.md`);
+  if (!existsSync(cmdPath)) { fail(`missing commands/${skill}.md wrapper`); continue; }
+  const fm = parseFrontmatter(readFileSync(cmdPath, 'utf8'));
+  if (!fm || !fm.description) fail(`commands/${skill}.md missing description frontmatter`);
+  else pass(`commands/${skill}.md → /sidekick:${skill}`);
+}
+
+// --- Informational: command forms ------------------------------------------
+console.log('\n# Info — command forms');
+info('Always-on (model-invoked, no typed command): sidekick');
+for (const skill of EXPLICIT_SKILLS) {
+  info(`  ${skill}  →  typed /sidekick:${skill} (via commands/${skill}.md)`);
 }
 
 // --- Summary ----------------------------------------------------------------

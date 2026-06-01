@@ -132,6 +132,10 @@ log/brain as usual.
 Populating existing tables with records that fit the existing columns is
 **free** — that is normal use, not a structure change. All data access
 goes through `scripts/data.py` — never read or edit the JSON by hand.
+Insert a whole sheet in **one** `insert --json '[…]'` call (it takes an
+array). If the helper *genuinely* fails on an environment problem (e.g. a
+sandbox permission error), use the emergency fallback in
+`references/data-discipline.md` and tell the user — don't get stuck.
 
 ### Discipline 1 — Log freely (`log/`)
 

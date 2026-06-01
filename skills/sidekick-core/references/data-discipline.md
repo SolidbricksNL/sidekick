@@ -48,6 +48,26 @@ Reading the raw JSON "just to look" is the start of the failure mode — it
 leads to hand-edits that desync the data and the schema. Resist it; use
 `query` and `info`.
 
+### Emergency fallback (only when the helper truly fails)
+
+The helper is robust, but a sandbox can still break it in ways you can't fix
+(e.g. it refuses a file operation). If `data.py` **repeatedly fails on a
+genuine environment problem** — not a usage mistake — you may, as a last
+resort, write the table file directly. When you do:
+
+1. First re-check it isn't a usage error: an `insert` takes `--json` (a JSON
+   object, or a **JSON array** for many rows); table/column names are
+   letters/digits/underscore; columns must already exist (`info`).
+2. Keep `<table>.json` a **valid JSON array of objects** whose keys match
+   `_schema.json` exactly. Do not change the structure by hand — a new
+   column still goes through `addcol` (or hand-edit `_schema.json` too, and
+   say so).
+3. **Tell the user** you fell back to a direct write and why, and go back to
+   the helper for the next operation.
+
+This escape hatch exists precisely so a permission glitch never blocks the
+work. It is the exception, not the routine — the helper is still the rule.
+
 ### Locating the helper in Cowork
 
 The plugin is installed outside the working directory, so call the helper by
@@ -133,16 +153,27 @@ project path, e.g. `projects/finance`.
 |---|---|---|
 | Create a table | `data.py create --project DIR --table NAME --columns "a:text,b:number"` | confirm first |
 | Add a column | `data.py addcol --project DIR --table NAME --column NAME --type text` | confirm first |
-| Insert records that fit | `data.py insert --project DIR --table NAME --json '<rows>'` | free |
+| Insert records that fit | `data.py insert --project DIR --table NAME --json '<object-or-array>'` | free |
 | Correct rows | `data.py update --project DIR --table NAME --match '{...}' --set '{...}'` | on instruction |
 | Remove rows | `data.py delete --project DIR --table NAME --match '{...}'` | on instruction |
 | Query (read-only) | `data.py query --project DIR --sql "<SELECT>"` | free |
 | Inspect tables/columns | `data.py info --project DIR` | free |
 | Dated backup | `data.py backup --project DIR --label check-in` | the check-in |
 
+**Insert in one batch, not row by row.** `--json` takes a **JSON array** of
+objects, so a whole spreadsheet goes in with a *single* `insert` call. Do
+that — it is one subprocess and one snapshot, versus one of each per row.
+Inserting 34 rows as 34 separate calls is slow and needlessly churns
+snapshots. (`--row`/`--rows` are accepted as aliases of `--json`.) Each
+mutating call snapshots the table first; snapshotting is **best-effort** — if
+the sandbox refuses it, the write still goes through (a warning is printed).
+
 Column types for `create`/`addcol`: `text`, `number` (alias `real`),
 `integer`, `bool`, `date`. Types are preserved on disk (a JSON number stays
-a number), so numeric queries need no casting.
+a number), so numeric queries need no casting. `_schema.json` stores only the
+column **name and type** — human-readable column *descriptions* live in
+`brain/data-model.md` (prose), kept in step with the structure, not in the
+schema file.
 
 ## Querying — over a throwaway in-memory database
 

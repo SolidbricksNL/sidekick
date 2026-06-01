@@ -125,17 +125,31 @@ def _load_rows(project, table):
 
 
 def _snapshot(project, table):
-    """Copy a table file (and the schema) into .snapshots/ before a mutation.
-    Keeps the last _SNAPSHOT_KEEP snapshots per table; prunes older ones."""
+    """Copy a table file into .snapshots/ before a mutation, keeping the last
+    _SNAPSHOT_KEEP per table. **Best-effort:** the snapshot is a safety net, so
+    a failure here (e.g. a sandbox that forbids deleting files this script
+    created) must never abort the actual write. Warn and carry on."""
     src = _table_path(project, table)
     if not src.exists():
         return
-    snap_dir = _data_dir(project) / ".snapshots"
-    snap_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, snap_dir / f"{table}-{_ts()}.json")
-    existing = sorted(snap_dir.glob(f"{table}-*.json"))
-    for old in existing[:-_SNAPSHOT_KEEP]:
-        old.unlink()
+    try:
+        snap_dir = _data_dir(project) / ".snapshots"
+        snap_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, snap_dir / f"{table}-{_ts()}.json")
+    except OSError as e:
+        print(f"warning: snapshot of {table!r} skipped ({e})", file=sys.stderr)
+        return
+    # Prune old snapshots. unlink may be denied in some sandboxes — never fatal.
+    try:
+        existing = sorted(snap_dir.glob(f"{table}-*.json"))
+        for old in existing[:-_SNAPSHOT_KEEP]:
+            try:
+                old.unlink()
+            except OSError as e:
+                print(f"warning: could not prune old snapshot {old.name} ({e})",
+                      file=sys.stderr)
+    except OSError:
+        pass
 
 
 def _write_rows(project, table, rows):
@@ -411,10 +425,28 @@ def build_parser():
     a.add_argument("--type", default="text")
     a.set_defaults(func=cmd_addcol)
 
-    i = sub.add_parser("insert", help="append records that fit the columns")
+    i = sub.add_parser(
+        "insert", help="append records that fit the columns",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Append one or more records. Pass a JSON ARRAY of objects to insert\n"
+            "many rows in a SINGLE call - this is strongly preferred: it is one\n"
+            "subprocess and one snapshot, instead of one per row.\n\n"
+            "Examples:\n"
+            "  # batch (preferred) - all rows in one call:\n"
+            "  data.py insert --project projects/finance --table contacts \\\n"
+            "    --json '[{\"name\":\"Ada\",\"email\":\"ada@ex.com\"},"
+            "{\"name\":\"Bo\",\"email\":\"bo@ex.com\"}]'\n\n"
+            "  # single row:\n"
+            "  data.py insert --project projects/finance --table contacts \\\n"
+            "    --json '{\"name\":\"Ada\",\"email\":\"ada@ex.com\"}'\n\n"
+            "Keys must match the table's columns (see `info`); missing columns\n"
+            "are filled with null. --row/--rows are accepted as aliases of --json."))
     i.add_argument("--project", required=True)
     i.add_argument("--table", required=True)
-    i.add_argument("--json", required=True, help="JSON object or array of objects")
+    i.add_argument("--json", "--rows", "--row", dest="json", required=True,
+                   metavar="JSON",
+                   help="a JSON object, or a JSON array of objects for batch insert")
     i.set_defaults(func=cmd_insert)
 
     u = sub.add_parser("update", help="update rows matching --match")

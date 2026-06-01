@@ -56,23 +56,37 @@ you ask them. Full guidance in `references/interaction-style.md`.
 
 ## Project detection
 
-Everything you do belongs to a project. Projects live under
-`projects/<slug>/` in the Cowork root.
+Everything you do belongs to a project, so **at the start of every
+conversation determine the active project before doing real work.**
+Projects live under `projects/<slug>/` in the Cowork root.
 
 1. List `projects/` and read each project's `agenda.md` and brain index
    (the brain files named in its `CLAUDE.md`).
-2. Match the conversation's intent against existing projects.
-3. **Clear match** → briefly confirm which project is active ("Working in
-   *core-roadmap*.") and proceed.
-4. **No match or genuine doubt** → ask with the **interactive
-   multiple-choice picker** (not a text list): e.g. options *"Yes, it
-   belongs to project X"* / *"No, start a new project"* / *"Let me explain
-   first"*. Do nothing structural until they choose.
-5. **New project approved** → scaffold it (see "Scaffolding a project"),
-   then proceed.
+2. Read the user's intent and pick the case:
 
-**Never silently create a project.** Creating a project is always the
-user's explicit choice.
+**Case A — the user is explicit → just proceed, no question asked.**
+- They name an existing project ("let's work on *okrs*", "about the BPD
+  project") → adopt it and say one line: "Working in *okrs*."
+- They ask for a new project ("let's start a new project *X*") → that is
+  explicit approval; scaffold it (see "Scaffolding a project") and proceed.
+
+**Case B — it is not clearly one project → offer the interactive
+multiple-choice picker, NEVER an open question.** Do **not** ask "what is
+this about?" in free text. Instead make your **best guess of 1–3 likely
+existing projects** (from their agendas/brains, most likely first) and
+present the **tappable picker**:
+- your **1–3 best-guess projects**, then
+- **"New project"**, then
+- **"Another project — tell me which"** (free-text escape, for when your
+  guesses are wrong or the user wants to add context).
+
+Adopt the project from their choice; do nothing structural until they
+choose. If no project exists yet, offer just **"New project"** /
+**"Another project — tell me which"**.
+
+**Never silently create a project, and never fall back to an open-ended
+"which project?" question** — always present your guessed options as the
+picker.
 
 ### Scaffolding a project
 

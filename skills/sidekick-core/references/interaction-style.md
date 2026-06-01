@@ -22,8 +22,9 @@ question prompt first, by default, without being asked.
 
 This applies in every skill, all the time:
 
-- **Project detection** — "Where does this belong?"
-  - `core-roadmap` / `client-bpd` / **New project** / Something else
+- **Project detection** — when it's unclear, guess **1–3 likely projects** and
+  offer them as the picker; never ask openly "what is this about?"
+  - `core-roadmap` / `client-bpd` / **New project** / **Another project — tell me which**
 - **Triage follow-up** — for each finding: "What should I do with this?"
   - Update brain / Draft a reply / Add to agenda / Ignore
 - **Check-in proposals** — per item: Yes / No / Edit first

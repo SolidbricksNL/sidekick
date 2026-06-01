@@ -10,9 +10,10 @@ output language.
 
 ## Read at session start
 
-1. `brain/{{MAIN_TOPIC}}.md` — current status and knowledge
-2. `agenda.md` — live items and planning
-<!-- add more brain files here as the project grows, e.g.: -->
+1. `agenda.md` — live items and planning
+<!-- brain/ starts empty. When the first brain file is distilled, add it
+     here so it is read at session start, e.g.: -->
+<!-- 2. brain/{{MAIN_TOPIC}}.md — current status and knowledge -->
 <!-- 3. brain/decisions.md — decisions made so far -->
 <!-- 4. brain/data-model.md — database schema (plain language) -->
 

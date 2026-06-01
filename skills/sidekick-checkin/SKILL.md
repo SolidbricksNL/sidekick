@@ -41,6 +41,9 @@ recently active first):
    gatekeeper:
    - **Update brain** — durable fact/decision → will show a diff and need
      approval.
+   - **Distill a log** — a triage-flagged undistilled `log/` file whose
+     insights belong in the brain → show a diff and need approval, then
+     stamp the log (see "Acting on approvals").
    - **Do an action** — a task to perform now in this session.
    - **Create a deliverable** — something in `output/` → needs
      confirmation; generated in the default output language.
@@ -67,6 +70,11 @@ disciplines:
 
 - **Brain:** show the diff, write after approval, move any processed
   source into `archive/`.
+- **Distilled logs:** for a triage-flagged log, show the brain diff and
+  write after approval, then **append `> distilled to brain: <today>` to
+  that `log/` file** so triage stops flagging it. If the user defers a log,
+  leave it unstamped — it resurfaces at the next triage. (The original log
+  stays in `log/`; only the stamp is added.)
 - **Output/database structure:** confirm, then create/edit; record what
   was produced.
 - **Agenda:** update `agenda.md` directly (this is bookkeeping, written

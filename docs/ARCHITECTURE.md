@@ -159,6 +159,13 @@ brain"). Essence:
 
 Input arrives through the chat — there is no separate inbox folder.
 
+**Logs feed the brain too (the write-back safety net).** Besides writing
+insights back to `brain/` inline during a session, durable insights captured in
+`log/` are surfaced systematically: the triage flags undistilled logs and the
+check-in folds them into the brain (with the usual diff + approval). So a good
+discussion that landed in a log is never lost, even if the inline write-back was
+missed. See §6, §10, §11.
+
 ---
 
 ## 6. The log layer (`log/`)
@@ -174,6 +181,20 @@ The log is the solution to Cowork's sprawl. Rules:
 - This keeps the `log/` folder clear: one file per topic/session.
 
 The log may be written freely — that is the whole point. No gatekeeper.
+
+**Distilled-to-brain stamp.** When a log's durable insights have been captured
+into `brain/` — which happens at the **check-in**, with approval — the check-in
+appends a footer line to that log file:
+
+```
+> distilled to brain: 2026-06-01
+```
+
+The **triage** uses this stamp to find work: any `log/*.md` **without** the stamp
+(except a log still being written today) is a log whose insights may not be in
+the brain yet, so triage flags it for the check-in. This closes the loop
+`log → brain` without relying on remembering to write back inline. Only the
+check-in writes the stamp (triage never writes outside `_triage/`).
 
 ---
 
@@ -224,13 +245,17 @@ it.
 
 ## 10. The triage layer (`sidekick-triage`, scheduled)
 
-A single bundled skill that scans email + chat + calendar. Runs as a
-**scheduled task** (frequency set by the user in Cowork, not in the
-plugin). Operation, at the top level:
+A single bundled skill that scans email + chat + calendar **and the project
+logs**. Runs as a **scheduled task** (frequency set by the user in Cowork, not in
+the plugin). Operation, at the top level:
 
-1. Review recent messages, emails, and calendar items.
-2. Write the findings to `_triage/YYYYMMDD-triage.md` at the top level.
-3. **Never write to a project brain itself.** The `_triage/` file is
+1. Review recent messages, emails, and calendar items (external sources).
+2. **Scan each non-archived project's `log/`** for entries **not yet distilled
+   to the brain** — files lacking the `> distilled to brain:` stamp (skip a log
+   still being written today). These are internal findings: durable insights to
+   fold into the brain.
+3. Write all findings to `_triage/YYYYMMDD-triage.md` at the top level.
+4. **Never write to a project brain or log itself.** The `_triage/` file is
    purely **input for the check-in** that the user starts.
 
 The human remains gatekeeper: triage does the heavy lifting (scanning and
@@ -248,9 +273,14 @@ The user starts the check-in themselves. Operation:
    connected — the calendar.
 4. Propose concrete actions per project: update the brain, perform an
    action, create something in `output/`, reply to an email/chat, tick
-   off an agenda item.
+   off an agenda item, **and distill the triage-flagged undistilled logs
+   into the brain.**
 5. All proposed changes follow the normal gatekeeper rules (brain = diff
    + approval, output/db = confirmation).
+6. **After distilling a log into the brain (on approval), stamp that log
+   file** with `> distilled to brain: <date>` so the triage stops flagging
+   it. If the user defers a log, leave it unstamped (it resurfaces next
+   triage).
 
 The per-project `agenda.md` is deliberately simple (markdown): a list of
 live items with status, so the check-in can work with it well.

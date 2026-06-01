@@ -138,6 +138,13 @@ documents. Instead:
 
 You do not ask permission to log. Logging freely is the whole point.
 
+**Logs reach the brain via triage + check-in.** A log's durable insights get
+folded into `brain/` at the check-in (diff + approval), which then stamps the
+log with a `> distilled to brain: <date>` footer. The triage flags any log
+without that stamp, so a good logged discussion is never lost even if you didn't
+write it back inline. (You may also write back inline during the session as
+usual — the stamp just records when its insights landed in the brain.)
+
 ### Discipline 2 — Brain with diff + approval (`brain/`)
 
 Maintain a per-project brain of distilled, durable knowledge. Full

@@ -111,6 +111,12 @@ What was decided or learned during a session is written back to `brain/`
 so the next session benefits. The log records that it happened; the brain
 keeps the durable essence. This is the cycle that lets the system grow.
 
+**Safety net — undistilled logs are not lost.** If the inline write-back is
+missed, the loop still closes: the **triage** flags any `log/` file lacking a
+`> distilled to brain:` stamp, and the **check-in** distills it (diff + approval)
+and then stamps the log. So a good logged discussion always gets a chance to
+reach the brain, even sessions later.
+
 ## The cycle in one glance
 
 ```

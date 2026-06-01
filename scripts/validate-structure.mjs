@@ -88,12 +88,16 @@ if (manifest) {
   // Required by Cowork/Claude Code: only `name`.
   if (typeof manifest.name === 'string' && manifest.name.length > 0) pass(`name present ("${manifest.name}")`);
   else fail('name is missing or empty (required)');
-  // The plugin id must NOT be "sidekick": Cowork would treat the leading
-  // `sidekick` of /sidekick-init as a namespace and fail to resolve the command.
-  if (manifest.name === 'sidekick') {
-    fail('plugin name "sidekick" collides with the /sidekick-* commands — use e.g. "sidekick-cowork"');
-  } else if (manifest.name && manifest.name !== 'sidekick-cowork') {
-    warn(`name is "${manifest.name}", expected "sidekick-cowork"`);
+  if (manifest.name && manifest.name !== 'sidekick') {
+    warn(`name is "${manifest.name}", expected "sidekick"`);
+  }
+  // The real install-blocker found 2026-06-01: `repository` as an OBJECT makes the
+  // manifest invalid (schema wants a string), so Cowork loaded skills but rejected
+  // the commands. Must be a string.
+  if (manifest.repository !== undefined && typeof manifest.repository !== 'string') {
+    fail('repository must be a STRING (an object fails manifest validation and breaks command registration)');
+  } else if (typeof manifest.repository === 'string') {
+    pass('repository is a string');
   }
   // Present in current manifest; warn if absent (not fatal).
   for (const f of ['version', 'description', 'author']) {

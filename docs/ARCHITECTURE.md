@@ -297,8 +297,8 @@ sidekick/
 
 **Distribution.** Cowork installs *plugins* from *marketplaces*, so the repo
 carries its own marketplace catalog at `.claude-plugin/marketplace.json`
-listing one plugin with id **`sidekick-cowork`** and `source: "./"` (the plugin
-root is the repo root). Users add the repo as a marketplace, then install the
+listing one plugin named **`sidekick`** with `source: "./"` (the plugin root is
+the repo root). Users add the repo as a marketplace, then install the `sidekick`
 plugin from it.
 
 **Typed commands come from `commands/`, not `skills/`.** In Cowork a
@@ -307,19 +307,20 @@ plugin from it.
 thin wrapper whose body says *"Invoke the `<name>` skill"*). So each explicit
 skill has a matching command file. This mirrors the working `solidcortex` plugin
 (`commands/bootstrap-cortex.md` + `skills/bootstrap-cortex/`). The always-on
-main skill has no command file — it fires by model-invocation.
+main skill (`sidekick-core`) has no command file — it fires by model-invocation.
 
-**The plugin id must NOT be `sidekick` (proven Cowork constraint).** The commands
-are `/sidekick-init`, `/sidekick-triage`, … . If the plugin were named `sidekick`,
-Cowork grabs the leading `sidekick` of a typed `/sidekick-init` as a **plugin
-namespace** and looks for `sidekick:sidekick-init`, which never resolves —
-verified to fail on every install where the plugin was named `sidekick`
-(v0.2.0/0.2.1/0.2.4: *"Unknown command: /sidekick:sidekick-init"*). The working
-`solidcortex` plugin has no command whose first word is `solidcortex`
-(`/bootstrap-cortex`), so it never hits this. Therefore the plugin id is
-**`sidekick-cowork`**; with no plugin named `sidekick`, `/sidekick-init` resolves
-as a bare command. The always-on main skill is likewise named `sidekick-core`
-(no skill equals the plugin id). The triage skill is also meant to be attached to a
+**The real install-blocker was a malformed manifest, not the plugin name.** For
+several iterations `/sidekick-init` returned *"Unknown command:
+/sidekick:sidekick-init"* (and, after a rename, `/sidekick-cowork:sidekick-init`).
+The cause: `plugin.json` had `repository` as an **object** (`{type, url}`), which
+fails the manifest schema (it must be a **string**). Cowork loaded the skills
+(filesystem discovery) but **rejected the commands** because the manifest was
+invalid; the `<plugin>:<command>` text in the error was just Cowork's
+command-not-found form. Verified locally: with the object `repository` the plugin
+fails to install (`repository: expected string, received object`); with a string
+it installs and all four `/sidekick-*` commands register. The always-on main
+skill is named `sidekick-core` (kept distinct from the plugin name as a
+precaution). The triage skill is also meant to be attached to a
 Cowork **scheduled task**.
 
 A plugin-wide interaction principle applies across all skills: when
@@ -349,19 +350,18 @@ Resolved:
   referencing, `source: "./"`) so it installs cleanly. Discovered during the
   first install attempt, 2026-06-01.
 
-- **Command form — modeled on the working `solidcortex` plugin (2026-06-01).**
-  Learned by comparing against a SolidCortex plugin that works in the same Cowork:
-  (1) **flat `commands/<name>.md` files** produce the typed `/<name>` command
-  (skills/ alone only gives model-invocation + a menu entry), in the solidcortex
-  format (`name:` frontmatter + "Invoke the `<name>` skill" body); (2) **the
-  plugin id cannot be `sidekick`** — Cowork would treat the leading `sidekick` of
-  `/sidekick-init` as a namespace and fail (proven on v0.2.0/0.2.1/0.2.4). Fix
-  (v0.2.5): plugin id `sidekick-cowork`; the main skill is `sidekick-core`; the
-  four `commands/<name>.md` files give `/sidekick-init` etc. (`displayName` was
-  tried but is rejected by the manifest schema, so the id is the display name.)
+- **Command form — RESOLVED, root cause was the manifest (2026-06-01).** Two
+  requirements: (1) **flat `commands/<name>.md` files** produce the typed
+  `/<name>` command (skills/ alone only gives model-invocation + a menu entry),
+  in the solidcortex format (`name:` frontmatter + "Invoke the `<name>` skill"
+  body); (2) **`plugin.json` `repository` must be a string** — it was an object,
+  which invalidated the manifest so Cowork rejected the commands. With both fixed
+  (v0.2.6), the plugin is named `sidekick` and all four `/sidekick-*` commands
+  register (verified by a local install). The earlier plugin-name churn
+  (`solidbricks`, `sidekick-cowork`) was chasing a symptom; the name `sidekick`
+  is fine once the manifest is valid. The main skill stays `sidekick-core`.
 
 Remaining (verify-on-install):
 
-- **Bare command resolution** — after installing `sidekick-cowork` v0.2.5,
-  confirm `/sidekick-init` (and the others) run when typed, and also by asking
-  (`docs/MANUAL-TESTS.md` step 0b).
+- **Command resolution in Cowork** — after installing `sidekick` v0.2.6, confirm
+  `/sidekick-init` (and the others) run when typed (`docs/MANUAL-TESTS.md` 0b).

@@ -254,9 +254,18 @@ the plugin). Operation, at the top level:
    to the brain** — files lacking the `> distilled to brain:` stamp (skip a log
    still being written today). These are internal findings: durable insights to
    fold into the brain.
-3. Write all findings to `_triage/YYYYMMDD-triage.md` at the top level.
-4. **Never write to a project brain or log itself.** The `_triage/` file is
+3. Write all findings to **`_triage/YYYYMMDD-HHMM-triage.md`** at the top level —
+   a **timestamped file per run**, so triage can run **several times a day**
+   without overwriting an earlier run.
+4. **Never write to a project brain or log itself.** The `_triage/` files are
    purely **input for the check-in** that the user starts.
+
+**Window (supports any cadence).** A run scans since the **run timestamp of the
+most recent `_triage/*-triage.md` file** (not just the date), so a second run the
+same day only covers what's new since the previous run. The first-ever run uses a
+sensible default (e.g. last 7 days). Times are local to the workspace. The
+check-in consumes **all** triage files written since the previous check-in
+(deduping by source), so multiple runs per day are handled.
 
 The human remains gatekeeper: triage does the heavy lifting (scanning and
 proposing); the user decides via the check-in.

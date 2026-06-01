@@ -4,6 +4,7 @@
 > **plus undistilled project logs**. This is **input for `/sidekick-checkin`** —
 > nothing here has been acted on. Suggestions only.
 
+_Run at: {{TIMESTAMP}}_
 _Scanned sources: {{SOURCES}}_
 _Window: since {{LAST_RUN_OR_WINDOW}}_
 

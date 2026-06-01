@@ -1,6 +1,6 @@
 ---
 name: sidekick-triage
-description: Scheduled scan of connected email, chat, and calendar — plus each project's undistilled logs — bundled into one skill. Use when the user runs /sidekick-triage or when this skill runs as a scheduled Cowork task. Reviews recent messages, emails, and calendar items, and flags project log files not yet distilled to the brain, writing a structured findings file to _triage/YYYYMMDD-triage.md at the Cowork root. It NEVER writes to any project brain or log and never takes action on the user's behalf — its output is purely input for the user-initiated /sidekick-checkin. The human stays the gatekeeper.
+description: Scheduled scan of connected email, chat, and calendar — plus each project's undistilled logs — bundled into one skill. Use when the user runs /sidekick-triage or when this skill runs as a scheduled Cowork task. Reviews recent messages, emails, and calendar items, and flags project log files not yet distilled to the brain, writing a timestamped findings file to _triage/YYYYMMDD-HHMM-triage.md at the Cowork root (one per run, so it can run several times a day). It NEVER writes to any project brain or log and never takes action on the user's behalf — its output is purely input for the user-initiated /sidekick-checkin. The human stays the gatekeeper.
 ---
 
 # Sidekick — Triage
@@ -41,8 +41,10 @@ task, so you must be safe: **read-only, write only to `_triage/`.**
 ## What to scan
 
 For each connected source, review **recent** items since the last triage
-run (look at the date of the most recent `_triage/` file; if none, use a
-sensible recent window such as the last 7 days):
+run — the **run timestamp of the most recent `_triage/*-triage.md` file**
+(read it from the filename / its `_Run at:_` line), so a second run the same day
+only covers what is new since the previous run. If there is no prior triage file,
+use a sensible default such as the last 7 days. Times are local to the workspace:
 
 - **Email:** new/unread or recently received messages of plausible
   relevance.
@@ -61,7 +63,8 @@ discussion makes it back into the brain:
 
 - List `projects/<slug>/log/*.md`.
 - A log is **undistilled** if it has **no** `> distilled to brain:` footer line.
-  **Skip** a log dated **today** (it is likely still being written).
+  **Skip** a log that is still being actively written (e.g. modified within the
+  last hour), so an in-progress discussion is not flagged mid-write.
 - For each undistilled log, capture a finding under that project: a one-line
   summary of the durable point(s) it holds, with suggested action **"distill to
   brain"** and a note of the source log filename.
@@ -89,9 +92,11 @@ You only **suggest** — you never do.
 
 ## Writing the findings file
 
-Write `_triage/YYYYMMDD-triage.md` (today's date). If a file for today
-already exists, update it rather than creating a second. Use the
-structure in `references/triage-template.md`.
+Write `_triage/YYYYMMDD-HHMM-triage.md` — a **timestamped file per run**
+(date + time), so triage can run **several times a day** without overwriting an
+earlier run. Do not edit a previous run's file; each run is its own snapshot.
+Record the run time in the file's `_Run at:_` line. Use the structure in
+`references/triage-template.md`.
 
 Group findings by suggested project, with an "Unassigned / new project?"
 group at the end for items that don't match any existing project.

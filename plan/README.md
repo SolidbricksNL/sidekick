@@ -19,7 +19,7 @@ planning have been **resolved** (see the decisions section below).
 | 04 | [04-project-model-and-scaffolding.md](04-project-model-and-scaffolding.md) | Nail down the on-disk project model + folder contract; finalize the CLAUDE.md and agenda templates. | 01, 03 | [x] done (contract written; CLAUDE template fix applied) |
 | 05 | [05-write-disciplines-enforcement.md](05-write-disciplines-enforcement.md) | Make the three disciplines testable; build a gatekeeper matrix across all skills. | 02, 04 | [x] done (matrix complete; agenda=free decided) |
 | 06 | [06-database-discipline.md](06-database-discipline.md) | Finalize the SQLite layer; worked example of propose→create→document→extend. | 04, 05 | [x] done (db.py helper built + verified) |
-| 07 | [07-brain-protocol.md](07-brain-protocol.md) | Verify the brain protocol; worked example of a distillation with diff + archive. | 04, 05 | [ ] not started |
+| 07 | [07-brain-protocol.md](07-brain-protocol.md) | Verify the brain protocol; worked example of a distillation with diff + archive. | 04, 05 | [x] done (worked example + diff definition) |
 | 08 | [08-triage-skill.md](08-triage-skill.md) | Harden scheduled triage (read-only, `_triage/`-only, injection-safe); sample output + safety checklist. | 02, 04, 05 | [ ] not started |
 | 09 | [09-checkin-skill.md](09-checkin-skill.md) | Finalize the check-in; scripted 2–3 project walkthrough proposals→approvals→writes. | 04, 05, 07, 08 | [ ] not started |
 | 10 | [10-archive-skill.md](10-archive-skill.md) | Verify archive = move-never-delete + restore; scripted move-and-restore. | 04 | [ ] not started |

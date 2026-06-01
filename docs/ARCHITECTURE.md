@@ -347,6 +347,46 @@ live items with status, so the check-in can work with it well.
 
 ---
 
+## 11b. The read-only layer: status & recall
+
+Triage scans *inbound*, the check-in drives *actions*. Two **read-only**
+skills round out the loop — they never write anything, so they carry no
+gatekeeper and can run anytime.
+
+### `sidekick-status` (user-initiated) — "where does everything stand?"
+
+A quick, read-only glance across all non-archived projects. For each it
+reports, without proposing anything:
+
+- open `agenda.md` items and anything marked waiting-on;
+- the count of **undistilled logs** (files in `log/` lacking the
+  `> distilled to brain:` stamp);
+- the date of the last check-in (from `log/YYYYMMDD-checkin.md`);
+- the `data/` tables and their row counts (via `data.py info`);
+- staleness (no activity in a while) and, if a calendar is connected,
+  upcoming items in the near term.
+
+Output is a **short prose summary**, not proposal cards — it decides
+nothing, so there are no pickers; it may end by suggesting the user run
+`/sidekick-checkin` if action is due. It is the read-only sibling of the
+check-in.
+
+### `sidekick-find` (user-initiated + model-invoked) — cross-project recall
+
+Answers "where did we decide X?" / "which project mentions Y?" across
+**all** projects at once — the recall the per-project session-start read
+can't give. It searches each project's `brain/`, `log/`, and `agenda.md`
+(markdown, grep-able) and, for `data/`, uses `data.py info`/`query` to spot
+tables/columns/values that match. The core skill routes a clear recall
+question here even without the explicit command.
+
+It returns a **prose list of hits** (project → file → snippet, original
+language preserved). It writes nothing; if the user then wants to act on a
+hit, it offers — through the interactive picker — to open that project and
+hands off to the normal flow. Read-only, so no backup or gatekeeper needed.
+
+---
+
 ## 12. Plugin structure (Cowork plugin)
 
 Sidekick is built for **Claude Cowork only**. The structure follows the
@@ -376,12 +416,16 @@ sidekick/
 │   │   ├── SKILL.md
 │   │   └── references/triage-template.md
 │   ├── sidekick-checkin/SKILL.md
-│   └── sidekick-archive/SKILL.md
+│   ├── sidekick-archive/SKILL.md
+│   ├── sidekick-status/SKILL.md   ← read-only cross-project overview
+│   └── sidekick-find/SKILL.md     ← read-only cross-project recall/search
 ├── commands/                      ← flat files Cowork turns into typed /<name>
 │   ├── sidekick-init.md           ← /sidekick-init → "Invoke the sidekick-init skill"
 │   ├── sidekick-triage.md
 │   ├── sidekick-checkin.md
-│   └── sidekick-archive.md
+│   ├── sidekick-archive.md
+│   ├── sidekick-status.md
+│   └── sidekick-find.md
 ├── docs/
 │   └── ARCHITECTURE.md            ← this document
 └── README.md
@@ -448,6 +492,11 @@ Resolved:
   script — put guidance in the reference instead.
 - **Archive move primitive** — true rename/move, else copy → verify →
   remove; never delete before verified (plan 10).
+- **Read-only layer (added 2026-06-01, post-test)** — `sidekick-status`
+  (cross-project overview) and `sidekick-find` (cross-project recall/search),
+  see §11b. Both are read-only (no writes, no gatekeeper, no `data.py` change),
+  report in prose, and reuse existing reads + `data.py info`/`query`. They round
+  out the loop alongside triage (inbound) and the check-in (actions).
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

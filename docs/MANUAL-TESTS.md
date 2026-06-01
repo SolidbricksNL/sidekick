@@ -161,10 +161,34 @@ plugin name needs to change again.
   unchanged throughout.
 - [ ] PASS / FAIL
 
+### J. Status (read-only overview)
+- **Start:** 2–3 projects with some agenda items, an undistilled log, and a
+  project with a `data/` table.
+- **Do:** run `/sidekick-status`.
+- **Expect:** a **short prose summary** per project — open agenda items,
+  undistilled-log count, last check-in date, data tables + row counts, and any
+  "gone quiet" flag; upcoming calendar items if connected. **No proposal cards,
+  no pickers.** Ends with at most a nudge to run `/sidekick-checkin`.
+- **Inspect:** **nothing was written or changed** anywhere (diff the sandbox
+  before/after — identical); the row counts match the actual `data/` tables.
+- [ ] PASS / FAIL
+
+### K. Find (cross-project recall)
+- **Start:** a fact that lives in one project (e.g. "Norvato" in a brain/log of
+  `finance`), plus an unrelated project.
+- **Do:** run `/sidekick-find Norvato` (or ask "what do we know about Norvato?").
+- **Expect:** a **prose list of hits** grouped by project → file → snippet (in
+  the original language), only from projects that actually mention it; a clean
+  "no matches" for a nonsense term. For a data match, it uses `data.py
+  info`/`query` (never a raw read of the JSON). Optionally offers — via the
+  picker — to open the matching project.
+- **Inspect:** **nothing written**; hits point to real files; no false hits.
+- [ ] PASS / FAIL
+
 ---
 
 ## Overall result
 
-- [ ] All scenarios A–I PASS, and the command-name form (0b) is recorded.
+- [ ] All scenarios A–K PASS, and the command-name form (0b) is recorded.
 
 **Overall: PASS / FAIL** — _____________   Tester: __________   Date: __________

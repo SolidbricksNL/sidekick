@@ -52,6 +52,8 @@ changes are confirmed.
 | `sidekick-triage` | Scheduled / `/sidekick-triage` | Read-only scan of email + chat + calendar → `_triage/`. |
 | `sidekick-checkin` | `/sidekick-checkin` | Walks all projects, cross-references triage + calendar, proposes actions. |
 | `sidekick-archive` | `/sidekick-archive` | Moves a project to `_archive/` (never deletes). |
+| `sidekick-status` | `/sidekick-status` | Read-only cross-project overview — where everything stands. |
+| `sidekick-find` | `/sidekick-find` | Read-only cross-project recall — search brains, logs, agendas, data. |
 
 ## Install in Cowork
 
@@ -75,7 +77,8 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
    to `_triage/`; the plugin does not set the frequency.
 5. **Just start working** — the always-on `sidekick` skill picks the right
    project and keeps everything structured. Run `/sidekick-checkin` to
-   review across projects, `/sidekick-archive` to retire one.
+   review across projects, `/sidekick-status` for a read-only overview,
+   `/sidekick-find` to recall across projects, `/sidekick-archive` to retire one.
 
 ## For contributors
 

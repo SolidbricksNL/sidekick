@@ -222,3 +222,8 @@ The chat is the steering wheel; the disk is the workbench.
   `_triage/`.
 - `/sidekick-checkin` — user-initiated walk through all projects.
 - `/sidekick-archive` — archive a project.
+- `/sidekick-status` — read-only cross-project overview (where things stand).
+- `/sidekick-find` — read-only cross-project recall/search. When the user
+  asks a recall question that spans projects ("where did we decide X?",
+  "which project mentions Y?"), hand it to this skill rather than searching
+  ad-hoc.

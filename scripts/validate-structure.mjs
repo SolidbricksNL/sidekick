@@ -24,7 +24,7 @@ function info(msg) { console.log(`      ${msg}`); }
 // Note: the always-on main skill folder is `sidekick-core`, NOT `sidekick`. The
 // plugin itself is named `sidekick`, so a skill folder named `sidekick` would
 // collide (`sidekick:sidekick`) and break Cowork command resolution.
-const SKILLS = ['sidekick-core', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
+const SKILLS = ['sidekick-core', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find'];
 
 const EXPECTED_TREE = [
   '.claude-plugin/plugin.json',
@@ -43,10 +43,14 @@ const EXPECTED_TREE = [
   'skills/sidekick-triage/references/triage-template.md',
   'skills/sidekick-checkin/SKILL.md',
   'skills/sidekick-archive/SKILL.md',
+  'skills/sidekick-status/SKILL.md',
+  'skills/sidekick-find/SKILL.md',
   'commands/sidekick-init.md',
   'commands/sidekick-triage.md',
   'commands/sidekick-checkin.md',
   'commands/sidekick-archive.md',
+  'commands/sidekick-status.md',
+  'commands/sidekick-find.md',
   'docs/ARCHITECTURE.md',
   'README.md',
 ];
@@ -58,7 +62,7 @@ const EXPECTED_TREE = [
 // named `sidekick-core` (a skill named `sidekick` would collide with the plugin
 // → `sidekick:sidekick` → broken resolution). The main skill is model-invoked
 // (no command file).
-const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
+const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find'];
 
 // --- Check 1: expected tree exists -----------------------------------------
 console.log('\n# Check 1 — expected tree (ARCHITECTURE §12)');
@@ -207,7 +211,10 @@ if (refCount === 0) warn('no references/... paths found in any SKILL.md (unexpec
 
 // --- Check 5: dead /sidekick-* command references --------------------------
 console.log('\n# Check 5 — /sidekick-* command references');
-const CMD_RE = /\/sidekick(?:-[a-z]+)?/g;
+// Only typed `/sidekick-<name>` commands are real; a bare `/sidekick` is not a
+// command (the main skill is model-invoked) and would also false-match the
+// filesystem path `plugins/sidekick/…`. So require the `-<name>` suffix.
+const CMD_RE = /\/sidekick-[a-z]+/g;
 const derived = new Set();
 for (const skill of SKILLS) {
   const entry = skillBodies[skill];

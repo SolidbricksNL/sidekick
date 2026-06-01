@@ -93,6 +93,31 @@ When you change the schema, update this file in the same step (after
 approval). A reader should be able to write correct queries from this
 file alone.
 
+## Running SQL (the bundled helper)
+
+The `sqlite3` command-line tool is not guaranteed in Cowork, so do **not**
+rely on it. All database work goes through the bundled, dependency-free
+helper `scripts/db.py` (Python stdlib only), invoked as `python3`:
+
+| Need | Command | Gatekeeper |
+|---|---|---|
+| Approved structure change | `python3 scripts/db.py schema --db projects/<slug>/data.sqlite --sql "<DDL>"` | confirm first |
+| Insert records that fit | `python3 scripts/db.py insert --db … --table <name> --json '<rows>'` | free |
+| Read query | `python3 scripts/db.py query --db … --sql "<SELECT>"` | free |
+| Inspect tables/columns | `python3 scripts/db.py info --db …` | free |
+
+- `schema` lazily creates `data.sqlite` and its parent dir on first use — this
+  is the lazy-creation point. Only call it **after** the plain-language
+  confirmation.
+- `query` opens the database **read-only**, so a read can never mutate data.
+- `insert` is parameterized and refuses unknown identifier shapes; use it for
+  records that fit — no prompt.
+- Use `info` to honor *extend before add*: check existing tables before
+  proposing a new one, and to regenerate `data-model.md` from the live schema.
+
+The helper executes SQL; it does **not** enforce the gatekeeper. Getting
+approval before any `schema` call is the skill's responsibility.
+
 ## Query hygiene
 
 - Write clear, readable SQL. Prefer explicit column lists over `SELECT *`

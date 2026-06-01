@@ -39,18 +39,14 @@ const EXPECTED_TREE = [
   'skills/sidekick-triage/references/triage-template.md',
   'skills/sidekick-checkin/SKILL.md',
   'skills/sidekick-archive/SKILL.md',
-  'commands/sidekick-init.md',
-  'commands/sidekick-triage.md',
-  'commands/sidekick-checkin.md',
-  'commands/sidekick-archive.md',
   'docs/ARCHITECTURE.md',
   'README.md',
 ];
 
-// The four explicit-action skills. Cowork does not surface skills/*/SKILL.md as
-// typed `/` commands, so each ships a thin commands/<name>.md wrapper that gives
-// the typed `/sidekick:<name>` form. The always-on `sidekick` skill is excluded
-// (model-invoked only).
+// Skill folder name → bare `/`-command Cowork exposes. The plugin is named
+// `solidbricks` (NOT `sidekick`) on purpose: a plugin named `sidekick` made
+// Cowork namespace every invocation as `sidekick:<skill>`, which it could not
+// resolve. With a non-colliding plugin name the bare skill names resolve.
 const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
 
 // --- Check 1: expected tree exists -----------------------------------------
@@ -82,8 +78,8 @@ if (manifest) {
   // Required by Cowork/Claude Code: only `name`.
   if (typeof manifest.name === 'string' && manifest.name.length > 0) pass(`name present ("${manifest.name}")`);
   else fail('name is missing or empty (required)');
-  if (manifest.name && manifest.name !== 'sidekick') {
-    warn(`name is "${manifest.name}", expected "sidekick" (repo + main skill folder)`);
+  if (manifest.name && manifest.name !== 'solidbricks') {
+    warn(`name is "${manifest.name}", expected "solidbricks" (a non-"sidekick" name avoids Cowork namespace collision)`);
   }
   // Present in current manifest; warn if absent (not fatal).
   for (const f of ['version', 'description', 'author']) {
@@ -203,21 +199,12 @@ for (const cmd of [...derived].sort()) {
   else fail(`${cmd} referenced but skills/${folder}/ does not exist`);
 }
 
-// --- Check 6: command wrappers for the explicit skills ---------------------
-console.log('\n# Check 6 — commands/ wrappers (typed /sidekick:<skill>)');
-for (const skill of EXPLICIT_SKILLS) {
-  const cmdPath = join(ROOT, 'commands', `${skill}.md`);
-  if (!existsSync(cmdPath)) { fail(`missing commands/${skill}.md wrapper`); continue; }
-  const fm = parseFrontmatter(readFileSync(cmdPath, 'utf8'));
-  if (!fm || !fm.description) fail(`commands/${skill}.md missing description frontmatter`);
-  else pass(`commands/${skill}.md → /sidekick:${skill}`);
-}
-
 // --- Informational: command forms ------------------------------------------
-console.log('\n# Info — command forms');
-info('Always-on (model-invoked, no typed command): sidekick');
+console.log('\n# Info — Cowork command forms (skills-only, like the reference plugin)');
+info('Always-on (model-invoked): sidekick');
+info('Explicit skills resolve as BARE names (plugin name must not be "sidekick"):');
 for (const skill of EXPLICIT_SKILLS) {
-  info(`  ${skill}  →  typed /sidekick:${skill} (via commands/${skill}.md)`);
+  info(`  ${skill}  →  /${skill}`);
 }
 
 // --- Summary ----------------------------------------------------------------

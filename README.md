@@ -57,12 +57,14 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
 
 1. **Add the marketplace**, then **install the plugin**. Point Cowork at the
    GitHub repo `boezelaere/sidekick` as a marketplace, then install the
-   `sidekick` plugin from it. (Adding a plugin repo directly fails — Cowork
-   adds *marketplaces*, which then list installable plugins.)
-2. **Run `/sidekick-init`** — a short multiple-choice setup for your role,
-   chat language, default output language, and which connections you want.
-   It writes `sidekick.settings.md` and scaffolds your first project. It
-   does **not** turn any connector on.
+   **`solidbricks`** plugin from it. (Adding a plugin repo directly fails —
+   Cowork adds *marketplaces*, which then list installable plugins. The plugin
+   package is named `solidbricks`; its skills are `/sidekick-init` etc.)
+2. **Run `/sidekick-init`** (or just ask, e.g. *"set up my Sidekick
+   workspace"*) — a short multiple-choice setup for your role, chat language,
+   default output language, and which connections you want. It writes
+   `sidekick.settings.md` and scaffolds your first project. It does **not**
+   turn any connector on.
 3. **Enable connectors** you said yes to (email / messages / storage /
    calendar) in **Cowork's connector settings** — the plugin only records
    intent; you enable the actual connections.
@@ -103,7 +105,9 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.2.1** — Claude Cowork plugin. Installed from the private GitHub repo;
-hardened and documented across the `plan/` units (0.2.1 adds the
-`commands/` wrappers so the explicit skills get typed `/sidekick:<skill>`
-commands). Run the manual-test checklist in Cowork before wider rollout.
+**0.2.2** — Claude Cowork plugin (package name `solidbricks`; skills are
+`/sidekick-*`). Installed from the private GitHub repo; hardened and documented
+across the `plan/` units. 0.2.2 renames the plugin package away from `sidekick`
+so Cowork resolves the skills as bare `/sidekick-init` commands (a plugin named
+`sidekick` collided with its own skill namespace). Run the manual-test checklist
+in Cowork before wider rollout.

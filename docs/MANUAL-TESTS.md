@@ -23,32 +23,30 @@ Cowork adds **marketplaces**, not bare plugin repos. The repo is its own
 marketplace (`.claude-plugin/marketplace.json`, name `solidbricks`):
 
 1. **Add the marketplace** pointing at the GitHub repo `boezelaere/sidekick`.
-2. **Install the `sidekick` plugin** from it.
+2. **Install the `solidbricks` plugin** from it (the package is named
+   `solidbricks`; its skills are `sidekick-*`). If a previous `sidekick`-named
+   plugin is installed, **uninstall it first**.
 3. Confirm it installs without the "isn't a marketplace" error.
 
-- [ ] Marketplace added; `sidekick` plugin installed.
+- [ ] Marketplace added; `solidbricks` plugin installed (version 0.2.2+).
 
-## 0b. Command-name verification — DO THIS NEXT (settles plans 01/02)
+## 0b. Command resolution — DO THIS NEXT
 
-The first install test (2026-06-01) showed `skills/*/SKILL.md` does **not**
-register as a typed `/` command (`/sidekick:sidekick-init` → "Unknown command").
-The four explicit skills now ship `commands/<skill>.md` wrappers that provide the
-typed `/sidekick:<skill>` command. After pulling/refreshing the plugin, open the
-`/` menu, type `/sidekick`, and **record what appears**:
+The plugin is named `solidbricks`, **not** `sidekick`, on purpose: a plugin named
+`sidekick` made Cowork namespace every invocation as `sidekick:<skill>` and fail
+(`Unknown skill: sidekick:sidekick-init`). With the rename, the skills should
+resolve as **bare** commands. Verify both invocation paths:
 
-- [ ] `sidekick` (always-on) — model-invoked; need NOT appear in `/`.
-- [ ] `sidekick-init` appears as: ☐ `/sidekick:sidekick-init` (namespaced)
-      ☐ `/sidekick-init` (bare) ☐ not listed
-- [ ] `sidekick-triage` appears as: ☐ namespaced ☐ bare ☐ not listed
-- [ ] `sidekick-checkin` appears as: ☐ namespaced ☐ bare ☐ not listed
-- [ ] `sidekick-archive` appears as: ☐ namespaced ☐ bare ☐ not listed
+- [ ] **Typed:** select `/sidekick-init` from the `/` menu and send → init starts
+      (no "Unknown command").
+- [ ] **By asking:** type *"set up my Sidekick workspace"* (any language) →
+      `sidekick-init` runs.
+- [ ] The other skills appear bare in the `/` menu: `/sidekick-triage`,
+      `/sidekick-checkin`, `/sidekick-archive`.
 
-**Observed form:** ____________________  (record here)
-
-If the explicit skills do **not** appear as `/` commands at all, add thin
-`commands/<skill>.md` wrappers and re-check. Once the real form is known, decide
-whether to update command references in the skills + README (a mechanical
-find-replace). Until then, leave the bare `/sidekick-*` form as written.
+If a typed `/sidekick-init` still errors with a `sidekick:` namespace, capture the
+exact error — it means the rename did not fully clear the collision and the
+plugin name needs to change again.
 
 ---
 

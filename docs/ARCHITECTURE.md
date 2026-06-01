@@ -285,11 +285,6 @@ sidekick/
 │   │   └── references/triage-template.md
 │   ├── sidekick-checkin/SKILL.md
 │   └── sidekick-archive/SKILL.md
-├── commands/                      ← typed-command wrappers (one per explicit skill)
-│   ├── sidekick-init.md           ← /sidekick:sidekick-init → invokes the skill
-│   ├── sidekick-triage.md
-│   ├── sidekick-checkin.md
-│   └── sidekick-archive.md
 ├── docs/
 │   └── ARCHITECTURE.md            ← this document
 └── README.md
@@ -297,17 +292,19 @@ sidekick/
 
 **Distribution.** Cowork installs *plugins* from *marketplaces*, so the repo
 carries its own marketplace catalog at `.claude-plugin/marketplace.json`
-(name `solidbricks`) listing this one plugin with `source: "./"` (the plugin
-root is the repo root). Users add the repo as a marketplace, then install the
-`sidekick` plugin from it.
+(name `solidbricks`) listing one plugin **named `solidbricks`** with
+`source: "./"` (the plugin root is the repo root). Users add the repo as a
+marketplace, then install the `solidbricks` plugin from it.
 
-Skills invoke each other via slash commands. Cowork does **not** surface
-`skills/*/SKILL.md` as typed `/` commands (an install test on 2026-06-01 returned
-*"Unknown command: /sidekick:sidekick-init"*), so each explicit-action skill
-ships a thin `commands/<skill>.md` wrapper that gives the typed
-`/sidekick:<skill>` command and simply invokes the underlying skill. The
-always-on `sidekick` skill is model-invoked and needs no command. The triage
-skill is also intended to be attached to a Cowork **scheduled task**.
+**Plugin name ≠ skill names (deliberate).** The plugin is named `solidbricks`,
+**not** `sidekick`, even though every skill is `sidekick*`. An install test on
+2026-06-01 showed that a plugin named `sidekick` made Cowork namespace every
+invocation as `sidekick:<skill>` (e.g. `sidekick:sidekick-init`, even the doubled
+`sidekick:sidekick`) and fail to resolve any of them — both typed `/` commands
+and the model's Skill tool. With a non-colliding plugin name, Cowork exposes the
+skills as **bare** commands (`/sidekick-init`, `/sidekick-triage`, …) and the
+model invokes them by bare name. The always-on `sidekick` skill is model-invoked;
+the triage skill is also meant to be attached to a Cowork **scheduled task**.
 
 A plugin-wide interaction principle applies across all skills: when
 putting a choice to the user, ask with **multiple choice** by default
@@ -336,16 +333,17 @@ Resolved:
   referencing, `source: "./"`) so it installs cleanly. Discovered during the
   first install attempt, 2026-06-01.
 
-- **Command form in Cowork — RESOLVED via wrappers (2026-06-01).** The first
-  install test showed `skills/*/SKILL.md` does **not** register as a typed `/`
-  command (`/sidekick:sidekick-init` → "Unknown command"). Fixed by shipping
-  `commands/<skill>.md` wrappers for the four explicit skills, giving the typed
-  `/sidekick:<skill>` form (and the bare `/sidekick-init` the user types, which
-  Cowork expands to the namespaced form). Existing `/sidekick-*` references stay
-  valid; no find-replace needed. Re-verify the wrappers appear in the `/` menu
-  after this push (`docs/MANUAL-TESTS.md` step 0b).
+- **Command form — plugin renamed to dodge namespace collision (2026-06-01).**
+  Install tests showed a plugin named `sidekick` made Cowork namespace every
+  skill invocation as `sidekick:<skill>` (the Skill tool returned
+  `Unknown skill: sidekick:sidekick-init` and `Unknown skill: sidekick:sidekick`).
+  Renamed the plugin to `solidbricks` (skills unchanged); with no plugin named
+  `sidekick`, the skills resolve as bare `/sidekick-init` etc. The inert
+  `commands/` wrappers from 0.2.1 were removed — the structure is now
+  skills-only, matching the working reference plugin.
 
 Remaining (verify-on-install):
 
-- **Wrapper appearance** — confirm the four wrappers list in Cowork's `/` menu
-  and that invoking one runs its skill (re-run step 0b after pushing).
+- **Bare command resolution** — after installing the renamed `solidbricks`
+  plugin, confirm `/sidekick-init` (and the others) run, both typed and by
+  asking (`docs/MANUAL-TESTS.md` step 0b).

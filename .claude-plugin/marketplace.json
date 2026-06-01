@@ -3,10 +3,12 @@
   "owner": {
     "name": "Solidbricks"
   },
-  "description": "Solidbricks plugin catalog for Claude Cowork.",
+  "metadata": {
+    "description": "Solidbricks plugin catalog for Claude Cowork."
+  },
   "plugins": [
     {
-      "name": "sidekick",
+      "name": "solidbricks",
       "source": "./",
       "description": "A generic, role-adaptive personal advisor for Cowork. Anchors all work in projects and enforces three write disciplines (free logging, gated brain, confirmed output/database) to stop chat sprawl and unstructured document buildup."
     }

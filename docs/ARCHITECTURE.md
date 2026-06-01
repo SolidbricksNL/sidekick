@@ -268,7 +268,7 @@ sidekick/
 │   ├── plugin.json                ← plugin manifest
 │   └── marketplace.json           ← self-marketplace; lists this plugin, source "./"
 ├── skills/
-│   ├── sidekick/                  ← always-on main skill
+│   ├── sidekick-core/             ← always-on main skill (NOT "sidekick" — see below)
 │   │   ├── SKILL.md
 │   │   └── references/
 │   │       ├── interaction-style.md
@@ -297,9 +297,9 @@ sidekick/
 
 **Distribution.** Cowork installs *plugins* from *marketplaces*, so the repo
 carries its own marketplace catalog at `.claude-plugin/marketplace.json`
-(name `solidbricks`) listing one plugin **named `solidbricks`** with
-`source: "./"` (the plugin root is the repo root). Users add the repo as a
-marketplace, then install the `solidbricks` plugin from it.
+listing one plugin **named `sidekick`** with `source: "./"` (the plugin root is
+the repo root). Users add the repo as a marketplace, then install the `sidekick`
+plugin from it.
 
 **Typed commands come from `commands/`, not `skills/`.** In Cowork a
 `skills/<name>/SKILL.md` is model-invocable and shows in the `/` menu, but the
@@ -307,21 +307,21 @@ marketplace, then install the `solidbricks` plugin from it.
 thin wrapper whose body says *"Invoke the `<name>` skill"*). So each explicit
 skill has a matching command file. This mirrors the working `solidcortex` plugin
 (`commands/bootstrap-cortex.md` + `skills/bootstrap-cortex/`). The always-on
-`sidekick` skill has no command file — it fires by model-invocation.
+main skill has no command file — it fires by model-invocation.
 
-**Plugin name ≠ skill names (deliberate).** The plugin is named `solidbricks`,
-**not** `sidekick`, even though every skill is `sidekick*`. Install tests on
-2026-06-01 showed a plugin named `sidekick` made Cowork namespace every
-invocation as `sidekick:<skill>` — including the poisonous `sidekick:sidekick`
-(plugin name == the main skill name) — and fail to resolve any of them. The
-working `solidcortex` plugin has **no** skill named `solidcortex`, so it never
-hits this. With `solidbricks` there is no plugin named `sidekick`, so the bare
-commands `/sidekick-init` etc. resolve. The triage skill is also meant to be
-attached to a Cowork **scheduled task**.
+**No skill may be named `sidekick` (deliberate).** The plugin is named
+`sidekick`, so the always-on main skill is named **`sidekick-core`**, not
+`sidekick`. Install tests on 2026-06-01 showed that a skill whose name equals the
+plugin name produces `sidekick:sidekick` and breaks Cowork command resolution for
+the whole plugin (typed and via the model's Skill tool). The working
+`solidcortex` plugin has **no** skill named `solidcortex`, so it never
+hits this. With the main skill renamed to `sidekick-core`, the bare commands
+`/sidekick-init` etc. resolve. The triage skill is also meant to be attached to a
+Cowork **scheduled task**.
 
 A plugin-wide interaction principle applies across all skills: when
 putting a choice to the user, ask with **multiple choice** by default
-(see `skills/sidekick/references/interaction-style.md`).
+(see `skills/sidekick-core/references/interaction-style.md`).
 
 ---
 
@@ -338,7 +338,7 @@ Resolved:
   only records intent and guides. There is **no `.mcp.json` auto-config**
   (superseded; the earlier open item is dropped).
 - **SQLite execution** — via the bundled stdlib helper
-  `skills/sidekick/scripts/db.py`, not the `sqlite3` CLI (plan 06).
+  `skills/sidekick-core/scripts/db.py`, not the `sqlite3` CLI (plan 06).
 - **Archive move primitive** — true rename/move, else copy → verify →
   remove; never delete before verified (plan 10).
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
@@ -350,13 +350,15 @@ Resolved:
   Two things were needed, learned by comparing against a SolidCortex plugin that
   works in the same Cowork: (1) **flat `commands/<name>.md` files** produce the
   typed `/<name>` command (skills/ alone only gives model-invocation + a menu
-  entry); (2) the **plugin must not be named `sidekick`** — that collided with the
-  main skill (`sidekick:sidekick`) and broke resolution. Fix: plugin renamed to
-  `solidbricks` (v0.2.2) and `commands/` restored in the solidcortex format
-  (`name:` frontmatter + "Invoke the `<name>` skill" body) (v0.2.3).
+  entry); (2) **no skill may be named the same as the plugin** — a skill named
+  `sidekick` inside a plugin named `sidekick` produced `sidekick:sidekick` and
+  broke resolution. Fix: the plugin keeps the name `sidekick`; the always-on main
+  skill was renamed `sidekick` → `sidekick-core` (v0.2.4), and the four
+  `commands/<name>.md` files use the solidcortex format (`name:` frontmatter +
+  "Invoke the `<name>` skill" body).
 
 Remaining (verify-on-install):
 
-- **Bare command resolution** — after installing `solidbricks` v0.2.3, confirm
+- **Bare command resolution** — after installing `sidekick` v0.2.4, confirm
   `/sidekick-init` (and the others) run when typed, and also by asking
   (`docs/MANUAL-TESTS.md` step 0b).

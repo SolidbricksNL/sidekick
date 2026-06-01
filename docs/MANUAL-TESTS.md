@@ -20,22 +20,21 @@ release.
 ## 0a. Install via marketplace
 
 Cowork adds **marketplaces**, not bare plugin repos. The repo is its own
-marketplace (`.claude-plugin/marketplace.json`, name `solidbricks`):
+marketplace (`.claude-plugin/marketplace.json`):
 
 1. **Add the marketplace** pointing at the GitHub repo `boezelaere/sidekick`.
-2. **Install the `solidbricks` plugin** from it (the package is named
-   `solidbricks`; its skills are `sidekick-*`). If a previous `sidekick`-named
+2. **Install the `sidekick` plugin** from it. If an earlier `solidbricks`-named
    plugin is installed, **uninstall it first**.
 3. Confirm it installs without the "isn't a marketplace" error.
 
-- [ ] Marketplace added; `solidbricks` plugin installed (version 0.2.2+).
+- [ ] Marketplace added; `sidekick` plugin installed (version 0.2.4+).
 
 ## 0b. Command resolution — DO THIS NEXT
 
-The plugin is named `solidbricks`, **not** `sidekick`, on purpose: a plugin named
-`sidekick` made Cowork namespace every invocation as `sidekick:<skill>` and fail
-(`Unknown skill: sidekick:sidekick-init`). With the rename, the skills should
-resolve as **bare** commands. Verify both invocation paths:
+The plugin is named `sidekick`; the always-on main skill is named `sidekick-core`
+(a skill named `sidekick` would collide with the plugin name as `sidekick:sidekick`
+and break command resolution). Typed commands come from `commands/<name>.md`.
+Verify both invocation paths:
 
 - [ ] **Typed:** select `/sidekick-init` from the `/` menu and send → init starts
       (no "Unknown command").

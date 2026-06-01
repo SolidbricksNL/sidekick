@@ -10,7 +10,7 @@ anything. Archiving is reversible: it's a relocation, not a removal.
 
 **Ask with multiple choice** — present the project list as numbered
 options and the confirmation as Yes / No, per the plugin-wide style in
-`../sidekick/references/interaction-style.md`.
+`../sidekick-core/references/interaction-style.md`.
 
 ## Procedure
 

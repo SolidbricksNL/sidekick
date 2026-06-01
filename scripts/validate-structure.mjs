@@ -21,18 +21,21 @@ function fail(msg) { console.log(`FAIL  ${msg}`); fails++; }
 function info(msg) { console.log(`      ${msg}`); }
 
 // The five skills and their expected reference files, per ARCHITECTURE §12.
-const SKILLS = ['sidekick', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
+// Note: the always-on main skill folder is `sidekick-core`, NOT `sidekick`. The
+// plugin itself is named `sidekick`, so a skill folder named `sidekick` would
+// collide (`sidekick:sidekick`) and break Cowork command resolution.
+const SKILLS = ['sidekick-core', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
 
 const EXPECTED_TREE = [
   '.claude-plugin/plugin.json',
   '.claude-plugin/marketplace.json',
-  'skills/sidekick/SKILL.md',
-  'skills/sidekick/references/interaction-style.md',
-  'skills/sidekick/references/database-discipline.md',
-  'skills/sidekick/references/brain-protocol.md',
-  'skills/sidekick/references/write-disciplines.md',
-  'skills/sidekick/references/project-claude-template.md',
-  'skills/sidekick/references/agenda-template.md',
+  'skills/sidekick-core/SKILL.md',
+  'skills/sidekick-core/references/interaction-style.md',
+  'skills/sidekick-core/references/database-discipline.md',
+  'skills/sidekick-core/references/brain-protocol.md',
+  'skills/sidekick-core/references/write-disciplines.md',
+  'skills/sidekick-core/references/project-claude-template.md',
+  'skills/sidekick-core/references/agenda-template.md',
   'skills/sidekick-init/SKILL.md',
   'skills/sidekick-init/references/settings-template.md',
   'skills/sidekick-triage/SKILL.md',
@@ -50,9 +53,10 @@ const EXPECTED_TREE = [
 // The four explicit-action skills. Each needs a flat commands/<name>.md file —
 // that is what Cowork turns into a typed `/<name>` command (skills/ alone only
 // gives model-invocation + a menu entry). Modeled on the working solidcortex
-// plugin. The plugin is named `solidbricks` (NOT `sidekick`): a plugin named
-// `sidekick` collided with its own skills (`sidekick:sidekick`) and broke command
-// resolution. The always-on `sidekick` skill is model-invoked (no command).
+// plugin. The plugin is named `sidekick`; the always-on main skill is therefore
+// named `sidekick-core` (a skill named `sidekick` would collide with the plugin
+// → `sidekick:sidekick` → broken resolution). The main skill is model-invoked
+// (no command file).
 const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive'];
 
 // --- Check 1: expected tree exists -----------------------------------------
@@ -84,8 +88,8 @@ if (manifest) {
   // Required by Cowork/Claude Code: only `name`.
   if (typeof manifest.name === 'string' && manifest.name.length > 0) pass(`name present ("${manifest.name}")`);
   else fail('name is missing or empty (required)');
-  if (manifest.name && manifest.name !== 'solidbricks') {
-    warn(`name is "${manifest.name}", expected "solidbricks" (a non-"sidekick" name avoids Cowork namespace collision)`);
+  if (manifest.name && manifest.name !== 'sidekick') {
+    warn(`name is "${manifest.name}", expected "sidekick"`);
   }
   // Present in current manifest; warn if absent (not fatal).
   for (const f of ['version', 'description', 'author']) {
@@ -170,7 +174,9 @@ for (const skill of SKILLS) {
 
 // --- Check 4: reference paths resolve --------------------------------------
 console.log('\n# Check 4 — references/... paths resolve');
-const REF_RE = /(?:\.\.\/sidekick\/)?references\/[A-Za-z0-9._/-]+\.md/g;
+// Matches both own refs (`references/x.md`) and cross-skill refs
+// (`../sidekick-core/references/x.md`); the `../<dir>/` prefix is generic.
+const REF_RE = /(?:\.\.\/[A-Za-z0-9._-]+\/)?references\/[A-Za-z0-9._/-]+\.md/g;
 let refCount = 0;
 for (const skill of SKILLS) {
   const entry = skillBodies[skill];

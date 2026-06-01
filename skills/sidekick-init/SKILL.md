@@ -11,7 +11,7 @@ user can answer fast. Confirm before writing files.
 
 **Ask with multiple choice throughout** (2–4 short options, plus an
 escape hatch). This is the plugin-wide interaction style — see
-`../sidekick/references/interaction-style.md`. Use open questions only for
+`../sidekick-core/references/interaction-style.md`. Use open questions only for
 free-form answers like the role or a project name.
 
 ## Before you start
@@ -83,9 +83,9 @@ Setup must roll out the structure, so create **at least one** project:
 1. Ask: "What's the first project you want to work in? Give it a short
    name." Derive a `kebab-case` slug from the answer.
 2. Scaffold `projects/<slug>/` exactly as the main `sidekick` skill does:
-   - `CLAUDE.md` from `../sidekick/references/project-claude-template.md`,
+   - `CLAUDE.md` from `../sidekick-core/references/project-claude-template.md`,
      with the project name filled in.
-   - `agenda.md` from `../sidekick/references/agenda-template.md`.
+   - `agenda.md` from `../sidekick-core/references/agenda-template.md`.
    - empty `brain/`, `log/`, `archive/`, `output/` directories.
    - do **not** create `data.sqlite` yet (lazy creation).
 3. Also create the root-level system folders if absent: `_triage/` and

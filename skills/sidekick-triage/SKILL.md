@@ -86,5 +86,5 @@ summary in the chat: how many items, across which sources, and that the
 details are in `_triage/<file>` ready for `/sidekick-checkin`. If you
 offer any choice here (e.g. "Run the check-in now?"), use multiple choice
 (Yes / Not now) per the plugin-wide style in
-`../sidekick/references/interaction-style.md`. If run as a scheduled
+`../sidekick-core/references/interaction-style.md`. If run as a scheduled
 task, a short summary is still fine but the file is the real output.

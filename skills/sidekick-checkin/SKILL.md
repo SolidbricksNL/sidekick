@@ -14,7 +14,7 @@ only with the user's go-ahead, item by item.
 **Present every proposal as a quick choice** (e.g. Yes / No / Edit first)
 so the user can run through them by tapping rather than typing. This is
 the plugin-wide interaction style — see
-`../sidekick/references/interaction-style.md`.
+`../sidekick-core/references/interaction-style.md`.
 
 ## Preconditions
 

@@ -29,8 +29,10 @@ options and the confirmation as Yes / No, per the plugin-wide style in
    (e.g. `<slug>-archived-YYYYMMDD`) and tell the user.
 
 4. **Move.** Create `_archive/projects/` if absent, then move the whole
-   `projects/<slug>/` folder there intact. Use a move (rename), not a
-   copy-then-delete, so nothing is ever removed.
+   `projects/<slug>/` folder there intact. Prefer a true rename/move. If
+   the runtime cannot rename atomically, **copy the folder, verify the
+   copy is complete, and only then remove the source** — the source is
+   never removed before the copy is verified, so "never delete" holds.
 
 5. **Confirm done.** Tell the user the project is archived and where it
    lives. Note that it will no longer appear in project detection,

@@ -20,10 +20,10 @@ planning have been **resolved** (see the decisions section below).
 | 05 | [05-write-disciplines-enforcement.md](05-write-disciplines-enforcement.md) | Make the three disciplines testable; build a gatekeeper matrix across all skills. | 02, 04 | [x] done (matrix complete; agenda=free decided) |
 | 06 | [06-database-discipline.md](06-database-discipline.md) | Finalize the SQLite layer; worked example of propose→create→document→extend. | 04, 05 | [x] done (db.py helper built + verified) |
 | 07 | [07-brain-protocol.md](07-brain-protocol.md) | Verify the brain protocol; worked example of a distillation with diff + archive. | 04, 05 | [x] done (worked example + diff definition) |
-| 08 | [08-triage-skill.md](08-triage-skill.md) | Harden scheduled triage (read-only, `_triage/`-only, injection-safe); sample output + safety checklist. | 02, 04, 05 | [ ] not started |
-| 09 | [09-checkin-skill.md](09-checkin-skill.md) | Finalize the check-in; scripted 2–3 project walkthrough proposals→approvals→writes. | 04, 05, 07, 08 | [ ] not started |
-| 10 | [10-archive-skill.md](10-archive-skill.md) | Verify archive = move-never-delete + restore; scripted move-and-restore. | 04 | [ ] not started |
-| 11 | [11-interaction-style.md](11-interaction-style.md) | Ensure plugin-wide multiple-choice is applied everywhere; choice-point checklist. | 02 | [ ] not started |
+| 08 | [08-triage-skill.md](08-triage-skill.md) | Harden scheduled triage (read-only, `_triage/`-only, injection-safe); sample output + safety checklist. | 02, 04, 05 | [x] done (Diff A applied; checklist+sample+schedule docs) |
+| 09 | [09-checkin-skill.md](09-checkin-skill.md) | Finalize the check-in; scripted 2–3 project walkthrough proposals→approvals→writes. | 04, 05, 07, 08 | [x] done (scripted walkthrough) |
+| 10 | [10-archive-skill.md](10-archive-skill.md) | Verify archive = move-never-delete + restore; scripted move-and-restore. | 04 | [x] done (Diff C applied; move/restore verified on real FS) |
+| 11 | [11-interaction-style.md](11-interaction-style.md) | Ensure plugin-wide multiple-choice is applied everywhere; choice-point checklist. | 02 | [x] done (checklist; no deviations) |
 | 12 | [12-manual-test-walkthroughs.md](12-manual-test-walkthroughs.md) | End-to-end human-judged scenarios in a disposable Cowork sandbox; ~30-min checklist. | 03–11 | [ ] not started |
 | 13 | [13-docs-and-release.md](13-docs-and-release.md) | Final docs pass, INSTALL section, version bump to 0.2.0 + git tag, rollout note. | 01–12 | [ ] not started |
 

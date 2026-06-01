@@ -46,6 +46,11 @@ Processing is **not copying** — it is summarizing to the essence:
 4. Keep the original source file in `archive/` for reference.
 5. **Show a diff of the change first; write only after approval.**
 
+For a brand-new brain file, the whole file is the diff — show the full
+proposed content. For an edit, show only the changed line(s) as a plain
+before/after, and **amend the existing line; never stack a second,
+contradictory version.**
+
 The difference between `archive/` and `brain/`: `archive/` holds the
 whole original; `brain/` holds only what must be remembered from it.
 

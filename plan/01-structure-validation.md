@@ -76,13 +76,20 @@ any failure.
   `skills/`; no `skills`/`commands` array is needed. The validator (task 6) should
   assert `name` exists + JSON parses, and may *warn* (not fail) on missing
   optional `repository`/`license`/`keywords` (added at release, plan 13).
-- **Slash-command derivation — RESOLVED.** Commands are auto-derived from skill
-  folder names; no declaration needed. **Verify (→ plan 12):** in an installed
-  plugin, skills are namespaced `/sidekick:<skill>` (e.g.
-  `/sidekick:sidekick-init`) rather than the bare `/sidekick-init` the
-  skills + README currently use. Confirm Cowork's actual form before any rewrite;
-  the validator should list the derived command names so the discrepancy is
-  visible.
+- **Slash-command derivation — RESEARCHED; verify-on-install (→ plan 12).** Docs
+  say plugin skills are namespaced `/sidekick:<skill>`. Two stale-closed (i.e.
+  unconfirmed-fixed) Claude Code bugs muddy this: **#22063** — a `name:` in
+  SKILL.md frontmatter strips the prefix, yielding the BARE `/sidekick-init`
+  (every Sidekick skill has `name:`, so this predicts the bare form); **#41842** —
+  `skills/*/SKILL.md` may not register as `/` commands at all (only `commands/*.md`
+  do), though model invocation still works. Cowork-specific behavior is
+  undocumented. Net: the always-on `sidekick` skill and every cross-skill
+  reference work by MODEL invocation regardless and are not at risk; only the
+  exact USER-typed command name is uncertain. The validator should LIST the
+  derived command names (so any discrepancy is visible) but must NOT fail on the
+  form. Decision deferred to the plan-12 install check; fallback if skills/ don't
+  register as commands: add thin `commands/<skill>.md` wrappers. Do not rewrite
+  command references until the install check decides.
 - **Cross-skill reference reads — RESOLVED.** Templates stay in
   `skills/sidekick/references/`; sibling skills reference them via
   `../sidekick/references/...` (the convention triage/checkin/archive already use

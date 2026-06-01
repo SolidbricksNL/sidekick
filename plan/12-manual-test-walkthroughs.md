@@ -70,6 +70,18 @@ code. Acceptance: a runnable checklist a person can follow in ~30 minutes.
   automated.
 
 ## Notes / open questions
+- **Command-name verification (from plans 01/02) — do this BEFORE scenario A.**
+  Install the plugin in a real Cowork workspace, open the `/` menu, type
+  `/sidekick`, and record how each skill actually appears: namespaced
+  (`/sidekick:sidekick-init`), bare (`/sidekick-init`), or not listed. Docs say
+  namespaced; Claude Code bugs #22063 (a `name:` in frontmatter → bare) and
+  #41842 (`skills/` may not register as `/` commands) mean it may differ, and
+  Cowork is undocumented. If the explicit skills (init/triage/checkin/archive) do
+  NOT appear as `/` commands, add thin `commands/<skill>.md` wrappers and
+  re-check. The always-on `sidekick` skill is model-invoked and need not appear
+  in `/`. Once the real form is known, decide whether to update command
+  references in the skills + README (a mechanical find-replace) — until then,
+  leave them. Record the observed form here as the artifact.
 - **Connector-dependent scenarios.** Triage (G) and parts of check-in (H) need
   connected sources to be fully exercised. Provide a connector-less fallback
   (seed a hand-written `_triage/` file) so the walkthrough runs without live

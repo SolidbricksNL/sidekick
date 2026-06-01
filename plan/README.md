@@ -64,10 +64,14 @@ folded into plans 02 and 12.
    manifest (`name`, `version`, `description`, `author{name}`) is **valid as-is**.
    Skills are auto-discovered from `skills/`; no declaration needed. Optional
    polish (`repository`, `license`, `keywords`, `homepage`) is deferred to plan
-   13. **Verify item (→ plan 12):** in a plugin, skill commands are namespaced
-   `/sidekick:<skill>` (e.g. `/sidekick:sidekick-init`), but the skills + README
-   currently write `/sidekick-init`. Confirm Cowork's real invocation form before
-   rewriting any command references.
+   13. **Verify item (→ plan 12):** the exact USER-typed command name is
+   uncertain. Docs say namespaced `/sidekick:<skill>`; Claude Code bugs #22063 (a
+   `name:` in frontmatter → bare `/sidekick-init`) and #41842 (`skills/` may not
+   register as `/` commands; model invocation still works) point other ways, and
+   Cowork is undocumented. The always-on skill + all cross-skill references work
+   by model invocation regardless, so only the typed name is at stake. Settle it
+   by installing in Cowork and reading the `/` menu (plan 12); fallback is thin
+   `commands/<skill>.md` wrappers. Don't rewrite command strings until then.
 2. **Cross-skill templates** (plans 01, 03, 04) — RESOLVED: **no duplication.**
    Shared templates stay in `skills/sidekick/references/`; other skills reference
    them via the `../sidekick/references/...` relative path already used by

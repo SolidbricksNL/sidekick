@@ -15,7 +15,7 @@ planning have been **resolved** (see the decisions section below).
 |---|-----------|---------|------------|--------|
 | 01 | [01-structure-validation.md](01-structure-validation.md) | Verify plugin structure for Cowork; add a re-runnable validator script. | — | [x] done |
 | 02 | [02-skill-prompt-review.md](02-skill-prompt-review.md) | Review each SKILL.md as a prompt (triggers, gatekeeper clarity, contradictions); propose diffs, don't apply. | 01 | [x] done (3 diffs proposed: A→p08, B→opt, C→p10) |
-| 03 | [03-settings-and-init-flow.md](03-settings-and-init-flow.md) | Validate the init questionnaire end to end; finalize the `sidekick.settings.md` field spec. | 01, 02 | [ ] not started |
+| 03 | [03-settings-and-init-flow.md](03-settings-and-init-flow.md) | Validate the init questionnaire end to end; finalize the `sidekick.settings.md` field spec. | 01, 02 | [x] done (field spec finalized; template unchanged) |
 | 04 | [04-project-model-and-scaffolding.md](04-project-model-and-scaffolding.md) | Nail down the on-disk project model + folder contract; finalize the CLAUDE.md and agenda templates. | 01, 03 | [ ] not started |
 | 05 | [05-write-disciplines-enforcement.md](05-write-disciplines-enforcement.md) | Make the three disciplines testable; build a gatekeeper matrix across all skills. | 02, 04 | [ ] not started |
 | 06 | [06-database-discipline.md](06-database-discipline.md) | Finalize the SQLite layer; worked example of propose→create→document→extend. | 04, 05 | [ ] not started |

@@ -88,8 +88,12 @@ if (manifest) {
   // Required by Cowork/Claude Code: only `name`.
   if (typeof manifest.name === 'string' && manifest.name.length > 0) pass(`name present ("${manifest.name}")`);
   else fail('name is missing or empty (required)');
-  if (manifest.name && manifest.name !== 'sidekick') {
-    warn(`name is "${manifest.name}", expected "sidekick"`);
+  // The plugin id must NOT be "sidekick": Cowork would treat the leading
+  // `sidekick` of /sidekick-init as a namespace and fail to resolve the command.
+  if (manifest.name === 'sidekick') {
+    fail('plugin name "sidekick" collides with the /sidekick-* commands — use e.g. "sidekick-cowork"');
+  } else if (manifest.name && manifest.name !== 'sidekick-cowork') {
+    warn(`name is "${manifest.name}", expected "sidekick-cowork"`);
   }
   // Present in current manifest; warn if absent (not fatal).
   for (const f of ['version', 'description', 'author']) {

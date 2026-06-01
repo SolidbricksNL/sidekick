@@ -57,8 +57,9 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
 
 1. **Add the marketplace**, then **install the plugin**. Point Cowork at the
    GitHub repo `boezelaere/sidekick` as a marketplace, then install the
-   **`sidekick`** plugin from it. (Adding a plugin repo directly fails —
-   Cowork adds *marketplaces*, which then list installable plugins.)
+   plugin (id **`sidekick-cowork`**) from it. (Adding a plugin repo directly
+   fails — Cowork adds *marketplaces*, which then list installable plugins. The
+   id can't be `sidekick` — that collides with the `/sidekick-*` commands.)
 2. **Run `/sidekick-init`** (or just ask, e.g. *"set up my Sidekick
    workspace"*) — a short multiple-choice setup for your role, chat language,
    default output language, and which connections you want. It writes
@@ -104,10 +105,10 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.2.4** — Claude Cowork plugin (package `sidekick`). Installed from the private
-GitHub repo; hardened and documented across the `plan/` units. Cowork command
-support follows the working SolidCortex pattern: flat `commands/<name>.md` files
-give the typed `/sidekick-init` etc. The always-on main skill is named
-`sidekick-core` (a skill named `sidekick` would collide with the plugin name and
-break command resolution). Run the manual-test checklist in Cowork before wider
-rollout.
+**0.2.5** — Claude Cowork plugin (id `sidekick-cowork`; commands are
+`/sidekick-*`). Installed from the private GitHub repo; hardened and documented
+across the `plan/` units. Cowork command support follows the working SolidCortex
+pattern: flat `commands/<name>.md` files give the typed `/sidekick-init` etc. The
+plugin id is `sidekick-cowork` and the main skill is `sidekick-core` — neither
+can be exactly `sidekick`, which Cowork would treat as a command namespace and
+fail to resolve. Run the manual-test checklist in Cowork before wider rollout.

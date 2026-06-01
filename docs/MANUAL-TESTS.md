@@ -22,19 +22,21 @@ release.
 Cowork adds **marketplaces**, not bare plugin repos. The repo is its own
 marketplace (`.claude-plugin/marketplace.json`):
 
-1. **Add the marketplace** pointing at the GitHub repo `boezelaere/sidekick`.
-2. **Install the `sidekick` plugin** from it. If an earlier `solidbricks`-named
-   plugin is installed, **uninstall it first**.
+1. **Add the marketplace** pointing at the GitHub repo `boezelaere/sidekick`. If
+   you added it under an older name, **remove and re-add it** (the marketplace
+   name is now `sidekick`).
+2. **Install the plugin (id `sidekick-cowork`)** from it. Uninstall any earlier
+   version first (`sidekick`, `solidbricks`).
 3. Confirm it installs without the "isn't a marketplace" error.
 
-- [ ] Marketplace added; `sidekick` plugin installed (version 0.2.4+).
+- [ ] Marketplace re-added; plugin `sidekick-cowork` installed (version 0.2.5+).
 
 ## 0b. Command resolution — DO THIS NEXT
 
-The plugin is named `sidekick`; the always-on main skill is named `sidekick-core`
-(a skill named `sidekick` would collide with the plugin name as `sidekick:sidekick`
-and break command resolution). Typed commands come from `commands/<name>.md`.
-Verify both invocation paths:
+The plugin id is `sidekick-cowork`, **not** `sidekick`: Cowork would treat the
+leading `sidekick` of a typed `/sidekick-init` as a command namespace and fail
+(`Unknown command: /sidekick:sidekick-init`). Typed commands come from flat
+`commands/<name>.md` files. Verify both invocation paths:
 
 - [ ] **Typed:** select `/sidekick-init` from the `/` menu and send → init starts
       (no "Unknown command").

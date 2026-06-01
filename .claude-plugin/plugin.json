@@ -1,6 +1,6 @@
 {
   "name": "sidekick",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "A generic, role-adaptive personal advisor for Cowork. Anchors all work in projects and enforces three write disciplines (free logging, gated brain, confirmed output/database) to stop chat sprawl and unstructured document buildup.",
   "author": {
     "name": "Solidbricks"

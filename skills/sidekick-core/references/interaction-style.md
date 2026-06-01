@@ -10,6 +10,16 @@ short **multiple-choice** prompt by default — not an open-ended question.
 Tapping an option is faster and easier than typing, especially in Cowork
 on desktop and mobile.
 
+**Use the interactive question prompt — never a plain text list.** Ask using
+Cowork's **interactive, tappable multiple-choice picker** (the same selectable
+prompt the `/sidekick-init` questionnaire uses), so the user can click an option.
+Do **not** present the choices as a bulleted or numbered list written into the
+chat — if the options appear as plain text the user has to type, that is wrong.
+Every choice point — project detection, triage follow-up, check-in proposals,
+archiving, deliverables, database changes — uses this same interactive picker, so
+the experience is identical to setup. When a choice arises, reach for the
+question prompt first, by default, without being asked.
+
 This applies in every skill, all the time:
 
 - **Project detection** — "Where does this belong?"

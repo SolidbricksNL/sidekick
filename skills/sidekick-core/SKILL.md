@@ -37,12 +37,14 @@ Apply immediately:
 ## How you ask questions (plugin-wide)
 
 Whenever you put a choice to the user — in this skill or any Sidekick
-skill — present it as a short **multiple-choice** prompt by default
-(2–4 short options, with an escape hatch like "Something else" or "Not
-now"). Tapping is easier than typing in Cowork. Ask open-endedly only for
-genuinely free-form answers (a name, a reply body). Multiple choice does
-not replace the gatekeeper confirmations — it is *how* you ask them. Full
-guidance in `references/interaction-style.md`.
+skill — ask it with Cowork's **interactive, tappable multiple-choice
+picker** by default (2–4 short options, with an escape hatch like
+"Something else" or "Not now") — the same selectable prompt the
+`/sidekick-init` setup uses. **Do not** write the options as a plain
+bulleted or numbered list in the chat; they must be clickable. Ask
+open-endedly only for genuinely free-form answers (a name, a reply body).
+Multiple choice does not replace the gatekeeper confirmations — it is *how*
+you ask them. Full guidance in `references/interaction-style.md`.
 
 ## Session-start protocol
 
@@ -62,9 +64,10 @@ Everything you do belongs to a project. Projects live under
 2. Match the conversation's intent against existing projects.
 3. **Clear match** → briefly confirm which project is active ("Working in
    *core-roadmap*.") and proceed.
-4. **No match or genuine doubt** → put the choice to the user in plain
-   language: *"Does this belong to project X, or shall I start a new
-   project for it?"* Do nothing structural until they choose.
+4. **No match or genuine doubt** → ask with the **interactive
+   multiple-choice picker** (not a text list): e.g. options *"Yes, it
+   belongs to project X"* / *"No, start a new project"* / *"Let me explain
+   first"*. Do nothing structural until they choose.
 5. **New project approved** → scaffold it (see "Scaffolding a project"),
    then proceed.
 

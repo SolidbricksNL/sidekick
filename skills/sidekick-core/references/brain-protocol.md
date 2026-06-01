@@ -39,10 +39,10 @@ into.
 **Fork on the input's shape first.** If what arrives is **tabular or
 repeating-record data** (a spreadsheet, CSV, exported table, a list of
 same-shaped items), the rows do **not** belong in the brain or a log —
-propose a **database table** and load them (see `database-discipline.md`).
-Only the prose *insights* drawn from that data follow the brain
-distillation below. For free-form prose, notes, and reports, continue with
-Step 2.
+propose a **table** and load them into `data/` through `scripts/data.py`
+(see `data-discipline.md`). Only the prose *insights* drawn from that data
+follow the brain distillation below. For free-form prose, notes, and
+reports, continue with Step 2.
 
 ### Step 2 — Distill into `brain/`
 
@@ -81,8 +81,8 @@ once a file grows too large or too broad. Typical brain files:
   options in the field.
 - `links.md` — useful URLs with one line of explanation each.
 - `decisions.md` — chronological log of decisions (what, why, when).
-- `data-model.md` — plain-language description of the SQLite schema (see
-  database-discipline.md).
+- `data-model.md` — plain-language description of the `data/` tables (see
+  data-discipline.md).
 
 Keep every file **lean and current.** A brain full of outdated or
 duplicate information becomes worthless.

@@ -23,7 +23,7 @@ enforcing three **write disciplines**.
 │       ├── log/              # process logbook     (free)
 │       ├── archive/          # processed originals
 │       ├── output/           # deliverables        (confirmation)
-│       └── data.sqlite       # structured data     (structure = confirm)
+│       └── data/             # structured data: JSON tables via data.py
 └── _archive/projects/        # archived projects (moved, never deleted)
 ```
 
@@ -34,11 +34,14 @@ enforcing three **write disciplines**.
 | Process, work-in-progress | `log/` | Write freely |
 | Durable knowledge | `brain/` | Show a diff + get approval |
 | Deliverables | `output/` | Confirm create/edit/delete |
-| Database **structure** | `data.sqlite` | Confirm (plain language) |
+| Structured-data **structure** (new table/column) | `data/` | Confirm (plain language) |
 
 Logging to disk (and summarizing in chat) keeps the chat clean. The brain
-and output are gated because they're durable. Database records that fit
-the schema are free; only structure changes are confirmed.
+and output are gated because they're durable. Structured data lives in
+plain JSON tables under `data/`, accessed only through the bundled
+`data.py` helper (queries run over a throwaway in-memory copy; writes
+snapshot first). Records that fit existing columns are free; only structure
+changes are confirmed.
 
 ## Skills
 

@@ -16,7 +16,7 @@ task, so you must be safe: **read-only, write only to `_triage/`.**
   message, accept an invite, or change anything in email/chat/calendar.
 - **Write only to `_triage/`.** That is the ONLY location you may create
   or modify. Never write anywhere else — not to any project's `brain/`,
-  `log/`, `output/`, `data.sqlite`, or `agenda.md`, not to
+  `log/`, `output/`, `data/`, or `agenda.md`, not to
   `sidekick.settings.md`, and not to any other file in the root or in
   another skill's space. Those are touched only via the check-in, with
   the user present.

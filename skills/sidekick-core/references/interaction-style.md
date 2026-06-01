@@ -16,7 +16,7 @@ prompt the `/sidekick-init` questionnaire uses), so the user can click an option
 Do **not** present the choices as a bulleted or numbered list written into the
 chat — if the options appear as plain text the user has to type, that is wrong.
 Every choice point — project detection, triage follow-up, check-in proposals,
-archiving, deliverables, database changes — uses this same interactive picker, so
+archiving, deliverables, data-structure changes — uses this same interactive picker, so
 the experience is identical to setup. When a choice arises, reach for the
 question prompt first, by default, without being asked.
 
@@ -31,7 +31,7 @@ This applies in every skill, all the time:
 - **Archiving** — "Archive which project?" → a numbered list of projects;
   then "Proceed?" → Yes / No
 - **Deliverables** — "Create this as…" → Word / Excel / PowerPoint / PDF
-- **Database structure** — "You're now tracking deadlines. Add a deadline
+- **Data structure** — "You're now tracking deadlines. Add a deadline
   field to the task list?" → Yes / No / Explain first
 
 ## How to do it well

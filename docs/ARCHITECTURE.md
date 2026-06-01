@@ -37,17 +37,17 @@ exactly one of three categories, each with its own gatekeeper rule:
 | 1 | **Log** (process) | `log/` | **Write freely** — no permission needed | — |
 | 2 | **Brain** (memory) | `brain/` | **Show a diff + get approval** | non-technical |
 | 3 | **Output** (deliverables) | `output/` | **Ask for confirmation** (create / edit / delete) | non-technical |
-| 3b | **Database** (structure) | `data.sqlite` | **Ask for confirmation** on schema change | **non-technical** |
+| 3b | **Structured data** (structure) | `data/` | **Ask for confirmation** on a table/column change | **non-technical** |
 
 The reasoning: the log is allowed to fill up freely, because that is
 exactly where work-in-progress belongs instead of in the chat. The brain
 and the output are precious and durable, so the human stands as
-gatekeeper there. The database structure is technically sensitive, so
-schema changes are always presented **in plain language** — never as SQL
-or technical jargon.
+gatekeeper there. The data **structure** is sensitive, so table/column
+changes are always presented **in plain language** — never as SQL or
+technical jargon. Records that fit existing columns flow in freely.
 
 **Rule of thumb for Sidekick itself:** "Before I write anything, I ask
-myself: is this log (free), brain (diff + approval), or output/db
+myself: is this log (free), brain (diff + approval), or output/data
 (confirmation)?"
 
 ---
@@ -70,7 +70,9 @@ the **root**. Everything lives underneath it.
 │   │   ├── log/                   ← structured logbook (date + slug)
 │   │   ├── archive/               ← processed source files (originals)
 │   │   ├── output/                ← clean deliverables
-│   │   └── data.sqlite            ← structured data + schema knowledge
+│   │   └── data/                  ← structured data: one JSON file per table
+│   │       ├── <table>.json       ←   a JSON array of row objects
+│   │       └── _schema.json       ←   table → columns (+ types)
 │   └── <another-project>/
 │       └── …
 └── _archive/
@@ -82,7 +84,8 @@ the **root**. Everything lives underneath it.
 
 When a new project is created, Sidekick scaffolds the full structure:
 `CLAUDE.md`, `agenda.md`, and the `brain/`, `log/`, `archive/`, `output/`
-directories. `data.sqlite` is created lazily on first structured data.
+directories. `data/` is created lazily on the first structured data
+(the first `create` makes `data/` and its first `<table>.json`).
 
 ### 3.1 Project detection (every session)
 
@@ -115,18 +118,38 @@ consultable. Handled by the `sidekick-archive` skill.
 
 ---
 
-## 4. The database layer (`data.sqlite`)
+## 4. The structured-data layer (`data/`)
 
-One SQLite file per project. Sidekick manages it autonomously, under
-three principles:
+Structured project data lives in **plain JSON files** — one file per
+"table" — under `projects/<slug>/data/`. Each `<table>.json` is a JSON
+array of row objects (human-readable, git-diffable); `_schema.json` records
+each table's columns and types. There is deliberately **no live database
+file**: it was a binary blob the model could not inspect, and a stray
+`DROP`/recreate wiped it. Plain files are inspectable, diffable, trivially
+backed up, and there is no schema to drop.
+
+**All access goes through one helper**, `scripts/data.py` (stdlib Python,
+file-based). The model must **never** touch the data another way — not the
+`sqlite3` CLI (absent in Cowork), not ad-hoc `python -c`, not a raw
+read/edit of the JSON. Two reasons the helper is mandatory:
+
+- **Reads** (`query`) run real SQL over a *throwaway in-memory SQLite*
+  loaded from the files and discarded — full filter/sort/count power
+  without pulling the whole file into context, and a read physically
+  cannot touch the disk.
+- **Writes** (`insert`/`update`/`delete`/`addcol`) are validated against
+  the table's columns and **snapshot the file first** (a ring of the last
+  20 under `data/.snapshots/`), so a mistaken edit is always recoverable.
+
+Sidekick manages the store under three principles:
 
 1. **Sidekick designs the tables itself.** When shared information is
    genuinely structured (lists, records, repeating fields), Sidekick
    decides which tables are needed.
 2. **Extend over sprawl.** On new related information, Sidekick first
-   investigates whether an existing table can be extended, before
-   creating a new one. It must not become a tangle.
-3. **Schema as knowledge.** The schema is documented in plain language in
+   uses `info` to check whether an existing table can take a column,
+   before creating a new one. It must not become a tangle.
+3. **Schema as knowledge.** The tables are documented in plain language in
    `brain/data-model.md`, so that Sidekick (and the user) can later
    easily write clear queries.
 
@@ -138,21 +161,26 @@ response is to **propose a table** (a structure change → confirm in plain
 language), not to fold the rows into a log file or the brain. The brain
 still receives the prose *insights* drawn from the data, the original file
 goes to `archive/`, and the process is logged — but the rows themselves
-live in `data.sqlite`. Folding a clearly tabular input straight into a
-log + chat summary, with no table proposed, is the exact failure mode this
-layer exists to prevent.
+live in `data/`. Folding a clearly tabular input straight into a log +
+chat summary, with no table proposed, is the exact failure mode this layer
+exists to prevent.
 
-**Gatekeeper:** every schema change (new table, new column, removed
-column) is presented to the user **non-technically**. Example: *"You're
-now also sharing phone numbers with contacts. Shall I add those to the
-existing contact list?"* — not: *"ALTER TABLE contacts ADD COLUMN phone
-TEXT."*
+**Gatekeeper:** every structure change (new table, new column) is
+presented to the user **non-technically**. Example: *"You're now also
+sharing phone numbers with contacts. Shall I add those to the existing
+contact list?"* — not: *"ALTER TABLE contacts ADD COLUMN phone TEXT."*
 
 Reading data and **populating** existing tables with records that fit the
-existing schema is free (no gatekeeper) — that is normal use, not a
+existing columns is free (no gatekeeper) — that is normal use, not a
 structural change.
 
-See `references/database-discipline.md` for the full protocol.
+**Backups.** The structure is robust against accidents but not against
+everything, so the **check-in makes a timestamped backup** of each
+project's `data/` (`scripts/data.py backup`, written to `data/.backups/`)
+before it processes anything. Per-write snapshots cover in-session slips;
+the check-in backup is the durable, dated safety line.
+
+See `references/data-discipline.md` for the full protocol.
 
 ---
 
@@ -327,13 +355,15 @@ sidekick/
 ├── skills/
 │   ├── sidekick-core/             ← always-on main skill (NOT "sidekick" — see below)
 │   │   ├── SKILL.md
-│   │   └── references/
-│   │       ├── interaction-style.md
-│   │       ├── database-discipline.md
-│   │       ├── brain-protocol.md
-│   │       ├── write-disciplines.md
-│   │       ├── project-claude-template.md
-│   │       └── agenda-template.md
+│   │   ├── references/
+│   │   │   ├── interaction-style.md
+│   │   │   ├── data-discipline.md
+│   │   │   ├── brain-protocol.md
+│   │   │   ├── write-disciplines.md
+│   │   │   ├── project-claude-template.md
+│   │   │   └── agenda-template.md
+│   │   └── scripts/
+│   │       └── data.py            ← file-based structured-data helper
 │   ├── sidekick-init/
 │   │   ├── SKILL.md
 │   │   └── references/settings-template.md
@@ -398,8 +428,14 @@ Resolved:
 - **Connectors** — the **user** enables connectors in Cowork; the plugin
   only records intent and guides. There is **no `.mcp.json` auto-config**
   (superseded; the earlier open item is dropped).
-- **SQLite execution** — via the bundled stdlib helper
-  `skills/sidekick-core/scripts/db.py`, not the `sqlite3` CLI (plan 06).
+- **Structured-data storage** — plain JSON files under `projects/<slug>/data/`
+  (one `<table>.json` per table + `_schema.json`), all access through the
+  stdlib helper `skills/sidekick-core/scripts/data.py`. Replaced the original
+  single `data.sqlite` after testing (2026-06-01) showed the model bypassing
+  the helper — it tried the absent `sqlite3` CLI, then ad-hoc `python -c`, and
+  a stray recreate emptied the table. Files are inspectable + diffable, the
+  helper snapshots before every write, queries run over a throwaway in-memory
+  SQLite (no live DB to drop), and the check-in takes a dated backup.
 - **Archive move primitive** — true rename/move, else copy → verify →
   remove; never delete before verified (plan 10).
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare

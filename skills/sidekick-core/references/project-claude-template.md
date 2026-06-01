@@ -15,15 +15,16 @@ output language.
      here so it is read at session start, e.g.: -->
 <!-- 2. brain/{{MAIN_TOPIC}}.md — current status and knowledge -->
 <!-- 3. brain/decisions.md — decisions made so far -->
-<!-- 4. brain/data-model.md — database schema (plain language) -->
+<!-- 4. brain/data-model.md — the data/ tables (plain language) -->
 
 ## Write disciplines (reminder)
 
 - **Log freely** to `log/` (`YYYYMMDD-<slug>.md`); summarize in chat.
 - **Brain** changes (`brain/`): show a diff, write only after approval.
 - **Output** (`output/`): confirm before create / edit / delete.
-- **Database structure** (`data.sqlite`): confirm in plain language;
-  records that fit the schema are free.
+- **Structured data** (`data/`): all access via `scripts/data.py`. Confirm
+  a structure change (new table/column) in plain language; records that fit
+  the columns are free.
 
 ## Notes
 

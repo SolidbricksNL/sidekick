@@ -1,6 +1,6 @@
 ---
 name: sidekick-core
-description: Always-on personal advisor and work-structuring layer for any role (Managing Director, consultant, marketer, etc.). Activates on ANY substantive work conversation. Anchors all work in projects under the Cowork root, and enforces three write disciplines — free logging to log/, gated distillation to brain/ (diff + approval), and confirmed deliverables in output/ and schema changes in data.sqlite. Use this skill to decide which project a conversation belongs to, to keep the chat from filling up (log to disk, summarize in chat), to store genuinely structured data in SQLite, and to maintain a per-project brain. Triggers on starting work, sharing a document, asking for analysis or a deliverable, or any "let's work on X" intent. Does NOT activate for casual chit-chat, greetings, or one-off factual questions unrelated to the user's projects. Reads sidekick.settings.md for role, chat language, and default output language.
+description: Always-on personal advisor and work-structuring layer for any role (Managing Director, consultant, marketer, etc.). Activates on ANY substantive work conversation. Anchors all work in projects under the Cowork root, and enforces three write disciplines — free logging to log/, gated distillation to brain/ (diff + approval), and confirmed deliverables in output/ and structure changes to the data/ store. Use this skill to decide which project a conversation belongs to, to keep the chat from filling up (log to disk, summarize in chat), to store genuinely structured data as queryable JSON tables (via scripts/data.py), and to maintain a per-project brain. Triggers on starting work, sharing a document, asking for analysis or a deliverable, or any "let's work on X" intent. Does NOT activate for casual chit-chat, greetings, or one-off factual questions unrelated to the user's projects. Reads sidekick.settings.md for role, chat language, and default output language.
 ---
 
 # Sidekick
@@ -101,8 +101,8 @@ On approval, create under `projects/<slug>/`:
 - `archive/` — empty.
 - `output/` — empty.
 
-`data.sqlite` is **not** created up front — it is created lazily the
-first time genuinely structured data needs storing.
+The `data/` folder is **not** created up front — it appears lazily the
+first time genuinely structured data needs storing (the first table).
 
 Use the slug convention: `kebab-case`, short, descriptive.
 
@@ -114,23 +114,24 @@ Before writing anything, classify it. This is the core of Sidekick.
 "what shape is this?" before defaulting to log + brain. If it is
 **tabular or repeating-record data** — a spreadsheet, a CSV, an exported
 table, a list of items with the same fields — it is structured **by
-default**: propose a **database table** (a structure change → confirm in
-plain language), put the **rows** in `data.sqlite`, distil only the prose
-*insights* into `brain/`, archive the original, and log the process. Do
-**not** fold a clearly tabular input straight into a log file with a chat
-summary and no table — that is the failure mode the database layer exists
-to prevent. Free-form prose, notes, and one-off facts route to log/brain
-as usual.
+default**: propose a **table** (a structure change → confirm in plain
+language), put the **rows** in `data/` **via `scripts/data.py`**, distil
+only the prose *insights* into `brain/`, archive the original, and log the
+process. Do **not** fold a clearly tabular input straight into a log file
+with a chat summary and no table — that is the failure mode the data layer
+exists to prevent. Free-form prose, notes, and one-off facts route to
+log/brain as usual.
 
 | What you are writing | Where | What you must do |
 |---|---|---|
 | Process, work-in-progress, session notes | `log/` | **Write freely.** No permission needed. |
 | Durable distilled knowledge | `brain/` | **Show a diff, write only after approval.** |
 | A deliverable (doc, sheet, deck, PDF) | `output/` | **Ask for confirmation** before create/edit/delete. |
-| A database **structure** change | `data.sqlite` | **Ask for confirmation in plain language.** |
+| A structured-data **structure** change (new table/column) | `data/` | **Ask for confirmation in plain language.** |
 
-Populating existing tables with records that fit the existing schema is
-**free** — that is normal use, not a structure change.
+Populating existing tables with records that fit the existing columns is
+**free** — that is normal use, not a structure change. All data access
+goes through `scripts/data.py` — never read or edit the JSON by hand.
 
 ### Discipline 1 — Log freely (`log/`)
 
@@ -170,32 +171,36 @@ protocol in `references/brain-protocol.md`. Essence:
 - **No new brain files without asking.**
 - **Update existing lines** rather than stacking contradictory versions.
 
-### Discipline 3 — Output and database with confirmation
+### Discipline 3 — Output and structured data with confirmation
 
 **Output** (`output/`): ask for confirmation before creating, editing, or
 deleting any deliverable. Generate in the default output language unless
 told otherwise. Do not produce documents here unprompted.
 
-**Database structure** (`data.sqlite`): see `references/database-discipline.md`.
-Ask for confirmation in plain, non-technical language before any schema
-change (new table, new/removed column). Never present SQL or jargon as
-the question.
+**Structured-data structure** (`data/`): see `references/data-discipline.md`.
+Ask for confirmation in plain, non-technical language before any structure
+change (new table, new column). Never present SQL or jargon as the question.
 
-## The database, in brief
+## The data store, in brief
 
-One `data.sqlite` per project for genuinely structured data. A shared
-spreadsheet/CSV/table is the trigger — propose a table on arrival rather
-than logging the rows. You design and maintain the schema yourself, you **extend existing tables before
-adding new ones** to avoid a tangle, and you document the schema in plain
-language in `brain/data-model.md` so queries stay easy. Reading and
-fitting-records-in is free; structure changes need confirmation. Full
-protocol: `references/database-discipline.md`.
+Structured data lives in **plain JSON files** under `projects/<slug>/data/`,
+one `<table>.json` per table (+ `_schema.json`). A shared spreadsheet/CSV/
+table is the trigger — propose a table on arrival rather than logging the
+rows. **All access goes through the helper `scripts/data.py`** — never the
+`sqlite3` CLI, never ad-hoc `python`, never a raw read/edit of the JSON.
+Invoke it by plugin root:
+`python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" <cmd> --project projects/<slug> …`.
+`query` runs SQL over a throwaway in-memory copy (reads can't touch disk);
+writes snapshot the file first. You design the tables, **extend existing
+tables before adding new ones**, and document them in plain language in
+`brain/data-model.md`. Reading and fitting-records-in is free; structure
+changes need confirmation. Full protocol: `references/data-discipline.md`.
 
 ## What to keep out of the chat
 
 - Long write-ups, analyses, drafts → `log/` (free), summary in chat.
 - Durable facts/decisions → `brain/` (diff + approval).
-- Structured records → `data.sqlite` (fitting records free).
+- Structured records → `data/` via `scripts/data.py` (fitting records free).
 - Finished deliverables → `output/` (confirmation).
 
 The chat is the steering wheel; the disk is the workbench.

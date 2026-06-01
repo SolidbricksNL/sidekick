@@ -64,7 +64,7 @@ plugin name needs to change again.
   enabled**.
 - **Inspect:** `sandbox/sidekick.settings.md` (all 7 fields, languages differ);
   `sandbox/projects/<slug>/` (CLAUDE.md, agenda.md, empty brain/log/archive/
-  output, no data.sqlite); `sandbox/_triage/`, `sandbox/_archive/projects/`.
+  output, no data/); `sandbox/_triage/`, `sandbox/_archive/projects/`.
 - [ ] PASS / FAIL
 
 ### B. Project creation / detection
@@ -97,14 +97,18 @@ plugin name needs to change again.
 
 ### E. Structured-data table
 - **Start:** an active project.
-- **Do:** share a list of similar items (e.g. contacts). Then add a few more.
-  Later, share an extra field (e.g. phone).
+- **Do:** share a list of similar items, or a spreadsheet/CSV (e.g. contacts).
+  Then add a few more. Later, share an extra field (e.g. phone). Then ask a
+  question about the data ("how many at company X?").
 - **Expect:** a **plain-language** table proposal (never SQL); on yes the table is
-  created and `brain/data-model.md` written; further records inserted **freely**
-  (no prompt); the new field asked in plain language, then `data-model.md`
-  updated with a dated note.
-- **Inspect:** `projects/<slug>/data.sqlite` exists (created lazily, only now);
-  `brain/data-model.md` documents the table + dated column.
+  created via `data.py create` and `brain/data-model.md` written; further records
+  inserted **freely** (no prompt) via `data.py insert`; the new field asked in
+  plain language then added via `data.py addcol`, `data-model.md` updated with a
+  dated note; the question answered via `data.py query` (no `sqlite3` CLI, no
+  ad-hoc `python`, no raw read of the JSON). The data **survives** the query.
+- **Inspect:** `projects/<slug>/data/<table>.json` holds the rows and
+  `_schema.json` the columns (created lazily, only now); `data/.snapshots/` has
+  pre-write copies; `brain/data-model.md` documents the table + dated column.
 - [ ] PASS / FAIL
 
 ### F. Deliverable
@@ -135,11 +139,14 @@ plugin name needs to change again.
 - **Start:** 2–3 projects + a `_triage/` file (from G or hand-seeded).
 - **Do:** run `/sidekick-checkin`.
 - **Expect:** per-item **multiple-choice** proposals (Yes / No / Edit first);
-  approved actions routed through the correct gatekeeper (brain = diff+approval;
-  output = confirm); **reply drafts are NOT sent**; a short wrap-up; each touched
-  `agenda.md` left clean.
-- **Inspect:** brain/output changes only where approved; `log/YYYYMMDD-checkin.md`
-  per touched project; drafts present but unsent; agendas updated.
+  for any project with a `data/` folder, a **timestamped backup is taken first**
+  (`data/.backups/<ts>-check-in/`) before anything is processed; approved actions
+  routed through the correct gatekeeper (brain = diff+approval; output = confirm);
+  **reply drafts are NOT sent**; a short wrap-up; each touched `agenda.md` left
+  clean.
+- **Inspect:** `data/.backups/` has a fresh dated copy for each project with data;
+  brain/output changes only where approved; `log/YYYYMMDD-checkin.md` per touched
+  project; drafts present but unsent; agendas updated.
 - [ ] PASS / FAIL
 
 ### I. Archive (+ restore)

@@ -20,10 +20,12 @@ three **write disciplines**.
 | Process / work-in-progress | `log/` | **Free** — written to disk, chat gets a short summary |
 | Durable knowledge | `brain/` | **Diff + your approval** before it's saved |
 | A deliverable | `output/` | **You confirm** before it's created/edited/deleted |
-| Database **structure** | `data.sqlite` | **You confirm** (asked in plain language) |
+| Structured-data **structure** (new table/column) | `data/` | **You confirm** (asked in plain language) |
 
-Database **records that fit** an existing table flow in freely; only structure
-changes are confirmed. The chat is the steering wheel; the disk is the workbench.
+Structured data lives in plain JSON tables under `data/` (one file per table),
+managed by a bundled helper. **Records that fit** an existing table flow in
+freely; only structure changes are confirmed. The chat is the steering wheel;
+the disk is the workbench.
 
 ## Install (one-time)
 

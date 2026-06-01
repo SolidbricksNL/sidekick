@@ -32,6 +32,12 @@ the plugin-wide interaction style — see
 For **each** non-archived project, in a sensible order (e.g. most
 recently active first):
 
+0. **Back up structured data first.** If the project has a `data/` folder,
+   run a timestamped backup **before doing anything else** with it:
+   `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" backup --project projects/<slug> --label check-in`
+   (writes a dated copy into `data/.backups/`). This is a hard rule — the
+   check-in never processes a project's data without first taking a dated
+   backup. Skip silently for projects that have no `data/` yet.
 1. Read the project's `agenda.md` (open items, waiting-on, notes for next
    check-in) and the brain index from its `CLAUDE.md` for context.
 2. Pull any triage findings tagged to this project.
@@ -52,6 +58,8 @@ recently active first):
    - **Do an action** — a task to perform now in this session.
    - **Create a deliverable** — something in `output/` → needs
      confirmation; generated in the default output language.
+   - **Structured data** — load/correct records via `scripts/data.py`; a
+     new table or column needs plain-language confirmation first.
    - **Reply** — to an email or chat. **Draft only** unless the user
      explicitly approves sending; never send unprompted.
    - **Agenda** — add a new item, or tick/close an existing one.
@@ -81,8 +89,10 @@ disciplines:
   re-detected. If the user defers a log, leave it unstamped — it resurfaces
   at the next check-in. (The original log stays in `log/`; only the stamp is
   added.)
-- **Output/database structure:** confirm, then create/edit; record what
-  was produced.
+- **Output:** confirm, then create/edit; record what was produced.
+- **Structured data:** records that fit existing columns flow in freely via
+  `scripts/data.py`; a new table or column is a structure change — confirm
+  in plain language first, then update `brain/data-model.md`.
 - **Agenda:** update `agenda.md` directly (this is bookkeeping, written
   freely like the log).
 - **Replies:** draft in the relevant language; only send if the user

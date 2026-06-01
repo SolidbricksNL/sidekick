@@ -87,7 +87,7 @@ Setup must roll out the structure, so create **at least one** project:
      with the project name filled in.
    - `agenda.md` from `../sidekick-core/references/agenda-template.md`.
    - empty `brain/`, `log/`, `archive/`, `output/` directories.
-   - do **not** create `data.sqlite` yet (lazy creation).
+   - do **not** create `data/` yet (lazy — appears on the first table).
 3. Also create the root-level system folders if absent: `_triage/` and
    `_archive/projects/`.
 

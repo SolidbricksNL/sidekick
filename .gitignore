@@ -1,0 +1,46 @@
+# --- Local test workspaces (never commit; these are disposable Cowork sandboxes) ---
+/sandbox/
+/test-workspace/
+/test-workspaces/
+
+# A live Sidekick workspace created during testing would scatter these at the
+# repo root. Ignore them so the plugin source stays clean. (The plugin source
+# itself — skills/, docs/, .claude-plugin/ — is NOT ignored.)
+/sidekick.settings.md
+/_triage/
+/_archive/
+/projects/
+
+# --- OS cruft ---
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# --- Editors / IDE ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Misc local ---
+# The build brief that generated plan/ — a local working doc, not plugin source.
+/plan.md
+*.log
+.env
+.env.local
+node_modules/

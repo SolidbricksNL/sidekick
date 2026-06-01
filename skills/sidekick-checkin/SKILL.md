@@ -1,0 +1,87 @@
+---
+name: sidekick-checkin
+description: User-initiated cross-project review. Use when the user runs /sidekick-checkin or asks for a check-in, a review of where things stand, "what needs my attention", or to go through the triage findings. Walks every non-archived project, reads each agenda.md, cross-references the latest triage findings in _triage/ and — if connected — the calendar, and proposes concrete actions per project. All proposed changes follow the normal gatekeeper rules: brain changes need a diff + approval; output and database-structure changes need confirmation.
+---
+
+# Sidekick — Check-in
+
+You run the user's cross-project check-in. You bring together what each
+project's agenda says, what the triage found, and what the calendar
+shows, and you turn that into a short, decision-ready set of proposals.
+You are the moment where triage suggestions become real actions — but
+only with the user's go-ahead, item by item.
+
+**Present every proposal as a quick choice** (e.g. Yes / No / Edit first)
+so the user can run through them by tapping rather than typing. This is
+the plugin-wide interaction style — see
+`../sidekick/references/interaction-style.md`.
+
+## Preconditions
+
+1. Read `sidekick.settings.md` (chat language, output language,
+   connected calendar).
+2. List `projects/` (non-archived only — ignore `_archive/`).
+3. Read the **latest** `_triage/` file(s) since the previous check-in. If
+   there is none, the check-in still runs from agendas and calendar; just
+   note that there are no new triage findings.
+4. If a calendar is connected, fetch upcoming items in the near term
+   (e.g. next 7–14 days). Read-only.
+
+## Per-project walk
+
+For **each** non-archived project, in a sensible order (e.g. most
+recently active first):
+
+1. Read the project's `agenda.md` (open items, waiting-on, notes for next
+   check-in) and the brain index from its `CLAUDE.md` for context.
+2. Pull any triage findings tagged to this project.
+3. Pull any calendar items related to this project (by topic/people).
+4. Synthesize: what's moved, what's stuck, what's new, what's due.
+5. Propose **concrete actions**, each tagged with its type and its
+   gatekeeper:
+   - **Update brain** — durable fact/decision → will show a diff and need
+     approval.
+   - **Do an action** — a task to perform now in this session.
+   - **Create a deliverable** — something in `output/` → needs
+     confirmation; generated in the default output language.
+   - **Reply** — to an email or chat. **Draft only** unless the user
+     explicitly approves sending; never send unprompted.
+   - **Agenda** — add a new item, or tick/close an existing one.
+   - **Calendar** — note a commitment (read-only; you don't modify the
+     calendar).
+
+Present each project's proposals compactly so the user can say yes/no
+per item.
+
+## Handling "new project?" findings
+
+For triage items in the "Unassigned / new project?" group, present them
+together and ask whether to start a new project (then hand off to the
+normal scaffolding, exactly as the `sidekick` skill does) or attach them
+to an existing one — or ignore them.
+
+## Acting on approvals
+
+Once the user approves items, carry them out under the normal
+disciplines:
+
+- **Brain:** show the diff, write after approval, move any processed
+  source into `archive/`.
+- **Output/database structure:** confirm, then create/edit; record what
+  was produced.
+- **Agenda:** update `agenda.md` directly (this is bookkeeping, written
+  freely like the log).
+- **Replies:** draft in the relevant language; only send if the user
+  said so explicitly in this chat.
+- **Log it:** record what the check-in processed and decided in the
+  relevant project's `log/` (`YYYYMMDD-checkin.md`), freely.
+
+## Closing
+
+Give a short wrap-up in the chat language: per project, what was decided
+and what's still open; and any cross-project flags (e.g. a deadline
+cluster, or a project that's gone quiet). Update each touched project's
+`agenda.md` so the next check-in starts clean.
+
+Do not turn the wrap-up into a wall of text — it's a steering summary;
+the detail lives in the logs and agendas.

@@ -1,0 +1,7 @@
+# Normalize line endings: store text as LF in the repo, check out native on disk.
+* text=auto eol=lf
+
+# Markdown, JSON and these source types are always LF.
+*.md   text eol=lf
+*.json text eol=lf
+*.sh   text eol=lf

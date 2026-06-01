@@ -32,9 +32,8 @@ shipped files, and a tagged release exists.
    it in the README (and/or a dedicated `INSTALL.md`).
 4. [ ] **Validator hook.** Reference `scripts/validate-structure.*` (plan 01) in
    the README so contributors can re-check structure before release.
-5. [ ] **Version + tag.** Bump `plugin.json` `version` per semver (decide the
-   target, e.g. `0.2.0` for the hardened pre-release or `1.0.0` for first ship).
-   Create a matching annotated git tag and push it.
+5. [ ] **Version + tag.** Bump `plugin.json` `version` to **`0.2.0`** and create
+   a matching annotated git tag **`v0.2.0`**, then push it.
 6. [ ] **Internal rollout note.** Write a short note for colleagues: what
    Sidekick is, how to install it in Cowork, the one-time init, the
    three-disciplines mental model, and where to give feedback. Keep it internal
@@ -50,11 +49,13 @@ shipped files, and a tagged release exists.
 - An internal rollout note exists for colleagues.
 - The structure validator passes on the final tree.
 
-## Notes / open questions
-- **Version target.** Decide whether the hardened build ships as `0.2.0`
-  (pre-release) or `1.0.0` (first real release). Needs the user's call.
+## Notes / open questions (version + distribution resolved 2026-06-01)
+- **Version target — RESOLVED.** Ship as **0.2.0**. Bump `plugin.json` to
+  `0.2.0` and tag `v0.2.0`.
+- **Distribution — RESOLVED.** Install from the **private GitHub repo** first
+  (add the plugin from GitHub). Later, create an organization plugin; once we're
+  happy with it, the GitHub repo can be opened public. The INSTALL section
+  documents the from-GitHub install path for now.
 - **Where INSTALL lives.** README section vs a separate `INSTALL.md` — pick one;
-  a section keeps it discoverable, a file keeps the README lean.
-- **Release mechanism.** Confirm how Cowork plugins are distributed/installed
-  internally (a git URL, a marketplace, a zipped artifact). This shapes both the
-  INSTALL section and the rollout note. Flag for the user.
+  a section keeps it discoverable, a file keeps the README lean. (Still open —
+  minor.)

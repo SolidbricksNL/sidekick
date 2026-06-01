@@ -68,22 +68,27 @@ any failure.
   the unresolved ones are explicitly logged as open questions for plan 03/04.
 - No dead `/sidekick-*` command references.
 
-## Notes / open questions
-- **Cowork manifest required fields.** Current `plugin.json` has `name`,
-  `version`, `description`, `author{name}`. Unconfirmed whether Cowork also
-  wants e.g. `license`, `homepage`, a `skills`/`commands` array, or an icon.
-  ARCHITECTURE says only `plugin.json` lives in `.claude-plugin/` and implies
-  skills are auto-discovered from `skills/`. **Needs confirmation against the
-  current Cowork plugin spec before we call the manifest "valid".**
-- **Cross-skill reference reads.** `skills/sidekick-init/SKILL.md` instructs the
-  init skill to scaffold from `references/project-claude-template.md` and
-  `references/agenda-template.md`, but those templates physically live in
-  `skills/sidekick/references/`, not under `sidekick-init/`. Two unknowns: (a)
-  can a Cowork skill read a *sibling* skill's reference files at runtime? (b) the
-  `agenda-template.md` mention in init has no "(in the sidekick skill)" qualifier,
-  so the literal path `sidekick-init/references/agenda-template.md` does not
-  exist — a likely dead link. Resolution options (duplicate the templates into
-  init, or rely on cross-skill paths) are decided in plan 03/04; this plan only
-  flags it.
-- **Slash-command declaration.** Confirm whether `/sidekick-init` etc. are
-  auto-derived from skill names or need explicit declaration in `plugin.json`.
+## Notes / open questions (resolved 2026-06-01)
+- **Cowork manifest fields — RESOLVED.** Cowork uses the same plugin format as
+  Claude Code; only `name` is required. The current `plugin.json` (`name`,
+  `version`, `description`, `author{name}`) is **valid as-is** — `author` as an
+  object with `name` is the correct shape. Skills are auto-discovered from
+  `skills/`; no `skills`/`commands` array is needed. The validator (task 6) should
+  assert `name` exists + JSON parses, and may *warn* (not fail) on missing
+  optional `repository`/`license`/`keywords` (added at release, plan 13).
+- **Slash-command derivation — RESOLVED.** Commands are auto-derived from skill
+  folder names; no declaration needed. **Verify (→ plan 12):** in an installed
+  plugin, skills are namespaced `/sidekick:<skill>` (e.g.
+  `/sidekick:sidekick-init`) rather than the bare `/sidekick-init` the
+  skills + README currently use. Confirm Cowork's actual form before any rewrite;
+  the validator should list the derived command names so the discrepancy is
+  visible.
+- **Cross-skill reference reads — RESOLVED.** Templates stay in
+  `skills/sidekick/references/`; sibling skills reference them via
+  `../sidekick/references/...` (the convention triage/checkin/archive already use
+  for `interaction-style.md`). The whole plugin is copied to the cache as one
+  unit, so within-plugin `../` paths resolve. Init's two template references were
+  fixed to this path **in this pass**. The validator (task 4) should resolve
+  `../sidekick/references/...` relative to each SKILL.md and confirm the targets
+  exist. Hedge (→ plan 12): if Cowork sandboxes skills per-directory, move shared
+  refs to a plugin-root `shared-references/` dir.

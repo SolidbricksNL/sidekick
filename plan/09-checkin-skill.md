@@ -58,10 +58,12 @@ over a 2–3 project sandbox showing proposals → approvals → correct writes.
 - Every approved action type is shown routing through its correct gatekeeper.
 - The wrap-up + agenda-cleanup behavior is confirmed.
 
-## Notes / open questions
-- **Reply sending mechanism.** Sending a reply requires a connector write, which
-  is the one place check-in may act outward — confirm how/whether Cowork exposes
-  a send action, and re-affirm it is gated behind an explicit in-chat "send it".
+## Notes / open questions (reply mechanism resolved 2026-06-01)
+- **Reply sending — RESOLVED (gated).** Replies are drafted only; sending uses a
+  connector the **user** enabled, and only after an explicit in-chat "send it".
+  Check-in never enables a connector. If no send-capable connector is connected,
+  check-in leaves the draft (in the chat or `output/`) for the user to send
+  manually. It never sends unprompted.
 - **Triage freshness.** Define "latest triage since the previous check-in" when
   several triage files exist — read the newest, or all unprocessed ones? Decide
   and document so findings aren't missed or double-counted.

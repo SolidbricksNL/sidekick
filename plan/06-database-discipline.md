@@ -32,9 +32,14 @@ record inserts flow freely.
 4. [ ] Confirm lazy creation: `data.sqlite` is NOT made at scaffold; the first
    table creation is itself a structure change and must be confirmed in plain
    language.
-5. [ ] Pin down the **execution mechanism** for SQLite in Cowork (see open
-   questions) — how Sidekick actually runs SQL (a shell `sqlite3`, a tool, an
-   MCP). Document the assumption the skill relies on.
+5. [ ] Implement the **execution mechanism**: Sidekick runs SQL via Python's
+   stdlib `sqlite3` module through a small helper script bundled in the plugin
+   (e.g. `skills/sidekick/scripts/db.py`) — NOT the `sqlite3` CLI (not present
+   in-env and not guaranteed in Cowork). The helper supports exactly what the
+   discipline needs: run a schema statement (after approval), insert records that
+   fit, and run a read query. Per-project databases stay at
+   `projects/<slug>/data.sqlite`. Create the helper in this unit and document how
+   the skill invokes it (`python3 <helper> ...`).
 6. [ ] Build the **worked example** (write it into this plan as the artifact):
    - User shares a list of contacts → Sidekick proposes a `contacts` table in
      plain language ("Shall I start a contact list with name, company, role,
@@ -60,12 +65,13 @@ record inserts flow freely.
 - The SQLite execution mechanism assumption is documented (or raised as an open
   question for the user).
 
-## Notes / open questions
-- **SQLite execution in Cowork.** How does Sidekick actually create/alter/query
-  `data.sqlite` in Cowork — via a shell `sqlite3`, a built-in tool, or an MCP
-  server? The whole database discipline assumes some SQL execution path exists.
-  **Confirm the available mechanism**; if none is guaranteed, decide a fallback
-  (e.g. a structured file format) and flag the design impact to the user.
+## Notes / open questions (SQLite mechanism resolved 2026-06-01)
+- **SQLite execution — RESOLVED.** Sidekick runs SQLite via Python's stdlib
+  `sqlite3` module (Python 3.11 confirmed in-env; the `sqlite3` CLI is NOT
+  present and not guaranteed in Cowork). A helper script bundled in the plugin
+  performs create/alter/query; no external dependency. Node 24 is also available
+  as a fallback runtime if ever needed. Per-project DBs live at
+  `projects/<slug>/data.sqlite` (in the workspace, not the plugin).
 - **Schema in two places.** The schema lives both in the actual `data.sqlite`
   and (in plain language) in `brain/data-model.md`. Note the risk of drift and
   the rule that `data-model.md` is updated in the same approved step as the

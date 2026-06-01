@@ -69,9 +69,11 @@ finalized.
   scaffold dirs aren't a git concern there; but confirm Cowork tolerates empty
   `brain/`/`log/`/`archive/`/`output/` dirs, or whether each should get a tiny
   placeholder README on scaffold.
-- **Template location** (shared with plan 01 + plan 03): does init read the
-  `sidekick` skill's `references/*-template.md`, or do we duplicate them under
-  `sidekick-init/references/`? Decide once; apply in both plans.
+- **Template location — RESOLVED** (shared with plan 01 + plan 03): no
+  duplication. Templates live in `skills/sidekick/references/`; init references
+  them via `../sidekick/references/...` (already fixed in the init SKILL.md). Both
+  init and the always-on skill seed from the same files, guaranteeing identical
+  scaffolds.
 - **`{{MAIN_TOPIC}}` at scaffold time.** The CLAUDE.md template points at
   `brain/{{MAIN_TOPIC}}.md` before any brain file exists. Decide whether to fill
   a sensible default at scaffold, leave the placeholder, or comment it out until

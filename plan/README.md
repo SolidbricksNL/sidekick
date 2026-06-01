@@ -6,8 +6,8 @@ session can open and execute on its own. Work them roughly in order; the
 **Depends on** column is the real constraint.
 
 `docs/ARCHITECTURE.md` is the single source of truth. Plan files propose edits;
-they do not silently change the design. Anything ambiguous is recorded as an
-**open question** in the relevant plan file (and summarized at the bottom here).
+they do not silently change the design. The open questions raised during
+planning have been **resolved** (see the decisions section below).
 
 ## Execution order
 
@@ -25,7 +25,7 @@ they do not silently change the design. Anything ambiguous is recorded as an
 | 10 | [10-archive-skill.md](10-archive-skill.md) | Verify archive = move-never-delete + restore; scripted move-and-restore. | 04 | [ ] not started |
 | 11 | [11-interaction-style.md](11-interaction-style.md) | Ensure plugin-wide multiple-choice is applied everywhere; choice-point checklist. | 02 | [ ] not started |
 | 12 | [12-manual-test-walkthroughs.md](12-manual-test-walkthroughs.md) | End-to-end human-judged scenarios in a disposable Cowork sandbox; ~30-min checklist. | 03–11 | [ ] not started |
-| 13 | [13-docs-and-release.md](13-docs-and-release.md) | Final docs pass, INSTALL section, version bump + git tag, rollout note. | 01–12 | [ ] not started |
+| 13 | [13-docs-and-release.md](13-docs-and-release.md) | Final docs pass, INSTALL section, version bump to 0.2.0 + git tag, rollout note. | 01–12 | [ ] not started |
 
 Status legend: `[ ] not started` · `[~] in progress` · `[x] done`. Update both
 this row and the **Status:** line at the top of the plan file when a unit moves.
@@ -53,36 +53,46 @@ the plugin's structural correctness (manifest, skill frontmatter, reference
 paths, dead links). Run it before starting a unit and again before release
 (plan 13).
 
-## Collected open questions (need the user's decision before/while executing)
+## Resolved decisions (user review, 2026-06-01)
 
-These are aggregated from the individual plan files. Resolve the design-level
-ones before the units that depend on them run.
+The open questions raised during planning are resolved. Decisions below are
+binding for execution; the few residual items are verify-on-install checks
+folded into plans 02 and 12.
 
-1. **Cowork manifest required fields** (plan 01) — is `name`/`version`/
-   `description`/`author` the complete required set, or does Cowork want more
-   (license, homepage, explicit skills/commands)? Are `/sidekick-*` commands
-   auto-derived from skill names?
-2. **Cross-skill template reads** (plans 01, 03, 04) — can `sidekick-init` read
-   the `sidekick` skill's `references/*-template.md` at runtime, or must those
-   templates be duplicated under `sidekick-init/references/`? (The init body's
-   `agenda-template.md` reference currently resolves to a non-existent path.)
-3. **SQLite execution mechanism** (plan 06) — how does Sidekick actually run
-   SQL against `data.sqlite` in Cowork (shell `sqlite3`, a tool, an MCP)? If
-   none is guaranteed, what's the fallback?
-4. **Connector / MCP mechanism** (plans 03, 08, 09) — are email/chat/calendar
-   exposed as native Cowork connectors, MCP servers, or both? This defines what
-   "enable the connector" means and how triage/check-in read and (for replies)
-   write.
-5. **Filesystem move primitive** (plan 10) — is a true `mv`/rename available for
-   archiving, or only copy+delete (which needs a careful verify-then-remove
-   sequence to honor "never delete")?
-6. **ARCHITECTURE §13 sync** (plans 03, 13) — mark the now-resolved open items
-   (questionnaire wording, agenda template) and confirm what stays deferred
-   (`.mcp.json`).
-7. **Release target + distribution** (plan 13) — ship as `0.2.0` or `1.0.0`,
-   and how are Cowork plugins distributed/installed internally (git URL,
-   marketplace, zipped artifact)?
-8. **GitHub account / ownership** (repo setup) — the repo was created under the
-   authenticated GitHub account **`boezelaere`** (`github.com/boezelaere/sidekick`,
-   private), while the session user is `wouter.boelaars@visma.com`. Confirm this
-   is the intended owner, or move it to a Visma org.
+1. **Cowork manifest** (plan 01) — RESOLVED. Cowork uses the **same plugin
+   format as Claude Code**. In `plugin.json` only `name` is required; the current
+   manifest (`name`, `version`, `description`, `author{name}`) is **valid as-is**.
+   Skills are auto-discovered from `skills/`; no declaration needed. Optional
+   polish (`repository`, `license`, `keywords`, `homepage`) is deferred to plan
+   13. **Verify item (→ plan 12):** in a plugin, skill commands are namespaced
+   `/sidekick:<skill>` (e.g. `/sidekick:sidekick-init`), but the skills + README
+   currently write `/sidekick-init`. Confirm Cowork's real invocation form before
+   rewriting any command references.
+2. **Cross-skill templates** (plans 01, 03, 04) — RESOLVED: **no duplication.**
+   Shared templates stay in `skills/sidekick/references/`; other skills reference
+   them via the `../sidekick/references/...` relative path already used by
+   triage/checkin/archive for `interaction-style.md`. The whole plugin is copied
+   to the cache as one unit on install, so within-plugin `../` paths resolve.
+   Init's two broken template references were fixed to this convention **in this
+   pass**. Hedge (→ plan 12): if Cowork sandboxes skills per-directory, fall back
+   to a plugin-root `shared-references/` dir (a mechanical move).
+3. **SQLite execution** (plan 06) — RESOLVED: run SQLite via Python's **stdlib
+   `sqlite3` module** (Python 3.11 confirmed in-env; the `sqlite3` CLI is NOT
+   present and not guaranteed in Cowork). A small helper script **bundled in the
+   plugin** does create/alter/query; per-project databases stay at
+   `projects/<slug>/data.sqlite`. No external dependency.
+4. **Connectors** (plans 03, 08, 09) — RESOLVED: the **user** installs/enables
+   connectors in Cowork. Skills never enable anything — they record intent (init)
+   and **guide** the user to enable connectors. No `.mcp.json` auto-config.
+5. **Archive move primitive** (plan 10) — RESOLVED: prefer a true rename/move; if
+   the runtime lacks atomic rename, **copy → verify the copy is complete → only
+   then remove the source**. The source is never removed before the copy is
+   verified, so "never delete" always holds.
+6. **ARCHITECTURE §13 sync** (plans 03, 13) — YES. Mark the questionnaire wording
+   and agenda template as resolved; drop `.mcp.json` auto-config (superseded by
+   decision 4). Applied in plan 13's docs pass.
+7. **Release** (plan 13) — Ship as **0.2.0**. Distribution: install from the
+   private GitHub repo first; later create an organization plugin and open it
+   public from GitHub once we're happy with it.
+8. **Repo ownership** — CONFIRMED: `github.com/boezelaere/sidekick` (private) is
+   the intended owner.

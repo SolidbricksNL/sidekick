@@ -61,11 +61,13 @@ artifacts: a sample `_triage/` output file and a written safety checklist.
 - Step-by-step instructions for attaching triage to a Cowork scheduled task are
   written.
 
-## Notes / open questions
-- **Connector access mechanism.** How triage actually reads email/chat/calendar
-  in Cowork (native connectors vs MCP servers vs `.mcp.json`) is unconfirmed
-  (shared with plan 03). The safety rules hold regardless, but the "what to
-  scan" steps assume some read API exists.
+## Notes / open questions (connectors resolved 2026-06-01)
+- **Connector access — RESOLVED.** The user installs/enables connectors in
+  Cowork; triage reads whatever the user has connected. Triage never enables a
+  connector. If a source the user marked "yes" in settings is not actually
+  connected, triage notes it as "not connected — enable it in Cowork" rather than
+  failing. The safety rules (read-only, `_triage/`-only) hold regardless of the
+  connector type.
 - **"Last run" window.** Window detection keys off the most recent `_triage/`
   file date. Note edge cases: multiple runs in one day (file is updated, not
   duplicated — confirm this resets the window correctly), and the first-ever run

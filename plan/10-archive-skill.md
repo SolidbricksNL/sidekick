@@ -51,11 +51,11 @@ a **scripted move-and-restore** in the sandbox proving nothing is ever deleted.
 - "Move, never delete" and "log before archiving mid-task" are confirmed in
   wording.
 
-## Notes / open questions
-- **Move primitive in Cowork.** Confirm the actual filesystem move available to
-  the skill (a `mv`/rename vs a copy+verify+remove). The skill must use a true
-  move; if only copy+delete is available, the "never delete" guarantee needs a
-  careful sequence (copy, verify, then remove the source only after verified) —
-  decide and document.
+## Notes / open questions (move primitive resolved 2026-06-01)
+- **Move primitive — RESOLVED.** Prefer a true rename/move of the whole folder.
+  If atomic rename is unavailable in the runtime, the skill does: copy the folder
+  to `_archive/projects/<slug>/`, **verify the copy is complete and intact**, and
+  only then remove the source. The source is never removed before the copy is
+  verified, so "never delete" holds even on the copy+remove path.
 - **Partial archive safety.** Reaffirm the rule to log current work before
   archiving, so an in-progress session isn't archived with unsaved context.

@@ -58,19 +58,17 @@ across the init skill, the settings template, and ARCHITECTURE §8.
 - First-project scaffolding in init is confirmed identical to the canonical
   contract in plan 04.
 
-## Notes / open questions
-- **Where init reads its scaffold templates.** Init must seed `CLAUDE.md` and
-  `agenda.md` from templates that live under `skills/sidekick/references/`. Pin
-  down whether Cowork lets init read another skill's references at runtime; if
-  not, decide whether to duplicate the two templates into
-  `skills/sidekick-init/references/`. (Shared with plan 01 + plan 04.)
-- **ARCHITECTURE §13 sync.** §13 still lists "exact wording of the init
-  questionnaire" as an open build item, but the wording now exists in the init
-  skill. Decide whether to update ARCHITECTURE §13 to mark it resolved (defer
-  the actual edit to plan 13 docs pass).
-- **`.mcp.json` connector config.** ARCHITECTURE §13 defers optional MCP
-  connector configuration for mail/chat/calendar. Init only records intent, so
-  this plan does not introduce `.mcp.json`; flag for the user whether connectors
-  in Cowork are exposed as native connectors, MCP servers, or both — this
-  affects what "enable the connector" means in the closing wrap-up. (Shared with
-  plan 08.)
+## Notes / open questions (resolved 2026-06-01)
+- **Where init reads its scaffold templates — RESOLVED.** Init seeds `CLAUDE.md`
+  and `agenda.md` from `../sidekick/references/project-claude-template.md` and
+  `../sidekick/references/agenda-template.md` — no duplication. The init SKILL.md
+  was fixed to these paths in this pass (it previously pointed at non-existent
+  `references/...` paths). (Shared with plan 01 + plan 04.)
+- **Connectors — RESOLVED.** The user installs/enables connectors in Cowork
+  themselves. Init only **records intent** and, in the closing wrap-up,
+  **guides** the user to enable the connectors they said yes to. Init never
+  enables anything and never writes a `.mcp.json`. (Shared with plan 08.)
+- **ARCHITECTURE §13 sync — RESOLVED (yes).** §13 will be updated in plan 13 to
+  mark the questionnaire wording and agenda template as done, and to drop the
+  `.mcp.json` auto-config item (superseded by the connectors decision above).
+  Defer the actual edit to the plan 13 docs pass.

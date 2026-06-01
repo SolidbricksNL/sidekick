@@ -72,6 +72,13 @@ boundary is airtight in the prompt wording.
 - **Trigger collisions.** The always-on `sidekick` description is broad by
   design; confirm it does not pre-empt the explicit `/sidekick-*` skills when
   the user invokes those directly.
+- **Command namespacing (verify, → plan 12).** In an installed plugin, skill
+  commands are namespaced `/sidekick:<skill>` (e.g. `/sidekick:sidekick-init`),
+  but every SKILL.md + the README write the bare `/sidekick-init`. Before
+  proposing any rewrite of these references, confirm Cowork's actual invocation
+  form in a real install (plan 12). If namespacing applies, fixing the
+  cross-references is a consistent, mechanical find-replace; if the bare form
+  also works, leave them.
 - Any skill ↔ ARCHITECTURE conflict found here that is a genuine design
   question (not just wording) must be escalated as an open question to the user,
   not resolved unilaterally.

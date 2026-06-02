@@ -52,7 +52,11 @@ you ask them. Full guidance in `references/interaction-style.md`.
 2. **Determine the project** (see "Project detection").
 3. **Read the project's `CLAUDE.md` and the brain files it points to**,
    plus `agenda.md`, so you have context without the user re-explaining.
-4. Proceed with the work, applying the three write disciplines.
+4. **If Output sync is on** (and a storage connection is set), reconcile this
+   project's `output/` with `sidekick-<slug>/` **both ways** before working, so
+   you start from the latest deliverables (see "Output sync" under Discipline
+   3). Skip silently when sync is off or no storage is connected.
+5. Proceed with the work, applying the three write disciplines.
 
 ## Project detection
 
@@ -221,19 +225,35 @@ protocol in `references/brain-protocol.md`. Essence:
 deleting any deliverable. Generate in the default output language unless
 told otherwise. Do not produce documents here unprompted.
 
-**Output sync (optional mirror).** If `sidekick.settings.md` has **Output
-sync: Yes** *and* a storage connection is set, also **mirror** each
-deliverable to the connected storage after the confirmed local write: push
-it to a `sidekick-<slug>/` folder in the storage root (area subfolders
-preserved). It is **one-way** — the local `output/` stays the original — and
-**additive**: never delete or rename in the external storage, even if the
-local file is removed. Write locally **first** (that is the gatekept,
-canonical step); the mirror is a follow-on copy and needs **no extra
-confirmation** (the setting is the consent). If the push fails (connector off,
-offline), keep the local deliverable, tell the user the mirror didn't update,
-and continue — never block the local write. The check-in reconciles any
-missed pushes. When Output sync is No (or no storage is connected), skip all
-of this. Full spec: ARCHITECTURE §7c.
+**Output sync (optional, two-way).** If `sidekick.settings.md` has **Output
+sync: Yes** *and* a storage connection is set, keep this project's `output/`
+**in step both ways** with the external folder `sidekick-<slug>/` (fixed
+prefix `sidekick` + the project slug; area subfolders preserved). Full spec
+and the per-file reconcile table: ARCHITECTURE §7c.
+
+- **Push immediately on a confirmed output write.** After you create/edit a
+  deliverable (the output gatekeeper already said yes), write locally **first**,
+  then push it to `sidekick-<slug>/`. No extra confirmation — the setting is
+  the consent.
+- **Pull + reconcile at session start and at the check-in.** When this project
+  becomes active (and again as a sweep at `/sidekick-checkin`), reconcile
+  `output/` with `sidekick-<slug>/` in **both** directions, using the manifest
+  `projects/<slug>/.sidekick-sync.json` (path → last-synced mtime; at the
+  **project root**, never inside `output/`, so it isn't synced itself):
+  one side changed → copy the newer over; a file new on one side → copy it
+  across; a file deleted on one side → **leave it** (don't resurrect, don't
+  delete the other copy — additive both ways).
+- **A true conflict (both sides changed the same file since last sync) →
+  ASK** via the picker: keep the Cowork version, keep the external version, or
+  keep both (rename one). Never silently overwrite a conflict.
+- After reconciling, rewrite the manifest to the new state. First sync (no
+  manifest) → treat all files as new, copy both ways, no false conflicts.
+- **Best-effort.** Two-way needs the connector to list + read + write; if it
+  can only write, fall back to push-only and say so. On any failure (connector
+  off, offline), leave both sides as they are, tell the user what didn't sync,
+  and continue — never block a local write or delete data.
+
+When Output sync is No (or no storage is connected), skip all of this.
 
 **Structured-data structure** (`data/`): see `references/data-discipline.md`.
 Ask for confirmation in plain, non-technical language before any structure

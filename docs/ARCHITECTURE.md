@@ -381,60 +381,92 @@ artifact (gated) — but it adds no new gatekeeper of its own.
 
 By default `output/` lives only in the Cowork workspace. When the user has a
 **storage connection** configured (§8) they may additionally switch on
-**output sync**: Sidekick then **mirrors** each project's deliverables to that
-external storage, so finished work also lands where the user (and colleagues)
-already keep files.
+**output sync**: Sidekick then keeps each project's deliverables **in step**
+with that external storage **in both directions**, so finished work also lands
+where the user (and colleagues) already keep files — and edits made *there*
+flow back into the workspace.
 
-**One-way mirror — the local `output/` stays canonical.** The workspace
-`projects/<slug>/output/` remains the source of truth and the workbench; the
-external copy is a downstream mirror Sidekick keeps up to date. Sync never
-reads *from* external back into the workspace, and the rest of the
-architecture (brain, log, data, gatekeepers) is untouched — only `output/` is
-mirrored, nothing else.
+**Two-way sync — neither side is sole owner.** The workspace
+`projects/<slug>/output/` and the external folder are kept reconciled: a
+change on **either** side is carried to the other. There is no daemon, so the
+reconcile happens at defined moments (below), not live. Only `output/` is
+synced — the rest of the architecture (brain, log, data, gatekeepers) is
+untouched.
 
 **Layout — one folder per project in the storage root.** The external root
-gets a `sidekick-<slug>/` folder per project, mirroring that project's
-`output/` tree (area subfolders included):
+gets one folder per project, named with the **fixed prefix `sidekick`** plus
+the project slug — `sidekick-<slug>/` — holding that project's `output/` tree
+(area subfolders included). The prefix is constant; only the slug varies, and
+that postfix is derived at runtime — it is **not** enumerated in
+`sidekick.settings.md` (§8).
 
 ```
 <external-storage-root>/
-├── sidekick-<project-a>/        ← mirrors projects/<project-a>/output/
+├── sidekick-<project-a>/        ↔ projects/<project-a>/output/
 │   ├── <deliverable>.docx
 │   └── <area>/                  ←   output/<area>/ subfolders preserved
-└── sidekick-<project-b>/        ← mirrors projects/<project-b>/output/
+└── sidekick-<project-b>/        ↔ projects/<project-b>/output/
 ```
 
-**When it syncs — write-through, with a check-in reconcile as the safety
-net.** Two moments:
+**When it syncs.** Push is immediate; pull and full reconcile happen at two
+moments:
 
-1. **On every confirmed output write.** Right after a deliverable is
-   created or edited in `output/` (the normal output gatekeeper already
-   said yes), Sidekick also pushes the file to `sidekick-<slug>/` in the
-   external storage. The local write happens **first** and is canonical; the
-   mirror is a follow-on copy.
-2. **A reconcile sweep at the check-in.** The check-in (§11) walks each
-   project's `output/` and pushes anything newer or missing in the mirror,
-   so a push that was skipped or failed between check-ins is caught.
+1. **Push on every confirmed output write.** Right after a deliverable is
+   created or edited in `output/` (the output gatekeeper already said yes),
+   Sidekick pushes the file to `sidekick-<slug>/`. The local write happens
+   **first**; the push is a follow-on.
+2. **Pull + reconcile at session start (active project) and at the
+   check-in.** When a project becomes active, and again as a sweep over every
+   project at `/sidekick-checkin` (§11), Sidekick reconciles `output/` with
+   `sidekick-<slug>/` in **both** directions — pulling external edits into the
+   workspace and pushing local ones out.
 
-**Additive — Sidekick never deletes in the external storage.** Sync only
-creates and overwrites the mirror; if a deliverable is deleted or renamed
-locally, the old external copy is **left in place** (it may go stale — the
-user manages external deletions themselves). This is the safe default
-against accidental data loss in a shared drive.
+**The reconcile rule (per file).** To tell a genuine edit from a genuine
+delete, and to spot true conflicts, Sidekick keeps a small **sync manifest**
+per project at `projects/<slug>/.sidekick-sync.json` — a map of each synced
+file to its last-synced modified-time. The manifest lives at the *project*
+root, **not inside `output/`**, so it is never itself synced. Each reconcile,
+for every path across local ∪ external ∪ manifest:
 
-**No new gatekeeper.** The deliverable was already confirmed under the output
-gatekeeper (§7); the mirror is a mechanical consequence of the user having
-turned sync on. The *setting itself* is the consent. Sync adds no extra
-confirmation per file.
+| Situation | Action |
+|---|---|
+| Present both sides, **unchanged** since the manifest | nothing |
+| Present both, **one** side changed | copy the newer over the older |
+| Present both, **both** changed since the manifest (a true **conflict**) | **ask the user** via the picker — keep the Cowork version, keep the external version, or keep both (one renamed). Never silently overwrite. |
+| Present on **one** side, **not** in the manifest (genuinely **new**) | copy it to the other side |
+| In the manifest but now **missing on one side** (a genuine **delete**) | respect it — **do not resurrect** it on the side it was removed, and **do not delete** it on the other side. The remaining copy stays as an orphan. |
 
-**Mechanism and failure handling.** The push goes through the **connected
-storage connector** (Google Drive, OneDrive/Outlook, …) using whatever
-write/upload it exposes — the plugin does not enable the connector (§8, §13).
-Sync therefore runs only when (a) the setting is on **and** (b) a storage
-connection is actually enabled in Cowork. If the push fails (connector off,
-offline, permission), Sidekick **keeps the local deliverable**, tells the user
-the mirror could not be updated, and moves on — a failed mirror never blocks
-or undoes the local write. The check-in reconcile retries it later.
+After reconciling, Sidekick rewrites the manifest to the new state. On the
+**first** sync (no manifest yet) every file counts as new and is copied both
+ways — no false conflicts.
+
+**Additive both directions — Sidekick never deletes a file as a side effect
+of sync.** A delete on one side is never propagated to the other; the other
+copy is left in place (it may go stale — the user removes orphans themselves,
+on whichever side). Conversely a deleted file is **not** resurrected from the
+other side (the manifest is how Sidekick knows it was deleted, not new). This
+is the safe default against accidental data loss in a shared drive — at the
+cost that *fully* removing a deliverable means deleting it on both sides.
+
+**Gatekeepers.** A **local** write is the normal output gatekeeper (§7) — the
+deliverable was confirmed, and the push out is a mechanical consequence of
+sync being on (no extra per-file confirmation). A **pulled** external change
+overwrites a workspace file the user did not touch this session; that is the
+point of sync, so it is applied without a prompt **except** in the conflict
+case above, which always asks. The *setting itself* is the standing consent
+for routine pulls; a true conflict is the one moment Sidekick stops to ask.
+
+**Mechanism and failure handling.** Sync goes through the **connected storage
+connector** (Google Drive, OneDrive/Outlook, …) using whatever list / read /
+write it exposes — the plugin does not enable the connector (§8, §13). It
+therefore runs only when (a) the setting is on **and** (b) a storage
+connection is actually enabled in Cowork. The two-way path additionally needs
+the connector to **list and read** the external folder (not just upload); if
+it can only write, Sidekick degrades to **push-only** and says so. If any step
+fails (connector off, offline, permission), Sidekick keeps both sides' files
+as they are, reports what could not sync, and moves on — sync never blocks a
+local write or destroys data. The next session-start / check-in reconcile
+retries.
 
 ---
 
@@ -449,9 +481,12 @@ One file in the root, written by the `sidekick-init` skill. Contains:
 - **Email connection** (yes / no).
 - **Messages/chat connection** (no / Slack / Teams / Google Chat / other).
 - **Storage connection** (no / Outlook / Google Drive / other).
-- **Output sync** (no / yes) — mirror each project's `output/` to the
-  connected storage (§7c). Only meaningful when a storage connection is set;
-  recorded as **no** (and not asked) when storage is "no".
+- **Output sync** (no / yes) — two-way sync of each project's `output/` with
+  the connected storage (§7c). Recorded as a plain **yes/no only**: the
+  per-project folder `sidekick-<slug>/` uses the fixed prefix `sidekick` and a
+  runtime-derived slug, so **no per-project name is written into settings**.
+  Only meaningful when a storage connection is set; recorded as **no** (and
+  not asked) when storage is "no".
 - **Calendar connection** (no / Google Calendar / Outlook Calendar / other).
 
 Chat language and output language are deliberately separate: a user may
@@ -525,10 +560,12 @@ The user starts the check-in themselves. Operation:
 7. **After distilling a log into the brain (on approval), stamp that log
    file** with `> distilled to brain: <date>`. If the user defers a log,
    leave it unstamped (it resurfaces at the next check-in).
-8. **Reconcile the external output mirror** (only if output sync is on and a
-   storage connection is enabled, §7c): push any deliverable that is newer or
-   missing in `sidekick-<slug>/` on the external storage. Additive — never
-   delete there. A failed push is reported, not fatal.
+8. **Reconcile output sync — both directions** (only if output sync is on and
+   a storage connection is enabled, §7c): per project, sync `output/` with
+   `sidekick-<slug>/` using the manifest rule — pull external edits in, push
+   local ones out, **ask on a true conflict** (both sides changed), and stay
+   **additive** (never delete or resurrect a file). A failed step is reported,
+   not fatal.
 
 The per-project `agenda.md` is deliberately simple (markdown): a list of
 live items with status, so the check-in can work with it well.
@@ -711,16 +748,26 @@ Resolved:
   output); `data.py` is **unchanged** (keeps the ~16 KB install cap). A richer
   React render was deferred — it would depend on Cowork's still-new live-artifact
   runtime, which the self-contained-HTML snapshot does not.
-- **Output sync to external storage (added 2026-06-02)** — an optional
-  setting (§7c, §8) that **mirrors** each project's `output/` to a connected
-  storage as `sidekick-<slug>/` per project in the storage root. **One-way**
-  (local `output/` stays canonical), **additive** (never deletes external),
-  pushed **write-through on each confirmed output write** plus a **reconcile
-  sweep at the check-in** (§11). No new gatekeeper — the deliverable was
-  already confirmed; the *setting* is the consent. Runs only when the setting
-  is on **and** a storage connector is actually enabled; a failed push keeps
-  the local file and is reported, never fatal. Recorded as **no** (and not
-  asked at init) when storage is "no".
+- **Output sync to external storage (added 2026-06-02; made two-way same
+  day)** — an optional setting (§7c, §8) that keeps each project's `output/`
+  **in step both ways** with a connected storage folder `sidekick-<slug>/`
+  (fixed prefix `sidekick` + runtime slug; **only yes/no is recorded in
+  settings**, never a per-project name — corrected after the first cut wrote
+  the postfix into the file). Push is immediate on each confirmed output
+  write; **pull + full reconcile run at session start (active project) and at
+  the check-in** (§11). A small per-project manifest
+  `projects/<slug>/.sidekick-sync.json` (path → last-synced mtime; lives at the
+  project root, never itself synced) distinguishes edit from delete and detects
+  conflicts: one-side change → propagate; **both-side change → ask via the
+  picker** (keep Cowork / external / both); **additive both ways** — a delete
+  is never propagated and never resurrected (orphan stays). No new gatekeeper
+  for routine pulls (the setting is the consent); only a true conflict stops to
+  ask. Needs the connector to **list + read + write** (write-only degrades to
+  push-only with a note). Runs only when the setting is on **and** a storage
+  connector is actually enabled; any failure is reported, never fatal, never
+  destroys data. Recorded as **no** (and not asked at init) when storage is
+  "no". The first cut (one-way mirror) was reworked the same session per user
+  feedback — local is no longer sole canonical.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

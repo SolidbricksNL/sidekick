@@ -57,16 +57,20 @@ list. Accept a free-text answer where it makes sense (role, "other").
 6. **Storage connection.** "Do you want to connect a storage location?"
    - Options: No / Outlook (OneDrive) / Google Drive / Other (specify).
 
-   **6b. Output sync (only ask if storage is not "No").** "Shall I also
-   keep your finished deliverables on that storage — a folder per project
-   (`sidekick-<project>`) in its root, kept in step with each project's
-   output?"
+   **6b. Output sync (only ask if storage is not "No").** "Shall I keep your
+   finished deliverables in step with that storage, both ways — a folder per
+   project (`sidekick-<project>`) in its root, so edits made there also come
+   back into your workspace?"
    - Options: Yes / No.
    - If storage is "No", **skip this question** and record Output sync as
      **No** automatically.
-   - Keep it non-technical: this mirrors `output/` one-way to the storage
-     (the workspace stays the original); Sidekick only adds and updates
-     there, never deletes.
+   - Keep it non-technical: this keeps `output/` and the storage in step in
+     **both directions**; if the same file is changed in both places at once,
+     Sidekick asks which version to keep, and it never deletes a file as a
+     side effect of syncing.
+   - **Record only Yes or No** in the settings — never write a per-project
+     folder name. The `sidekick-<project>` naming is a fixed convention
+     Sidekick applies at runtime.
 
 7. **Calendar connection.** "Do you want to connect a calendar, so the
    triage and check-in can take your agenda into account?"

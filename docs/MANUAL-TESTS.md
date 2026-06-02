@@ -229,27 +229,43 @@ plugin name needs to change again.
   without counting `X` separately.
 - [ ] PASS / FAIL
 
-### N. Output sync to external storage
+### N. Output sync to external storage (two-way)
 - **Start:** post-init sandbox with **Output sync: Yes** and a storage
   connector **actually enabled** in Cowork (Google Drive / OneDrive). An active
-  project `<slug>`.
-- **Do:** ask for a deliverable (as in F) and confirm it. Then ask for a
-  second one in an **area** (`output/<sub>/`). Then **delete** the first one
-  locally. Then run `/sidekick-checkin`.
-- **Expect:** after each confirmed local write, the file is **also mirrored**
-  to `sidekick-<slug>/` in the **storage root** (area file under
-  `sidekick-<slug>/<sub>/`) — **one-way**, **no extra confirmation** beyond the
-  output confirm. The deleted local file is **left in place externally**
-  (additive — never deleted there). The check-in **reconciles**: anything
-  newer/missing is pushed; nothing external is removed. If the connector is
-  off/offline, Sidekick keeps the local file, **says the mirror didn't
-  update**, and does not block.
-- **Inspect:** the storage shows `sidekick-<slug>/<deliverable>` and
-  `sidekick-<slug>/<sub>/<deliverable>`; the local `output/` is unchanged as
-  the original; the externally-orphaned (locally deleted) file still exists
-  externally.
+  project `<slug>`. Confirm `sidekick.settings.md` records **only** `Output
+  sync: Yes` — **no per-project folder name** written into the file.
+- **Do (push):** ask for a deliverable (as in F) and confirm it; then a second
+  one in an **area** (`output/<sub>/`).
+- **Do (pull):** edit one deliverable **externally** in `sidekick-<slug>/`
+  (change its text), then start a fresh session on `<slug>` (or run
+  `/sidekick-checkin`).
+- **Do (new-external):** drop a **new** file into `sidekick-<slug>/`
+  externally, then reconcile again.
+- **Do (delete):** **delete** one deliverable **locally**, then reconcile.
+- **Do (conflict):** change the **same** file both locally and externally
+  since the last sync, then reconcile.
+- **Expect:**
+  - **Push** — after each confirmed local write the file appears in
+    `sidekick-<slug>/` (area file under `sidekick-<slug>/<sub>/`); no extra
+    confirmation beyond the output confirm.
+  - **Pull** — the externally-edited file's new content is **brought back into
+    the workspace `output/`** at session start / check-in.
+  - **New-external** — the new external file is **copied into `output/`**.
+  - **Delete** — additive both ways: the locally-deleted file is **not
+    resurrected** locally **and not deleted** externally (orphan stays).
+  - **Conflict** — Sidekick **asks via the picker** (keep Cowork / keep
+    external / keep both); it does **not** silently overwrite either side.
+  - A per-project manifest `projects/<slug>/.sidekick-sync.json` exists (at the
+    **project root**, not inside `output/`) and is **not** itself synced.
+  - If the connector can only write (no list/read), Sidekick falls back to
+    **push-only** and says so; on any failure it keeps both sides and reports,
+    never blocking or deleting.
+- **Inspect:** content matches the winning side after each reconcile; the
+  manifest updates; `output/` and `sidekick-<slug>/` converge except for
+  intentional orphans; no data lost anywhere.
 - **Also (sync off):** with **Output sync: No** (or storage No), creating a
-  deliverable mirrors **nothing** — output stays only in the workspace.
+  deliverable syncs **nothing** — output stays only in the workspace, no
+  manifest is written.
 - [ ] PASS / FAIL
 
 ---

@@ -254,6 +254,34 @@ for (const skill of EXPLICIT_SKILLS) {
   info(`  ${skill}  →  /${skill}`);
 }
 
+// --- Check 7: install-truncation cap (runtime files) -----------------------
+// Cowork truncates an installed plugin file at a measured ~15808 bytes; anything
+// past that is silently lost on disk. data.py hit this (0.3.3/0.11.1) and so did
+// sidekick-core/SKILL.md (0.13.0 → the whole dashboard-routing rule + 3 sections
+// were truncated away, so the model never saw them and built dashboards by hand).
+// Guard every runtime-loaded file (skills/**: SKILL.md, references, scripts,
+// assets) — NOT docs/ (dev-only, never read at runtime).
+console.log('\n# Check 7 — install-truncation cap (~15808 B; Cowork truncates installed files)');
+const TRUNC_CAP = 15808;
+const TRUNC_WARN = 15300; // ~500 B of headroom before the hard cut
+function walkFiles(dir, acc = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name === '__pycache__') continue;
+    const p = join(dir, e.name);
+    if (e.isDirectory()) walkFiles(p, acc);
+    else if (/\.(md|py|css|js)$/.test(e.name)) acc.push(p);
+  }
+  return acc;
+}
+let capChecked = 0;
+for (const f of walkFiles(join(ROOT, 'skills'))) {
+  const n = statSync(f).size;
+  capChecked++;
+  if (n > TRUNC_CAP) fail(`${rel(f)} is ${n} B > ${TRUNC_CAP} cap — its TAIL IS TRUNCATED on Cowork install`);
+  else if (n > TRUNC_WARN) warn(`${rel(f)} is ${n} B — within ${TRUNC_CAP - TRUNC_WARN} B of the ${TRUNC_CAP} truncation cap`);
+}
+pass(`checked ${capChecked} runtime files against the ${TRUNC_CAP} B truncation cap`);
+
 // --- Summary ----------------------------------------------------------------
 console.log(`\n${'-'.repeat(60)}`);
 console.log(`Result: ${fails === 0 ? 'PASS' : 'FAIL'}  (${fails} fail, ${warns} warn)`);

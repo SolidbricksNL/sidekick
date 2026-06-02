@@ -1,0 +1,28 @@
+#!/bin/sh
+# Sidekick pre-commit guard.
+#
+# Blocks a commit that breaks the plugin structure OR pushes a runtime file
+# (skills/**: SKILL.md, references, scripts, assets) past Cowork's ~15808 B
+# install-truncation cap — the cliff that silently dropped the dashboard-routing
+# rule from sidekick-core/SKILL.md (and earlier truncated data.py).
+#
+# Activate once per clone:
+#   git config core.hooksPath scripts/hooks
+#
+# Reusable in any skill project: drop in scripts/validate-structure.mjs + this
+# hook + the same `git config` line.
+
+out=$(node scripts/validate-structure.mjs 2>&1)
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo "$out"
+  echo ""
+  echo "✗ Commit blocked — validate-structure found problems (see above)."
+  echo "  Truncation cap: keep every skills/** file under 15808 bytes."
+  echo "  (To override in an emergency: git commit --no-verify)"
+  exit 1
+fi
+
+echo "✓ sidekick structure + truncation-cap check passed"
+exit 0

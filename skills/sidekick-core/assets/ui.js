@@ -18,9 +18,11 @@ const IC={
 };
 const icon=(n,s)=>'<svg width="'+(s||18)+'" height="'+(s||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(IC[n]||IC.layout)+'</svg>';
 const LOGO='<svg width="30" height="30" viewBox="0 0 32 32" fill="none"><rect x="3" y="4" width="14" height="24" rx="4.2" fill="#1493E8"/><rect x="19" y="14" width="10" height="14" rx="3.6" fill="#F47800"/><rect x="6.5" y="9.5" width="3" height="3" rx="1.5" fill="#fff" opacity=".9"/><rect x="11.5" y="9.5" width="3" height="3" rx="1.5" fill="#fff" opacity=".9"/></svg>';
+/* Solidbricks maker mark — flat brick stack, brand blue + one orange brick. */
+const SBLOGO='<svg width="15" height="15" viewBox="0 0 32 32" fill="none"><rect x="3" y="4" width="12" height="7" rx="1.2" fill="#1493E8"/><rect x="17" y="4" width="12" height="7" rx="1.2" fill="#1493E8"/><rect x="3" y="13" width="12" height="7" rx="1.2" fill="#1493E8"/><rect x="17" y="13" width="12" height="7" rx="1.2" fill="#43A8EE"/><rect x="3" y="22" width="12" height="7" rx="1.2" fill="#F47800"/><rect x="17" y="22" width="12" height="7" rx="1.2" fill="#1493E8"/></svg>';
 const E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const SK=window.SK, root=document.getElementById('root');
-const KEY='sk.nav.'+(SK.brand||'sidekick');
+const KEY='sk.nav.sidekick';
 let nav=null,selId,sortS;try{nav=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 const coll=id=>SK.collections.find(c=>c.id===id);
 function go(cid,vid){if(!nav||nav.c!==cid){selId=undefined;sortS=null}nav={c:cid,v:vid};try{localStorage.setItem(KEY,JSON.stringify(nav))}catch(e){}render()}
@@ -54,7 +56,7 @@ function render(){
  if(!c.home&&!c.empty&&vs.length){view=vs.find(v=>v.id===(nav&&nav.v))||vs[0];
    tabs='<div class="tabs">'+vs.map(v=>'<button class="tab'+(v===view?' on':'')+'" data-go="'+c.id+'" data-v="'+v.id+'">'+icon(v.kind==='grid'?'grid':v.kind==='listdetail'?'list':'layout',15)+E(v.label)+'</button>').join('')+'</div>'}
  let body=c.home?viewHome(c):c.empty?viewEmpty(c):view&&view.kind==='grid'?viewGrid(view):view&&view.kind==='listdetail'?viewList(view):viewDash(view||{});
- root.innerHTML='<aside><div class="brandrow">'+LOGO+'<div><b>'+E(SK.brand||'Sidekick')+'</b><small>'+E(SK.tagline||'your alter ego')+'</small></div></div><nav>'+top.map(ni).join('')+'<div class="navsec"><span>Collections</span><i></i></div>'+cols.map(ni).join('')+'</nav><div class="foot">by <b>Solidbricks</b></div></aside><main><header class="top"><span class="wtitle">'+E(SK.workspace||'')+'</span>'+tt()+'</header>'+tabs+'<div class="content">'+body+'</div></main>';
+ root.innerHTML='<aside><div class="brandrow">'+LOGO+'<div><b>Sidekick</b><small>your alter ego</small></div></div><nav>'+top.map(ni).join('')+'<div class="navsec"><span>Collections</span><i></i></div>'+cols.map(ni).join('')+'</nav><div class="foot">'+SBLOGO+'<span>by <b>Solidbricks</b></span></div></aside><main><header class="top"><span class="wtitle">'+E(SK.workspace||'')+'</span>'+tt()+'</header>'+tabs+'<div class="content">'+body+'</div></main>';
  root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go,b.dataset.v));
  root.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{SK.theme=b.dataset.th;render()});
  root.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{selId=b.dataset.sel;render()});

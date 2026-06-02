@@ -64,12 +64,17 @@ window.SK = { /* ← your data, shaped as below (built from data.py query result
 
 ```js
 window.SK = {
-  workspace: "Westgate development",   // centered header title
-  brand: "Sidekick", tagline: "your alter ego",   // sidebar identity (optional)
+  workspace: "Westgate development",   // centered HEADER title — the project/workspace
   theme: "paper", accent: "blue",
   collections: [ /* sidebar entries, in order */ ]
 }
 ```
+
+Three identities, don't mix them up: the **sidebar top** is always **"Sidekick /
+your alter ego"** (the product — fixed in the kit, not settable); the **header**
+shows `SK.workspace` (the project, e.g. "Consulting Seasonality"); the **footer**
+shows the **Solidbricks** maker mark + "by Solidbricks" (fixed). So put the
+project name in `workspace` — never "Solidbricks" anywhere but the footer.
 
 A **collection** is one sidebar entry. `section:"top"` pins it above the
 "Collections" divider; anything else falls below it.

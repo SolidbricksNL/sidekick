@@ -1,0 +1,20 @@
+name: validate
+
+# Runs the zero-dependency structure validator on every push and PR. Check 7
+# enforces the ~15808 B Cowork install-truncation cap on every runtime file under
+# skills/ (SKILL.md, references, scripts, assets) — so a file can never silently
+# grow past the cliff and lose its tail on install. Fails the build on any FAIL.
+on:
+  push:
+  pull_request:
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate plugin structure + truncation-cap guard
+        run: node scripts/validate-structure.mjs

@@ -910,6 +910,23 @@ Resolved:
   to it. A combined runnable preview lives at `plan/sidekick-ui-base.html`
   (dev-only, never read at runtime). The user can restyle freely — it is a
   starting point, not a cage.
+- **Truncation bug found & guarded (2026-06-03, v0.13.1).** First Cowork run of
+  the kit failed at every step: the model built its own Chart.js dashboard in
+  `output/`, hand-read `data/*.json`, wrote its own wrapper, saved no recipe —
+  it never invoked `sidekick-report`. Root cause was **not** weak prompting: the
+  always-on `sidekick-core/SKILL.md` had grown to **19144 B**, and Cowork
+  truncates an installed file at ~**15808 B**, so the entire "Presenting the
+  data" routing rule plus three later sections sat **past the cut and were
+  silently dropped** — the model literally never received the instruction. Fix:
+  added an imperative **"Showing data → ALWAYS the `sidekick-report` skill"**
+  hard rule (the six failure modes enumerated as forbidden) placed **early**
+  (byte ~8.5 K, well inside the kept region), and **trimmed the whole file to
+  15123 B** (deferring detail to the references it already cites). New validator
+  **Check 7** fails the build if any runtime-loaded file under `skills/` (SKILL,
+  references, scripts, assets) exceeds the cap, so this class of silent
+  truncation can't recur (`data.py` hit the same cliff at 0.3.3/0.11.1). The fix
+  is plugin-side, so it reaches every install + every project on reinstall — no
+  per-workspace `CLAUDE.md`/settings band-aid needed.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

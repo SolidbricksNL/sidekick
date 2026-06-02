@@ -101,8 +101,20 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
   ```
   node scripts/validate-structure.mjs
   ```
-  It checks the manifest, every skill's frontmatter, and all reference
-  paths, exiting non-zero on any failure.
+  It checks the manifest, every skill's frontmatter, all reference paths, and
+  (Check 7) that **no runtime file under `skills/` exceeds the ~15808-byte
+  Cowork install-truncation cap** — the cliff that silently dropped the tail of
+  `sidekick-core/SKILL.md` and, earlier, `data.py`. Exits non-zero on any failure.
+- **Automated guards (so the cap can't be breached unnoticed):**
+  - **CI** — `.github/workflows/validate.yml` runs the validator on every push
+    and PR.
+  - **Pre-commit hook** — `scripts/hooks/pre-commit` blocks a local commit that
+    fails the validator. Activate once per clone:
+    ```
+    git config core.hooksPath scripts/hooks
+    ```
+    (Emergency override: `git commit --no-verify`.) This pattern — validator +
+    CI workflow + pre-commit — is copyable to any other skill project.
 - **Manual tests:** [`docs/MANUAL-TESTS.md`](docs/MANUAL-TESTS.md) is a
   ~30-minute human-judged checklist for verifying behavior in a disposable
   Cowork sandbox.
@@ -125,7 +137,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.13.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.13.1** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the

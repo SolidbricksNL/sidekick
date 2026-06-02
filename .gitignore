@@ -40,6 +40,10 @@ $RECYCLE.BIN/
 # --- Misc local ---
 # The build brief that generated plan/ — a local working doc, not plugin source.
 /plan.md
+# The user-supplied reference app (1.5 MB React/Babel bundle) the UI kit was
+# derived from — kept local for provenance, too heavy to track. The runnable
+# distilled preview (plan/sidekick-ui-base.html) IS committed.
+/plan/Sidekick (offline).html
 *.log
 .env
 .env.local

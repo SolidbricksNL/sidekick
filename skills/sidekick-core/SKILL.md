@@ -296,10 +296,13 @@ changes need confirmation. Full protocol: `references/data-discipline.md`.
 dashboard, a chart, "give me that breakdown again" — hand off to
 `/sidekick-report` (see `references/reporting.md`). It saves reusable reports
 in `brain/reports.md` (diff + approval), registers them in `.reports.json`, and
-renders a self-contained, tabbed HTML dashboard into **`artifacts/`** (confirm),
-always sourcing the data through `data.py query`. A dashboard can be a plain
-snapshot or a **live** one (the HTML synced to Drive, shown through a thin
-wrapper artifact). Do not build dashboards by hand-reading the JSON.
+renders a self-contained HTML dashboard into **`artifacts/`** (confirm), always
+sourcing the data through `data.py query`. Dashboards are built from the shared
+**Sidekick UI kit** (the Solidbricks look — sidebar, tabbed views,
+light/paper/dark, KPI/section cards, charts, sortable grids, list+detail; see
+`references/ui-kit.md`), so every artifact is brand-consistent. A dashboard can
+be a plain snapshot or a **live** one (the HTML synced to Drive, shown through a
+thin wrapper artifact). Do not build dashboards by hand-reading the JSON.
 
 **Keeping live dashboards fresh.** After you change a project's data (a
 `data.py` insert/update/delete), regenerate any **live** dashboard that reads

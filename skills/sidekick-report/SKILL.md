@@ -48,12 +48,16 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
    `log/` or a sheet in `output/`; something to explore → a tabbed HTML
    dashboard in `output/`.
 5. **Query each tab/section** with `data.py query` and collect the JSON.
-6. **Render.** Build **one self-contained `.html`** with the results
-   **embedded** (a JSON `<script>` block per tab), inline vanilla-JS rendering,
-   **no network calls** — adapt the skeleton in reporting.md. One tab per query;
-   sortable tables; a simple inline-SVG bar chart for label+number tabs.
-   Headings in the **default output language**. Write it to
-   `artifacts/<name>.html` after **confirmation**.
+6. **Render — from the Sidekick UI kit.** Don't hand-roll the page. Shape the
+   query results into a `window.SK` object (collections → views, each
+   `kind: dashboard | grid | listdetail | home`) and assemble **one
+   self-contained `.html`**: paste `assets/ui.css` into `<style>`, your `SK`
+   into a `<script>`, then `assets/ui.js` into a second `<script>` — **no
+   network**. Resolve the assets by search
+   (`find ~ -ipath '*/sidekick-core/assets'`; `$CLAUDE_PLUGIN_ROOT` is unset).
+   Bake **computed** rows in; labels in the **default output language**. Write
+   to `artifacts/<name>.html` after **confirmation**. Full guide + data model +
+   skeleton: `../sidekick-core/references/ui-kit.md`.
 7. **Save the recipe** if they'll want it again: add/update a section in
    `brain/reports.md` (name, purpose, the exact `SELECT`(s), the render target)
    — a **brain write → diff + approval**. Also register it machine-readably:
@@ -87,7 +91,9 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
   (Cowork truncates the helper past ~16 KB). Recipe-registry logic lives in
   `reports.py`, not `data.py`. Registering a recipe (`reports.py save`) mirrors
   an approved `brain/reports.md` entry — it is not a data-record write.
-- **Self-contained dashboard HTML.** One file in `artifacts/`, data embedded,
-  no external CSS/JS/fetch — works as a snapshot and as the body the live
-  wrapper loads from Drive. (The wrapper itself is the only artifact that calls
-  a connector; the dashboard HTML never does.)
+- **Self-contained dashboard HTML, from the UI kit.** One file in `artifacts/`,
+  data embedded, no external CSS/JS/fetch — built from the shared **Sidekick UI
+  kit** (`../sidekick-core/references/ui-kit.md`; `assets/ui.css` + `assets/ui.js`
+  pasted in full). Works as a snapshot and as the body the live wrapper loads
+  from Drive. (The wrapper itself is the only artifact that calls a connector;
+  the dashboard HTML never does.)

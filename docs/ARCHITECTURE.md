@@ -356,8 +356,23 @@ the report**, which re-queries and rewrites the artifact.
 
 The dashboard HTML is **dumb** — the agent generates it from the recipe with
 the **computed rows baked in**; the calculation rule stays in the recipe, never
-in the page. It lives in the project's **`artifacts/`** folder. Two ways to
-show it:
+in the page. It lives in the project's **`artifacts/`** folder.
+
+**Built from the Sidekick UI kit.** The page is not hand-rolled — every
+dashboard/list/grid artifact starts from one shared design system (the
+Solidbricks/Visma look: collapsible sidebar, centered workspace title, tabbed
+views, light/paper/dark toggle, KPI & section cards, bar / horizontal-bar
+charts, sortable grids, list+detail; brand orange `#F47800` + blue `#1493E8`,
+Ubuntu/Open Sans/JetBrains type stacks). It ships as **two raw assets** —
+`skills/sidekick-core/assets/ui.css` + `ui.js` — that the agent pastes into the
+artifact in full, driven by a single `window.SK` data object built from the
+query results (collections → views, each `kind: dashboard | grid | listdetail |
+home`). Two files rather than one because Cowork truncates any single installed
+plugin file past ~15.8 KB; the written artifact (in `projects/<slug>/artifacts/`)
+has no such limit. The kit is self-contained and makes no network calls, so the
+same file is both the snapshot and the body the live wrapper loads. Full guide +
+data model: `references/ui-kit.md`. It is the default starting point, not a cage
+— the user can restyle freely. Two ways to show it:
 
 **Self-contained snapshot (the default).** One `.html` with data embedded,
 rendering inline (vanilla JS), no network calls. Opens anywhere. **Refresh =
@@ -667,9 +682,13 @@ sidekick/
 │   │   │   ├── write-disciplines.md
 │   │   │   ├── project-structure.md
 │   │   │   ├── reporting.md
+│   │   │   ├── ui-kit.md          ← design system + window.SK data model for artifacts
 │   │   │   ├── sync-discipline.md
 │   │   │   ├── project-claude-template.md
 │   │   │   └── agenda-template.md
+│   │   ├── assets/                ← pasted into generated artifacts (split to dodge ~15.8 KB cap)
+│   │   │   ├── ui.css             ← Solidbricks design tokens + component CSS (3 themes)
+│   │   │   └── ui.js              ← render kernel: shell + dashboard/grid/listdetail/home
 │   │   └── scripts/
 │   │       ├── data.py            ← file-based structured-data helper (+ query() function)
 │   │       ├── reports.py         ← report-recipe registry + CLI (.reports.json; runs via data.query)
@@ -871,6 +890,26 @@ Resolved:
   env-specific values the agent resolves at setup: the Drive download tool name
   (`mcp__<uuid>__download_file_content`, per-install) and the synced HTML's Drive
   file id (stable across overwrites).
+- **Shared design system — the Sidekick UI kit (2026-06-03, v0.13.0).** Every
+  generated artifact now starts from one **Solidbricks/Visma design system**
+  instead of a hand-rolled page: a collapsible sidebar, centered workspace title,
+  tabbed views, light/paper/dark toggle, and a widget set (KPI & section cards,
+  bar / horizontal-bar charts, sortable grids, status pills, list+detail), in the
+  brand palette (orange `#F47800` + blue `#1493E8`). Derived from a reference app
+  the user supplied (`plan/Sidekick (offline).html`, a React/Babel bundle) and
+  **ported to dependency-free vanilla JS** — the wrapped iframe can reach no
+  network, so React/Babel/Google-Fonts CDNs are out; the demo's hardcoded views
+  were generalized into a **declarative `window.SK`-driven renderer** (smaller
+  *and* reusable). It ships as **two raw assets** the agent pastes in full —
+  `skills/sidekick-core/assets/ui.css` + `ui.js` (split because Cowork truncates
+  any single installed file past ~15.8 KB; the written artifact in `artifacts/`
+  has no cap). View kinds: `dashboard | grid | listdetail | home`, plus an
+  `empty` placeholder. Data still comes only from `data.py query`; computed rows
+  baked in; calc in the recipe. New reference `references/ui-kit.md` (data model +
+  assembly skeleton); `reporting.md`'s old inline skeleton replaced by a pointer
+  to it. A combined runnable preview lives at `plan/sidekick-ui-base.html`
+  (dev-only, never read at runtime). The user can restyle freely — it is a
+  starting point, not a cage.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

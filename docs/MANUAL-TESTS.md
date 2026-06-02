@@ -199,14 +199,18 @@ plugin name needs to change again.
 - **Expect:** it sources data **only via `data.py info`/`query`** (no raw read
   of the JSON); proposes a saved **recipe** in `brain/reports.md` with a
   **diff + approval**; asks **confirmation** before writing the artifact to
-  `output/`; produces a **single self-contained `.html`** with working tabs,
-  sortable tables, and at least one chart, in the **default output language**;
-  states it's a **snapshot** and that re-running refreshes it. The second run
-  reuses the saved recipe rather than re-deriving the query.
-- **Inspect:** `output/<name>.html` opens in a browser, tabs switch, no
-  external network calls (data is **embedded** in the file); `brain/reports.md`
-  holds the recipe (purpose + `SELECT`s); the numbers match a manual
-  `data.py query`. No `data/*.json` was written or hand-read.
+  `artifacts/`; produces a **single self-contained `.html`** built from the
+  **Sidekick UI kit** (`ui.css` + `ui.js` pasted in, `window.SK` data object) —
+  the Solidbricks look: **sidebar, tabbed views, a light/paper/dark toggle**, KPI
+  cards / charts / sortable grid as fits the data, in the **default output
+  language**; states it's a **snapshot** and that re-running refreshes it. The
+  second run reuses the saved recipe rather than re-deriving the query.
+- **Inspect:** `artifacts/<name>.html` opens in a browser and shows the
+  **branded shell** (orange+blue, sidebar + tabs); the **theme toggle** flips
+  light/paper/dark; tabs/sort work; **no external network calls** (CSS, JS, and
+  data are all **embedded** — no CDN, no `fetch`); `brain/reports.md` holds the
+  recipe (purpose + `SELECT`s); the numbers match a manual `data.py query`. No
+  `data/*.json` was written or hand-read.
 - [ ] PASS / FAIL
 
 ### M. Subproject (area within a project)

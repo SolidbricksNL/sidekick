@@ -125,7 +125,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.12.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.13.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -150,5 +150,11 @@ model (0.12.0) is **Drive-wrapped**: the agent generates a self-contained
 dashboard HTML into a project's `artifacts/` folder (computed rows baked in,
 rules in the recipe), syncs it to Drive, and a **thin wrapper artifact** loads
 it via the Drive connector — so a data change just overwrites the Drive HTML (no
-per-refresh approval). JSON stays the record; Excel-as-store was rejected. Run
-the manual-test checklist in Cowork before wider rollout.
+per-refresh approval). JSON stays the record; Excel-as-store was rejected. The
+latest step (0.13.0) gives every generated artifact a **shared design system —
+the Sidekick UI kit**: a Solidbricks/Visma look (sidebar, tabbed views,
+light/paper/dark, KPI cards, charts, sortable grids, list+detail; brand orange +
+blue), shipped as two pasteable assets (`ui.css` + `ui.js`) driven by a single
+`window.SK` data object, so dashboards/lists/grids are brand-consistent out of
+the box (and fully restyleable). Run the manual-test checklist in Cowork before
+wider rollout.

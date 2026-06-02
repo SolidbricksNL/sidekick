@@ -1,8 +1,10 @@
 # Output sync — the protocol
 
 Loaded on demand by the `sidekick` skill when **Output sync** is on. Defines
-how a project's `output/` is kept in step, both ways, with an external storage
-folder — efficiently, without ever routing file bytes through the model.
+how a project's `output/` **and `artifacts/`** are kept in step, both ways, with
+an external storage folder — efficiently, without routing file bytes through the
+model. (`artifacts/` holds generated dashboard HTML; syncing it to Drive is what
+lets a live dashboard wrapper read it — see `reporting.md`.)
 
 ## Why a native MCP server (not the connector, not a shell copy)
 
@@ -30,7 +32,7 @@ functions in `sync.py`.
 ## The tools (provided by the `sidekick-sync` MCP server)
 
 - **`reconcile_output(project, base)`** — two-way sync of `project`'s `output/`
-  with `<base>/<slug>/output/`. **`project` must be the ABSOLUTE path** to the
+  and `artifacts/` with `<base>/<slug>/{output,artifacts}/`. **`project` must be the ABSOLUTE path** to the
   project dir, e.g. `C:\Claude Cowork\Sidekick\projects\finance` — the server
   runs in its own process, so a relative path resolves against the wrong
   directory (in Cowork a scratchpad) and silently syncs nothing. `base` is the
@@ -51,12 +53,15 @@ One **base path** in `sidekick.settings.md` (**Output sync base path**) — a
 mounted/synced folder, e.g. `G:\My Drive\sidekick`. Under it, per project:
 
 ```
-<base path>/
-├── <project-a>/output/        ↔ projects/<project-a>/output/   (area subfolders included)
-└── <project-b>/output/        ↔ projects/<project-b>/output/
+<base path>/                          e.g. G:\My Drive\sidekick
+├── <project-a>/
+│   ├── output/        ↔ projects/<project-a>/output/      (deliverables; area subfolders included)
+│   └── artifacts/     ↔ projects/<project-a>/artifacts/   (dashboard HTML; read by the live wrapper)
+└── <project-b>/ …
 ```
 
 No `sidekick-` prefix — the base path the user chose is the Sidekick root.
+Manifest keys are `<sub>/<relpath>` (e.g. `artifacts/seasonality.html`).
 
 ## How reconcile decides (per file)
 

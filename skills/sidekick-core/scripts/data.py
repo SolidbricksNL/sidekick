@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Sidekick structured-data helper. JSON files (one per table) under
-<project>/data/ + _schema.json. query runs over a throwaway in-memory SQLite
-(never touches disk); writes snapshot first. Protocol: data-discipline.md.
-Keep this file small - Cowork truncates large plugin files on install."""
+"""Sidekick structured-data helper (protocol: data-discipline.md). One JSON file
+per table under <project>/data/ + _schema.json; query runs over a throwaway
+in-memory SQLite, writes snapshot first.
+BUDGET: keep under 15 KB. Cowork truncates plugin files on install at ~15.8 KB
+(a cut there once broke this file mid-line); leave margin for future edits."""
 
 import argparse
 import json
@@ -13,10 +14,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")  # legal table/column names
+_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _TYPES = {"text", "number", "integer", "real", "bool", "boolean", "date"}
 _SNAPSHOT_KEEP = 20
-_ENUM_MAX = 12  # columns with <= this many distinct values are categorical
+_ENUM_MAX = 12
 
 
 def _die(msg):
@@ -31,7 +32,7 @@ def _emit(obj):
 def _ident(name, kind):
     if not _IDENT.match(name):
         _die(f"error: invalid {kind} name {name!r} "
-             f"(allowed: letters, digits, underscore; not starting with a digit)")
+             f"(letters/digits/underscore, not leading digit)")
     return name
 
 
@@ -87,7 +88,6 @@ def _write_rows(project, table, rows):
 
 
 def _snapshot(project, table):
-    # Pre-mutation copy into .snapshots/ (best-effort; never abort the write).
     src = _table_path(project, table)
     if not src.exists():
         return
@@ -109,7 +109,6 @@ def _snapshot(project, table):
 
 
 def _table_columns(project, table, schema=None):
-    # Columns from the schema sidecar, else inferred from the rows' keys.
     schema = schema if schema is not None else _load_schema(project)
     if table in schema:
         return [c["name"] for c in schema[table]["columns"]]
@@ -126,8 +125,8 @@ def cmd_create(args):
     table = _ident(args.table, "table")
     schema = _load_schema(args.project)
     if table in schema or _table_path(args.project, table).exists():
-        _die(f"error: table {table!r} already exists - use addcol to extend it, "
-             f"do not recreate (that would discard data)")
+        _die(f"error: table {table!r} already exists - use addcol to extend, "
+             f"do not recreate (discards data)")
     cols = []
     for spec in args.columns.split(","):
         spec = spec.strip()
@@ -200,7 +199,7 @@ def cmd_insert(args):
             unknown = [k for k in r if k not in allowed]
             if unknown:
                 _die(f"error: row {i} has unknown column(s) {unknown} - "
-                     f"add them with addcol first (extend before you add)")
+                     f"add them with addcol first")
     _snapshot(args.project, table)
     rows = _load_rows(args.project, table)
     if allowed is not None:
@@ -263,11 +262,11 @@ def _sqlval(v):
 
 
 def query(project, sql):
-    # SELECT over a throwaway in-memory SQLite; on-disk JSON is never touched.
-    # Returns a result dict; raises ValueError (callers: CLI + sidekick-data MCP).
+    # SELECT over a throwaway in-memory SQLite; on-disk JSON never touched.
+    # Raises ValueError on bad SQL (callers: CLI + sidekick-data MCP server).
     sql = sql.strip().rstrip(";").strip()
     if not (sql.lstrip("(").lower().startswith(("select", "with"))):
-        raise ValueError("query only runs SELECT statements (reads). "
+        raise ValueError("query only runs SELECT (reads). "
                          "Use insert/update/delete to change data.")
     data_dir = _data_dir(project)
     if not data_dir.exists():
@@ -309,7 +308,7 @@ def cmd_query(args):
 
 
 def _distinct_values(rows, name):
-    # Distinct non-null values, or None if more than _ENUM_MAX (high-card).
+    # Distinct non-null values, or None when high-cardinality (> _ENUM_MAX).
     out, seen = [], set()
     for r in rows:
         v = r.get(name)
@@ -345,10 +344,9 @@ def cmd_info(args):
         cols = []
         for c in base:
             col = dict(c)
-            # Categorical columns carry distinct values (exact spelling match).
             vals = _distinct_values(rows, c["name"])
             if vals is not None:
-                col["values"] = vals
+                col["values"] = vals  # categorical: exact-spelling match values
             cols.append(col)
         tables.append({"name": table, "columns": cols, "rowcount": len(rows)})
     _emit({"ok": True, "action": "info", "project": args.project,
@@ -356,7 +354,6 @@ def cmd_info(args):
 
 
 def cmd_backup(args):
-    # Timestamped copy of the data/ tables + schema (made by the check-in).
     data_dir = _data_dir(args.project)
     if not data_dir.exists():
         _emit({"ok": True, "action": "backup", "project": args.project,
@@ -374,55 +371,52 @@ def cmd_backup(args):
 
 
 def build_parser():
-    p = argparse.ArgumentParser(prog="data.py",
-                                description="Sidekick file-based data helper")
+    p = argparse.ArgumentParser(prog="data.py", description="Sidekick data helper")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    c = sub.add_parser("create", help="create a table (structure change)")
+    c = sub.add_parser("create")
     c.add_argument("--project", required=True)
     c.add_argument("--table", required=True)
-    c.add_argument("--columns", required=True,
-                   help="comma list, e.g. 'name:text,amount:number'")
+    c.add_argument("--columns", required=True, help="e.g. 'name:text,amount:number'")
     c.set_defaults(func=cmd_create)
 
-    a = sub.add_parser("addcol", help="add a column (structure change)")
+    a = sub.add_parser("addcol")
     a.add_argument("--project", required=True)
     a.add_argument("--table", required=True)
     a.add_argument("--column", required=True)
     a.add_argument("--type", default="text")
     a.set_defaults(func=cmd_addcol)
 
-    i = sub.add_parser("insert", help="append records that fit the columns")
+    i = sub.add_parser("insert")
     i.add_argument("--project", required=True)
     i.add_argument("--table", required=True)
     i.add_argument("--json", "--rows", "--row", dest="json", required=True, metavar="JSON",
-                   help="a JSON object, OR a JSON array for a batch insert "
-                        "(preferred: one call, one snapshot)")
+                   help="JSON object or array (array = one batch, one snapshot)")
     i.set_defaults(func=cmd_insert)
 
-    u = sub.add_parser("update", help="update rows matching --match")
+    u = sub.add_parser("update")
     u.add_argument("--project", required=True)
     u.add_argument("--table", required=True)
-    u.add_argument("--match", required=True, help="JSON object of column=value")
-    u.add_argument("--set", required=True, help="JSON object of column=value")
+    u.add_argument("--match", required=True)
+    u.add_argument("--set", required=True)
     u.set_defaults(func=cmd_update)
 
-    d = sub.add_parser("delete", help="delete rows matching --match")
+    d = sub.add_parser("delete")
     d.add_argument("--project", required=True)
     d.add_argument("--table", required=True)
-    d.add_argument("--match", required=True, help="JSON object of column=value")
+    d.add_argument("--match", required=True)
     d.set_defaults(func=cmd_delete)
 
-    q = sub.add_parser("query", help="read-only SELECT over the tables")
+    q = sub.add_parser("query")
     q.add_argument("--project", required=True)
     q.add_argument("--sql", required=True)
     q.set_defaults(func=cmd_query)
 
-    n = sub.add_parser("info", help="list tables, columns (with category values), counts")
+    n = sub.add_parser("info")
     n.add_argument("--project", required=True)
     n.set_defaults(func=cmd_info)
 
-    b = sub.add_parser("backup", help="timestamped copy of data/ (check-in)")
+    b = sub.add_parser("backup")
     b.add_argument("--project", required=True)
     b.add_argument("--label", default=None)
     b.set_defaults(func=cmd_backup)

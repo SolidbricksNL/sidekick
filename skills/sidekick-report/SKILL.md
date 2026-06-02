@@ -1,6 +1,6 @@
 ---
 name: sidekick-report
-description: Surface a project's structured data/ store as reusable reports and interactive dashboards. Use when the user runs /sidekick-report or asks to see, present, visualize, chart, summarize, or build a dashboard/report over stored table data — "show me X as a dashboard", "give me the monthly breakdown again", "make a report of the contacts", "chart revenue by line". Sources data only via scripts/data.py query (never a raw JSON read). Saves the reusable report as a recipe in brain/reports.md (diff + approval) and renders a tabbed HTML dashboard into output/ (confirmation). Default is a self-contained snapshot (refresh = re-run); optionally a live artifact that fetches a saved recipe by name via the read-only sidekick-data MCP server. The always-on sidekick-core skill routes clear "present/visualize the data" intents here.
+description: Surface a project's structured data/ store as reusable reports and interactive dashboards. Use when the user runs /sidekick-report or asks to see, present, visualize, chart, summarize, or build a dashboard/report over stored table data — "show me X as a dashboard", "give me the monthly breakdown again", "make a report of the contacts", "chart revenue by line". Sources data only via scripts/data.py query (never a raw JSON read). Saves the reusable report as a recipe in brain/reports.md (diff + approval) and renders a tabbed HTML dashboard into the project's artifacts/ folder (confirmation). Default is a self-contained snapshot (refresh = regenerate); optionally a live dashboard — the HTML is synced to Drive and a thin wrapper artifact loads it, so only the Drive file is overwritten on a data change (no per-refresh approval). The always-on sidekick-core skill routes clear "present/visualize the data" intents here.
 ---
 
 # Sidekick — Report (present & reuse the data store)
@@ -15,12 +15,13 @@ its one rule. Full protocol: `../sidekick-core/references/reporting.md`
 
 **All data comes from `data.py query`** (or a saved recipe, which runs the
 same engine). Never hand-read `data/*.json`, never make the page read the raw
-table, never use the `sqlite3` CLI or ad-hoc `python`. **Default: snapshot** —
-the artifact carries your query results embedded; refresh = re-run. **Optional:
-live** — the artifact fetches a saved recipe **by name** via the read-only
-`sidekick-data` MCP server (`run_report`), with a snapshot fallback baked in.
-Either way the **calculation rule lives in the recipe, never in the page**.
-Full protocol incl. the live skeleton: `../sidekick-core/references/reporting.md`.
+table, never use the `sqlite3` CLI or ad-hoc `python`. You bake **computed
+rows** into the HTML; the **calculation rule lives in the recipe, never in the
+page**. **Default: snapshot** — a self-contained `.html` in `artifacts/`;
+refresh = regenerate. **Optional: live** — sync that HTML to Drive and show it
+through a **thin wrapper artifact** (loads the Drive HTML via the Drive
+connector); a data change overwrites the Drive HTML, no per-refresh approval.
+Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
 
 ## When you run
 
@@ -36,33 +37,36 @@ Full protocol incl. the live skeleton: `../sidekick-core/references/reporting.md
    and point to `data.py`/the data discipline; there is nothing to report on.
 2. **Load existing recipes.** If `brain/reports.md` exists, read it — the
    user may be asking to re-run a saved report ("the monthly one again").
-3. **Know the real shape.** Run
-   `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" info --project projects/<slug>`
+3. **Know the real shape.** Resolve the helper once — `$CLAUDE_PLUGIN_ROOT` is
+   unset in the shell, so find it:
+   `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
+   then `python3 "$SK/data.py" info --project projects/<slug>`
    for tables, columns, and category values. Match **exact** spellings in
-   `WHERE` (e.g. `ON-PREM`, not `ONPREM`). (Fallback path if
-   `$CLAUDE_PLUGIN_ROOT` is unset:
-   `~/.claude/plugins/sidekick/skills/sidekick-core/scripts/data.py`.)
+   `WHERE` (e.g. `ON-PREM`, not `ONPREM`).
 4. **Pick the lightest render that answers the need** (see reporting.md):
    a number → just `query` and answer; a keepable table → markdown in
    `log/` or a sheet in `output/`; something to explore → a tabbed HTML
    dashboard in `output/`.
 5. **Query each tab/section** with `data.py query` and collect the JSON.
-6. **Render.** For a dashboard, build **one self-contained `.html`** with the
-   results **embedded** (a JSON `<script>` block per tab), inline vanilla-JS
-   rendering, **no network calls** — adapt the skeleton in reporting.md. One
-   tab per query; sortable tables; a simple inline-SVG bar chart for
-   label+number tabs. Headings in the **default output language**.
-7. **Save the recipe** if this is something they'll want again: add/update a
-   section in `brain/reports.md` (name, plain-language purpose, the exact
-   `SELECT`(s), the render target) — a **brain write → show the diff, get
-   approval**. For a **live** artifact, also register it machine-readably:
-   `reports.py save --project projects/<slug> --name <n> --sql "…"` (writes
-   `.reports.json`; the `sidekick-data` server runs it by name).
-8. **Write the artifact** to `output/` only after **confirmation** (it's a
-   deliverable). **Snapshot** (default): embed the query results. **Live**
-   (if the user wants always-fresh): have the page call `run_report` by name
-   and **embed a snapshot fallback** too (see reporting.md). Then tell the user
-   which mode it is and how to refresh.
+6. **Render.** Build **one self-contained `.html`** with the results
+   **embedded** (a JSON `<script>` block per tab), inline vanilla-JS rendering,
+   **no network calls** — adapt the skeleton in reporting.md. One tab per query;
+   sortable tables; a simple inline-SVG bar chart for label+number tabs.
+   Headings in the **default output language**. Write it to
+   `artifacts/<name>.html` after **confirmation**.
+7. **Save the recipe** if they'll want it again: add/update a section in
+   `brain/reports.md` (name, purpose, the exact `SELECT`(s), the render target)
+   — a **brain write → diff + approval**. Also register it machine-readably:
+   `reports.py save --name <n> --sql "…" --artifact artifacts/<n>.html
+   --tables <t1>,<t2>` (writes `.reports.json`; drives regeneration on a data
+   change via `reports.py uses --table <t>`).
+8. **For a live dashboard** (always-fresh without re-emitting an artifact):
+   sync the HTML to Drive (`reconcile_output` now covers `artifacts/`), resolve
+   its Drive file id and save it (`reports.py save --name <n> --drive-file-id
+   <id>`), then emit the **thin wrapper** once (filling in the file id + the
+   per-install `mcp__<uuid>__download_file_content` tool name). On later data
+   changes: regenerate the HTML + re-sync — no artifact update. Full steps:
+   reporting.md → "Live dashboard". Tell the user which mode it is.
 
 ## Gatekeepers (reused — no new one)
 
@@ -83,5 +87,7 @@ Full protocol incl. the live skeleton: `../sidekick-core/references/reporting.md
   (Cowork truncates the helper past ~16 KB). Recipe-registry logic lives in
   `reports.py`, not `data.py`. Registering a recipe (`reports.py save`) mirrors
   an approved `brain/reports.md` entry — it is not a data-record write.
-- **Self-contained artifacts.** One file, data embedded, no external
-  CSS/JS/fetch — opens straight from `output/` and works in the sandbox.
+- **Self-contained dashboard HTML.** One file in `artifacts/`, data embedded,
+  no external CSS/JS/fetch — works as a snapshot and as the body the live
+  wrapper loads from Drive. (The wrapper itself is the only artifact that calls
+  a connector; the dashboard HTML never does.)

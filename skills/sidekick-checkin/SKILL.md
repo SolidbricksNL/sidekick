@@ -40,8 +40,10 @@ For **each** non-archived project, in a sensible order (e.g. most
 recently active first):
 
 0. **Back up structured data first.** If the project has a `data/` folder,
-   run a timestamped backup **before doing anything else** with it:
-   `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" backup --project projects/<slug> --label check-in`
+   run a timestamped backup **before doing anything else** with it. Resolve the
+   helper (`$CLAUDE_PLUGIN_ROOT` is unset in the shell):
+   `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`, then
+   `python3 "$SK/data.py" backup --project projects/<slug> --label check-in`
    (writes a dated copy into `data/.backups/`). This is a hard rule — the
    check-in never processes a project's data without first taking a dated
    backup. Skip silently for projects that have no `data/` yet.

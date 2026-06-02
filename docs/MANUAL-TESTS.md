@@ -275,32 +275,34 @@ plugin name needs to change again.
   manifest.
 - [ ] PASS / FAIL
 
-### O. Live report artifact via the sidekick-data MCP server
-- **Start:** post-install, **`sidekick-data`** tools present (`run_report`,
-  `list_reports` — check `/mcp` / tool list; if absent → Python not on host
-  PATH, set absolute interpreter in `plugin.json`). A project `<slug>` with a
-  `data/` table (e.g. `seasonality`).
-- **Do (recipe + register):** ask for a report/dashboard of the table. Expect:
-  a recipe saved in `brain/reports.md` (diff + approval) **and** registered via
-  `reports.py save` → `projects/<slug>/.reports.json` exists with the named
-  `SELECT`. `reports.py run --name <n>` returns the computed rows.
-- **Do (live artifact):** ask for it as a **live** dashboard. Expect a
-  self-contained `.html` in `output/` (confirm) that calls **`run_report`**
-  (name only, absolute project path), parses the MCP content array, renders the
-  list/totals + chart, and **embeds a snapshot fallback**.
+### O. Live dashboard (Drive-wrapped)
+- **Start:** Output sync **Yes** + base path set; **Drive connector enabled**;
+  a project `<slug>` with a `data/` table (e.g. `seasonality`).
+- **Do (recipe + register):** ask for a dashboard of the table. Expect: a recipe
+  in `brain/reports.md` (diff + approval) **and** `reports.py save` →
+  `projects/<slug>/.reports.json` holds the `sql`, `artifact:
+  artifacts/<n>.html`, and `tables`. `reports.py run --name <n>` returns the
+  computed rows; `reports.py uses --table seasonality` lists the report.
+- **Do (generate + sync):** Expect a **self-contained** `artifacts/<n>.html`
+  (confirm) with computed rows baked in (list/totals + chart, **no SQL in the
+  page**), then `reconcile_output` pushes it to `<base>\<slug>\artifacts\<n>.html`
+  and it appears in the Drive client.
+- **Do (wrapper, once):** the agent resolves the Drive **file id** (saved via
+  `reports.py save --drive-file-id`) and the **download tool name**
+  (`mcp__<uuid>__download_file_content`), then emits the **thin wrapper**
+  artifact once (one approval). Expect: it loads the Drive HTML into an iframe.
+- **Do (live update — the point):** change a row (`data.py update`) or a factor;
+  the agent **regenerates the HTML + re-syncs**. Expect: **no `update_artifact`
+  / no approval**; Cowork's refresh on the wrapper shows the new numbers.
 - **Expect / verify:**
-  - The artifact shows **current** data; change a row (`data.py update`) or the
-    recipe, reload → the view reflects it (live), without re-generating the file.
-  - **No SQL/calc rule in the page** — only the report name; the rule is in the
-    recipe. The agent answering the same question in chat gives the **same**
-    numbers (single source).
-  - Open the saved `.html` with **no session / in a plain browser** → it falls
-    back to the embedded snapshot (not blank).
-  - `.reports.json` lives at the **project root** and is **not** picked up as a
+  - The Drive HTML file keeps the **same file id** across updates.
+  - The agent answering the same question in chat gives the **same** numbers
+    (single source = the recipe).
+  - `.reports.json` is at the **project root** and is **not** picked up as a
     data table by `data.py query`.
-- **If `callMcpTool` is unavailable / the artifact can't reach the server:**
-  record it — this is the one unproven Cowork bridge; the snapshot mode still
-  works as the fallback.
+  - `reconcile_output` syncs **both** `output/` and `artifacts/`.
+- **If the Drive connector isn't enabled / no base path:** the dashboard still
+  works as a plain snapshot in `artifacts/`; note it won't auto-update.
 - [ ] PASS / FAIL
 
 ---

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Sidekick output-sync helper. Bidirectional file sync between a project's
-local output/ and an external base path (a mounted/synced Drive/OneDrive
-folder): <base>/<project>/output/. Plain file copies (binary-safe) so a
-native run writes to the real filesystem the storage client watches - no
-base64 through the model. Protocol: sync-discipline.md.
+local output/ and artifacts/ and an external base path (a mounted/synced
+Drive/OneDrive folder): <base>/<project>/{output,artifacts}/. Plain file copies
+(binary-safe) so a native run writes to the real filesystem the storage client
+watches - no base64 through the model. Protocol: sync-discipline.md.
 Keep this file small - Cowork truncates large plugin files on install."""
 
 import argparse
@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 _CHUNK = 65536
+_SUBDIRS = ("output", "artifacts")  # project subfolders kept in sync
 
 
 def _die(msg):
@@ -26,9 +27,12 @@ def _emit(obj):
 
 
 def _paths(project, base):
+    # (project root, external base root <base>/<name>, manifest path, name).
+    # Per subdir: local = proj/<sub>, remote = base_root/<sub>; manifest keys
+    # are "<sub>/<relpath>".
     proj = Path(project)
     name = proj.name
-    return proj / "output", Path(base) / name / "output", proj / ".sidekick-sync.json", name
+    return proj, Path(base) / name, proj / ".sidekick-sync.json", name
 
 
 def _walk(root):
@@ -74,27 +78,34 @@ def _save_manifest(p, files):
 
 
 def reconcile(project, base_path, dry_run=False):
-    """Two-way reconcile of <project>/output <-> <base>/<name>/output.
+    """Two-way reconcile of <project>/{output,artifacts} <-> <base>/<name>/...
     Returns a summary dict. Raises RuntimeError if a side can't be read."""
-    local, remote, mpath, name = _paths(project, base_path)
+    proj, base_root, mpath, name = _paths(project, base_path)
     warnings = []
     if not Path(project).is_absolute():
         warnings.append(f"project path {project!r} is relative; pass an absolute "
                         f"path to avoid resolving against the wrong directory")
-    if not local.exists():
-        warnings.append(f"local output dir not found: {local} - nothing local to "
-                        f"push (is the project path correct/absolute?)")
+    if not any((proj / s).exists() for s in _SUBDIRS):
+        warnings.append(f"no {'/'.join(_SUBDIRS)} dir under {proj} - nothing local "
+                        f"to push (is the project path correct/absolute?)")
+    # Build maps keyed by "<sub>/<relpath>" across all synced subdirs.
+    Lmap, Rmap = {}, {}
+    for sub in _SUBDIRS:
+        for rel, p in _walk(proj / sub).items():
+            Lmap[f"{sub}/{rel}"] = p
+        for rel, p in _walk(base_root / sub).items():
+            Rmap[f"{sub}/{rel}"] = p
     base = _load_manifest(mpath)
-    L, R = _walk(local), _walk(remote)
     try:
-        lh = {k: _hash(v) for k, v in L.items()}
-        rh = {k: _hash(v) for k, v in R.items()}
+        lh = {k: _hash(v) for k, v in Lmap.items()}
+        rh = {k: _hash(v) for k, v in Rmap.items()}
     except OSError as e:
         raise RuntimeError(f"could not read files (storage path reachable?): {e}")
     do = not dry_run
     new, pushed, pulled, insync, conflicts, errors = {}, [], [], 0, [], []
     for k in sorted(set(lh) | set(rh) | set(base)):
         b, l, r = base.get(k), lh.get(k), rh.get(k)
+        ldest, rdest = proj / k, base_root / k          # k = "<sub>/<relpath>"
         try:
             if l and r:
                 if l == r:
@@ -102,12 +113,12 @@ def reconcile(project, base_path, dry_run=False):
                     insync += 1
                 elif b is not None and l == b:        # only remote changed -> pull
                     if do:
-                        _copy(R[k], local / k)
+                        _copy(Rmap[k], ldest)
                     new[k] = r
                     pulled.append(k)
                 elif b is not None and r == b:        # only local changed -> push
                     if do:
-                        _copy(L[k], remote / k)
+                        _copy(Lmap[k], rdest)
                     new[k] = l
                     pushed.append(k)
                 else:                                 # both changed (or no baseline) -> conflict
@@ -116,12 +127,12 @@ def reconcile(project, base_path, dry_run=False):
                         new[k] = b
             elif l and not r:                         # local only -> push (additive)
                 if do:
-                    _copy(L[k], remote / k)
+                    _copy(Lmap[k], rdest)
                 new[k] = l
                 pushed.append(k)
             elif r and not l:                         # remote only -> pull (additive)
                 if do:
-                    _copy(R[k], local / k)
+                    _copy(Rmap[k], ldest)
                 new[k] = r
                 pulled.append(k)
             # else: only in baseline (gone both sides) -> drop from manifest
@@ -130,7 +141,7 @@ def reconcile(project, base_path, dry_run=False):
     if do:
         _save_manifest(mpath, new)
     return {"ok": True, "action": "reconcile", "project": name,
-            "local": str(local), "remote": str(remote), "dry_run": dry_run,
+            "base": str(base_root), "subdirs": list(_SUBDIRS), "dry_run": dry_run,
             "pushed": pushed, "pulled": pulled, "in_sync": insync,
             "conflicts": conflicts, "errors": errors, "warnings": warnings}
 
@@ -143,12 +154,12 @@ def cmd_reconcile(args):
 
 
 def resolve(project, base_path, file, keep):
-    """Settle one conflict; returns a summary dict. Raises RuntimeError if the
-    chosen side's file is missing."""
-    local, remote, mpath, name = _paths(project, base_path)
+    """Settle one conflict; file is a manifest key "<sub>/<relpath>". Returns a
+    summary dict. Raises RuntimeError if the chosen side's file is missing."""
+    proj, base_root, mpath, name = _paths(project, base_path)
     files = _load_manifest(mpath)
     k = file
-    lp, rp = local / k, remote / k
+    lp, rp = proj / k, base_root / k
     if keep == "local":
         if not lp.exists():
             raise RuntimeError(f"local file {k!r} not found")
@@ -164,9 +175,9 @@ def resolve(project, base_path, file, keep):
             raise RuntimeError(f"external file {k!r} not found")
         kp = Path(k)
         alt = kp.with_name(f"{kp.stem}.from-external{kp.suffix}").as_posix()
-        _copy(rp, local / alt)            # preserve external version under a new name
-        _copy(local / alt, remote / alt)
-        files[alt] = _hash(local / alt)
+        _copy(rp, proj / alt)             # preserve external version under a new name
+        _copy(proj / alt, base_root / alt)
+        files[alt] = _hash(proj / alt)
         if lp.exists():                   # local keeps the original name on both sides
             _copy(lp, rp)
             files[k] = _hash(lp)

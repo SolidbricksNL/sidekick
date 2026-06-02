@@ -354,40 +354,45 @@ single-access-path rule from §4 holds here too. "Live" therefore means
 but the numbers are as of the moment it was generated. **Refresh = re-run
 the report**, which re-queries and rewrites the artifact.
 
-**Self-contained HTML, no external calls (the default).** The snapshot
-dashboard is one `.html` file with the data embedded and all rendering inline
-(vanilla JS). No network requests; opens straight from `output/` in any
-browser. This is the robust default.
+The dashboard HTML is **dumb** — the agent generates it from the recipe with
+the **computed rows baked in**; the calculation rule stays in the recipe, never
+in the page. It lives in the project's **`artifacts/`** folder. Two ways to
+show it:
 
-**Optional: a live (MCP-backed) artifact.** When the user wants always-fresh
-numbers rather than a snapshot, the artifact fetches its data at load time from
-a **read-only MCP server, `sidekick-data`** (`scripts/reports_server.py`),
-which runs a saved recipe **by name** and returns its computed rows. So:
+**Self-contained snapshot (the default).** One `.html` with data embedded,
+rendering inline (vanilla JS), no network calls. Opens anywhere. **Refresh =
+regenerate the file.** Robust; no Drive, no connector.
 
-- The recipe is registered machine-readably in `projects/<slug>/.reports.json`
-  (project root — never scanned as a data table) via `scripts/reports.py`,
-  alongside the human-readable `brain/reports.md`. The server's tools —
-  **`run_report(project, name)`** and **`list_reports(project)`** — execute it
-  through the same `data.py query` engine (read-only; SQL over all tables, so
-  multi-table JOINs work).
-- The artifact calls `run_report` (e.g. via Cowork's `callMcpTool`), parses the
-  MCP content array, and renders. It passes only the **name** (the calculation
-  rule stays in the recipe, never in the page — no rule duplication, no SQL
-  injection surface) and an **absolute** project path.
-- Every live artifact also embeds a **snapshot fallback**, so a file opened
-  with no server (saved, or a plain browser) still renders.
+**Live dashboard (Drive-wrapped, optional).** The artifact sandbox blocks
+**local files and local MCP servers** (a local `sidekick-data` server was tried
+and removed) — only **cloud connectors** are reachable, and **every
+`update_artifact` is approval-gated**. So a live dashboard is shown indirectly:
 
-Rules live in the recipe in **both** modes; the artifact only renders. The
-live path depends on Cowork's still-new artifact→MCP bridge (verify the
-`callMcpTool` signature and plugin-server reach), which is why snapshot stays
-the default and live is opt-in.
+- The generated `artifacts/<name>.html` is **synced to Drive** (the sync now
+  covers `artifacts/` as well as `output/`, §7c).
+- A **thin wrapper artifact** — emitted **once** (one approval) — loads that
+  Drive HTML via the **Drive connector** (`download_file_content`, base64 →
+  iframe `srcdoc`). It is the only artifact that calls a connector.
+- On a data/rule change the agent **regenerates the HTML and re-syncs**,
+  overwriting the **same Drive file in place** (stable file id) — **no
+  `update_artifact`, no approval**. Cowork's own refresh re-pulls it.
+- The recipe is registered in `projects/<slug>/.reports.json` (project root,
+  never scanned as a table) via `scripts/reports.py` — recording its `sql`,
+  the `artifact` path, the `tables` it reads (so a change knows what to
+  regenerate, `reports.py uses`), and the synced HTML's `drive_file_id`.
+
+Rules live in the recipe in **both** modes; the page only renders. Live
+requires the Drive connector (the wrapper reads it) and Output sync on (the HTML
+reaches Drive); otherwise fall back to a plain snapshot.
 
 **Gatekeepers, reused as-is:**
 
 - Saving or changing a **recipe** is a brain write → **diff + approval**
   (and it is documented in plain language, like any brain entry).
-- Producing or overwriting the **artifact** in `output/` → **confirmation**,
-  exactly like any deliverable, in the default output language.
+- Producing or overwriting the **dashboard HTML** in `artifacts/` →
+  **confirmation**, like any deliverable, in the default output language. The
+  **wrapper** is emitted once; later refreshes overwrite the Drive HTML, not the
+  artifact.
 - Reading the data to build either → **free** (it is a `query`).
 
 The `sidekick-report` skill drives this (typed `/sidekick-report`, and the
@@ -402,10 +407,12 @@ artifact (gated) — but it adds no new gatekeeper of its own.
 By default `output/` lives only in the Cowork workspace. When the user sets an
 **Output sync base path** (§8) — a folder on a mounted/synced storage drive
 (Google Drive for Desktop, OneDrive, …) reachable from the workspace —
-Sidekick keeps each project's `output/` **in step both ways** with that
-storage: finished work lands where the user (and colleagues) keep files, and
-edits made *there* flow back in. Only `output/` is synced; brain, log, data,
-and the gatekeepers are untouched.
+Sidekick keeps each project's `output/` **and `artifacts/`** (generated
+dashboard HTML, §7b) **in step both ways** with that storage: finished work
+lands where the user (and colleagues) keep files, edits made *there* flow back
+in, and a live dashboard's HTML reaches Drive so its wrapper can read it. Only
+those two folders are synced; brain, log, data, and the gatekeepers are
+untouched.
 
 **A native MCP server does the sync — not the model, not a connector, not a
 sandboxed shell.** All file movement goes through the bundled **`sidekick-sync`
@@ -648,7 +655,7 @@ standard Cowork plugin layout:
 ```
 sidekick/
 ├── .claude-plugin/
-│   ├── plugin.json                ← plugin manifest (+ `mcpServers`: sidekick-sync, sidekick-data)
+│   ├── plugin.json                ← plugin manifest (+ `mcpServers`: sidekick-sync)
 │   └── marketplace.json           ← self-marketplace; lists this plugin, source "./"
 ├── skills/
 │   ├── sidekick-core/             ← always-on main skill (NOT "sidekick" — see below)
@@ -666,8 +673,7 @@ sidekick/
 │   │   └── scripts/
 │   │       ├── data.py            ← file-based structured-data helper (+ query() function)
 │   │       ├── reports.py         ← report-recipe registry + CLI (.reports.json; runs via data.query)
-│   │       ├── reports_server.py  ← `sidekick-data` MCP server (read-only; run_report/list_reports)
-│   │       ├── sync.py            ← output-sync engine + CLI (output/ ↔ external base path)
+│   │       ├── sync.py            ← sync engine + CLI (output/ + artifacts/ ↔ external base path)
 │   │       └── sync_server.py     ← `sidekick-sync` MCP server (native; wraps sync.py)
 │   ├── sidekick-init/
 │   │   ├── SKILL.md
@@ -749,11 +755,15 @@ Resolved:
   a stray recreate emptied the table. Files are inspectable + diffable, the
   helper snapshots before every write, queries run over a throwaway in-memory
   SQLite (no live DB to drop), and the check-in takes a dated backup.
-  **Keep `data.py` small.** Cowork truncated the helper on install once it grew
-  past ~16 KB (the installed copy was cut mid-line, breaking it and forcing the
-  model back to raw JSON). It was rewritten lean (~15.8 KB, prose moved to
-  `data-discipline.md`); don't reintroduce large docstrings/examples in the
-  script — put guidance in the reference instead.
+  **Keep `data.py` small.** Cowork truncates the helper on install past a hard
+  threshold — measured precisely 2026-06-02: a 15915-byte copy was cut at byte
+  **15808** (mid-`def main(`), breaking it and forcing the model back to raw
+  JSON. The earlier "lean" rewrite (~15800 B) sat only ~8 B under the cliff, so
+  a tiny +115 B edit re-broke it. Now trimmed to **14962 B (~846 B margin)** and
+  the docstring carries a `BUDGET: keep under 15 KB` banner. Keep prose in
+  `data-discipline.md`, not the script (no large docstrings/help/examples). A
+  truncated install surfaces as a `SyntaxError`/"'(' was never closed" — skills
+  are told to treat that as truncation, not fall back to raw JSON.
 - **Archive move primitive** — true rename/move, else copy → verify →
   remove; never delete before verified (plan 10).
 - **Read-only layer (added 2026-06-01, post-test)** — `sidekick-status`
@@ -840,13 +850,48 @@ Resolved:
   the SQLite failure (binary blob, dependency, and openpyxl writes formulas it
   can't evaluate, so the agent can't verify computed values); JSON stays the
   record, calc rules live as SQL recipes the agent runs, Excel only as an
-  optional human-facing export. **Open:** Cowork's artifact→plugin-MCP bridge is
-  new — verify `callMcpTool` reaches `sidekick-data` (the seasonality artifact
-  is the first live test).
+  optional human-facing export.
+- **Live reporting reworked to Drive-wrapped — `sidekick-data` server removed
+  (2026-06-02, v0.12.0).** Testing settled the bridge question: the **artifact
+  sandbox blocks local files, localhost, and local plugin MCP servers** — only
+  **cloud connectors** (Drive) are reachable, and **every `update_artifact` is
+  approval-gated**. So the `sidekick-data` server (run_report over a local MCP)
+  was **deleted** — useless to artifacts. The live model is now **Drive-wrapped**
+  (§7b): the agent generates a self-contained dashboard HTML into the project's
+  new **`artifacts/`** folder (data baked in, rules in the recipe), **syncs it to
+  Drive** (`sync.py` extended to sync `artifacts/` alongside `output/`), and a
+  **thin wrapper artifact** — emitted once — loads the Drive HTML via the Drive
+  connector (`download_file_content` → base64 → iframe). Refresh without
+  approval = regenerate the HTML + re-sync (overwrites the same Drive file in
+  place); the wrapper re-pulls on Cowork's own refresh. `.reports.json` now also
+  stores each recipe's `artifact` path, `tables`, and `drive_file_id`
+  (`reports.py uses` finds dashboards to regenerate on a data change). `reports.py`
+  + the registry stay; only the MCP server is gone. **Confirmed working in
+  Cowork** (Y-variant: artifact wrapping a Drive HTML re-loads un-gated). Two
+  env-specific values the agent resolves at setup: the Drive download tool name
+  (`mcp__<uuid>__download_file_content`, per-install) and the synced HTML's Drive
+  file id (stable across overwrites).
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the
   first install attempt, 2026-06-01.
+
+- **Locating bundled scripts — `$CLAUDE_PLUGIN_ROOT` is NOT in the shell
+  (2026-06-02).** The harness expands `${CLAUDE_PLUGIN_ROOT}` only inside
+  `plugin.json` (the two `mcpServers` args) and hook commands — **never** in a
+  Bash call the model runs, where it is empty. So every skill instruction of the
+  form `python3 "$CLAUDE_PLUGIN_ROOT/.../data.py" …` resolved to a bare
+  `/skills/...` path and failed; the documented fallback
+  `~/.claude/plugins/sidekick/...` was also wrong (real install lives under a
+  hashed `cache/<owner>/<plugin>/<hash>/`). **Fix:** skills resolve the scripts
+  dir by search —
+  `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`
+  — then call `"$SK/data.py"` / `reports.py` / `sync.py`. This is the same `find`
+  the tester used by hand, proven to work inside the Cowork sandbox. The MCP
+  route (sync/data servers) is unaffected — those launch from `plugin.json` with
+  the correct root. Canonical snippet: `data-discipline.md` → Locating the
+  helper. (Future direction: fold the CLI ops behind MCP tools so no path
+  resolution is needed at all, as sync/reports already did.)
 
 - **Command form — RESOLVED, root cause was the manifest (2026-06-01).** Two
   requirements: (1) **flat `commands/<name>.md` files** produce the typed

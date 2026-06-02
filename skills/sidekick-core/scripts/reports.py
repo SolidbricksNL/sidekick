@@ -49,23 +49,47 @@ def _save(project, reg):
                               encoding="utf-8")
 
 
-def save(project, name, sql, desc=""):
-    """Add/replace a recipe. The SQL must be a read-only SELECT (enforced when
-    it runs). Mirror it in brain/reports.md separately (gated, plain-language)."""
+def save(project, name, sql=None, desc=None, artifact=None,
+         drive_file_id=None, tables=None):
+    """Add/merge a recipe. Only the given fields are updated (so you can set
+    drive_file_id later, after the dashboard HTML is synced and its Drive ID is
+    resolved). SQL must be a read-only SELECT (enforced when it runs). Mirror
+    the recipe in brain/reports.md separately (gated, plain-language).
+      artifact      - relative path of the generated dashboard, e.g. artifacts/<n>.html
+      drive_file_id - the Drive file id of that synced HTML (for the wrapper)
+      tables        - the data tables it reads (drives regeneration on a change)"""
     if not _NAME.match(name):
         raise ValueError(f"invalid report name {name!r} "
                          "(letters, digits, _ and -, not starting with -)")
     reg = _load(project)
-    reg[name] = {"sql": sql, "desc": desc}
+    entry = reg.get(name, {})
+    for key, val in (("sql", sql), ("desc", desc), ("artifact", artifact),
+                     ("drive_file_id", drive_file_id), ("tables", tables)):
+        if val is not None:
+            entry[key] = val
+    if "sql" not in entry:
+        raise ValueError(f"report {name!r} is new - --sql is required")
+    reg[name] = entry
     _save(project, reg)
-    return {"ok": True, "action": "save", "report": name}
+    return {"ok": True, "action": "save", "report": name, "entry": entry}
 
 
 def list_reports(project):
     reg = _load(project)
     return {"ok": True, "action": "list",
-            "reports": [{"name": n, "desc": v.get("desc", "")}
+            "reports": [{"name": n, "desc": v.get("desc", ""),
+                         "artifact": v.get("artifact"),
+                         "drive_file_id": v.get("drive_file_id"),
+                         "tables": v.get("tables", [])}
                         for n, v in sorted(reg.items())]}
+
+
+def uses(project, table):
+    """Report names that read a given table (for regenerating on a data change)."""
+    reg = _load(project)
+    return {"ok": True, "action": "uses", "table": table,
+            "reports": sorted(n for n, v in reg.items()
+                              if table in (v.get("tables") or []))}
 
 
 def run(project, name):
@@ -80,14 +104,21 @@ def run(project, name):
 
 
 def cmd_save(args):
+    tables = [t.strip() for t in args.tables.split(",") if t.strip()] \
+        if args.tables is not None else None
     try:
-        _emit(save(args.project, args.name, args.sql, args.desc or ""))
+        _emit(save(args.project, args.name, args.sql, args.desc,
+                   args.artifact, args.drive_file_id, tables))
     except ValueError as e:
         _die(f"error: {e}")
 
 
 def cmd_list(args):
     _emit(list_reports(args.project))
+
+
+def cmd_uses(args):
+    _emit(uses(args.project, args.table))
 
 
 def cmd_run(args):
@@ -102,11 +133,14 @@ def build_parser():
                                 description="Sidekick report-recipe registry")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    s = sub.add_parser("save", help="add/replace a named recipe")
+    s = sub.add_parser("save", help="add/merge a named recipe")
     s.add_argument("--project", required=True)
     s.add_argument("--name", required=True)
-    s.add_argument("--sql", required=True, help="a read-only SELECT")
-    s.add_argument("--desc", default="")
+    s.add_argument("--sql", default=None, help="a read-only SELECT")
+    s.add_argument("--desc", default=None)
+    s.add_argument("--artifact", default=None, help="dashboard path, e.g. artifacts/<n>.html")
+    s.add_argument("--drive-file-id", default=None, help="Drive file id of the synced HTML")
+    s.add_argument("--tables", default=None, help="comma list of tables the recipe reads")
     s.set_defaults(func=cmd_save)
 
     n = sub.add_parser("list", help="list saved recipes")
@@ -117,6 +151,11 @@ def build_parser():
     r.add_argument("--project", required=True)
     r.add_argument("--name", required=True)
     r.set_defaults(func=cmd_run)
+
+    u = sub.add_parser("uses", help="reports that read a given table")
+    u.add_argument("--project", required=True)
+    u.add_argument("--table", required=True)
+    u.set_defaults(func=cmd_uses)
     return p
 
 

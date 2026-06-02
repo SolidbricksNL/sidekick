@@ -16,20 +16,21 @@ you do **not** use the `sqlite3` CLI or ad-hoc `python`. The page carries a
 `SELECT` — embedded in the file. This keeps the single-access-path rule from
 `data-discipline.md` intact even for a "live"-feeling dashboard.
 
-There are **two render modes** (pick per need — both keep data coming only
-from `query`):
+There are **two ways to present** (pick per need — both bake **computed** rows
+into the page; the calc rule stays in the recipe, never in the page's JS):
 
-- **Snapshot (default).** "Live" means **interactive over a snapshot**: tabs,
-  sorting, charts run in the page, but the numbers are as of generation time.
-  **Refresh = re-run the report.** Self-contained, no server needed — opens
-  anywhere. Use this unless the user needs always-fresh numbers.
-- **Live (MCP-backed, optional).** The artifact calls the read-only
-  `sidekick-data` MCP server's **`run_report`** tool and renders the result, so
-  it shows current data each time it loads. Needs the plugin's server running
-  (Cowork session). See "Live artifact" below.
-
-In **both** modes the calculation rule lives in the **recipe** (the agent owns
-it), never in the page's JavaScript — the artifact only renders.
+- **Snapshot (default).** A self-contained `.html`: tabs, sorting, charts run
+  in the page, numbers are as of generation. **Refresh = re-run the report**
+  (regenerate the file). Opens anywhere; no Drive, no connector. Use this
+  unless the user wants the view to update without you regenerating an artifact.
+- **Live dashboard (Drive-wrapped).** The same generated `.html` is **synced to
+  Drive**; a **thin wrapper artifact** loads it from Drive (via the Drive
+  connector) into an iframe. Then the artifact never needs updating again — you
+  only **overwrite the Drive HTML** when data/rules change (no approval), and
+  Cowork's refresh re-pulls it. This exists because the artifact sandbox blocks
+  **local files and local MCP servers**; only **cloud connectors** (Drive) are
+  reachable, and **every `update_artifact` is approval-gated** — so re-emitting
+  a fresh artifact on each change is friction. See "Live dashboard" below.
 
 ## A report = recipe + artifact
 
@@ -67,24 +68,34 @@ Saving or changing a recipe is a **brain write** → show the diff, get
 approval. Keep the SQL in step with the real columns (run `data.py info`
 first; match exact category spellings — `ON-PREM`, not `ONPREM`).
 
-### Also register the recipe (for live artifacts)
+### Also register the recipe (for live dashboards)
 
 `brain/reports.md` is the human-readable, gated source of truth. For a recipe
-a **live artifact** will run by name, also write a machine-readable copy via
-the registry helper — one named `SELECT` per call:
+that backs a **live dashboard**, also write a machine-readable copy via the
+registry helper, so the agent can regenerate it deterministically and know what
+to regenerate when data changes:
 
 ```
-python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/reports.py" \
-    save --project projects/<slug> --name <report-name> \
-    --sql "SELECT …" --desc "<one line>"
+SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"
+python3 "$SK/reports.py" save --project projects/<slug> --name <report-name> \
+    --sql "SELECT …" --desc "<one line>" \
+    --artifact artifacts/<report-name>.html --tables <table1>,<table2>
+# later, after the HTML is synced to Drive and you resolved its file id:
+python3 "$SK/reports.py" save --project projects/<slug> --name <report-name> \
+    --drive-file-id <DRIVE_FILE_ID>
 ```
 
-This stores it in `projects/<slug>/.reports.json` (project root — never
-scanned as a data table). The `sidekick-data` MCP server runs recipes **by
-name** from there, so the artifact only ever knows the name, never the SQL.
-`reports.py list` shows what's registered; `reports.py run --name <n>` runs one
-(same engine as `data.py query`). Registering mirrors an already-approved brain
-recipe, so it needs no separate gate. Skip the registry for one-off snapshots.
+(`$CLAUDE_PLUGIN_ROOT` is unset in the shell — resolve the scripts dir by
+search; see `data-discipline.md` → Locating the helper.)
+
+This stores `projects/<slug>/.reports.json` (project root — never scanned as a
+data table) with the recipe's `sql`, its dashboard path (`artifact`), the
+`tables` it reads, and the synced HTML's `drive_file_id`. `reports.py list`
+shows them; `reports.py run --name <n>` runs the SQL (same engine as `data.py
+query`); `reports.py uses --table <t>` lists the reports a change to table `<t>`
+should regenerate. `save` **merges** (re-saving with only `--drive-file-id`
+keeps the SQL). Registering mirrors an already-approved brain recipe, so it
+needs no separate gate. Skip the registry for one-off snapshots.
 
 ## Choosing the render kind
 
@@ -95,25 +106,31 @@ Ask what the user actually wants, then pick the lightest thing that does it:
 - **A table they want to keep/share** → a markdown table in `log/`
   (free) for reference, or an exported sheet in `output/` (confirm) if it's
   a deliverable.
-- **A dashboard to explore** → a self-contained tabbed `.html` in `output/`
-  (confirm). This is the "live artifact" case below.
+- **A dashboard to explore** → a self-contained tabbed `.html` in the
+  project's **`artifacts/`** folder (confirm). This is the dashboard the live
+  wrapper loads from Drive (below).
 
-## The dashboard artifact (self-contained HTML)
+Dashboards live in **`artifacts/`** (a synced folder, like `output/`); plain
+deliverables (docs/sheets) stay in `output/`.
+
+## The dashboard HTML (self-contained)
 
 One `.html` file. The data is **embedded** (a `<script type="application/json">`
 block per tab), rendering is **inline** (vanilla JS), and it makes **no
-network requests** — Cowork's artifact sandbox blocks outbound `fetch`, and a
-self-contained file also opens straight from `output/` in any browser.
+network requests** — Cowork's artifact sandbox blocks outbound `fetch`. The same
+file works both as a standalone snapshot and as the body the live wrapper loads.
 
 Build it like this:
 
-1. **Query each tab** with `data.py query` and collect the JSON results.
+1. **Query each tab** with `data.py query` (or `reports.py run`) and collect the
+   JSON results.
 2. **Embed** each result as a JSON `<script>` block (do not fetch it).
 3. **One tab per query.** Render each as a sortable table; add a simple
    inline-SVG bar chart when a tab is one label column + one numeric column.
-4. **Confirm before writing** to `output/` (it's a deliverable), generate
+4. **Confirm before writing** to `artifacts/<name>.html`, generate
    labels/headings in the **default output language**, then write the file.
-5. Tell the user it's a snapshot and how to refresh (re-run the report).
+5. For a **live** dashboard, continue with "Live dashboard" below; otherwise
+   tell the user it's a snapshot and that re-running regenerates it.
 
 ### Skeleton to adapt
 
@@ -200,67 +217,80 @@ TABS.forEach((t,i)=>{
 Adapt freely: more tabs, different columns, a different chart, the user's
 output language for headings. Keep it **one file, no network, data embedded**.
 
-## Live artifact (MCP-backed, optional)
+## Live dashboard (Drive-wrapped)
 
-When the user wants **always-fresh** numbers (data or a rule changes → the view
-updates on reload) instead of a snapshot, the artifact fetches its data at
-runtime from the **`sidekick-data`** MCP server rather than embedding it.
+The dashboard HTML is **dumb** — fully generated by you (data baked in). To make
+it *live* (updates without re-emitting an artifact each time), you sync it to
+Drive and show it through a **thin wrapper artifact** that loads the Drive HTML
+into an iframe.
 
-Preconditions and rules:
+### One-time setup (per dashboard)
 
-1. The recipe is **registered** (`reports.py save`, above) so it can be run by
-   **name**. The artifact passes only the name — never SQL (no rule leaks into
-   the page; no injection surface).
-2. Pass the project as an **absolute path** (the server runs in its own process;
-   a relative path resolves wrong — same lesson as the sync server). Bake the
-   absolute path in when you generate the artifact.
-3. **Always include a snapshot fallback.** A saved artifact opened later (no
-   session, or in a plain browser) has no server. Embed a last-known snapshot
-   and fall back to it when the tool call fails, so the file is never blank.
-4. The tool result is an **MCP content array** — read
-   `result.content[0].text` and `JSON.parse` it (not a plain string).
+1. **Generate** the self-contained dashboard HTML (above) → write
+   `projects/<slug>/artifacts/<name>.html`.
+2. **Sync to Drive.** Run `reconcile_output` (it now syncs `artifacts/` as well
+   as `output/`) so the file lands at `<base>/<slug>/artifacts/<name>.html` and
+   the Drive client uploads it.
+3. **Resolve the Drive file id.** Find the synced file via the Drive connector
+   (search/list by name) and save it:
+   `reports.py save --name <name> --drive-file-id <id>`. The id is **stable**
+   across later content overwrites (same file → same id), so this is one-time.
+4. **Find the Drive download tool name.** It is `mcp__<uuid>__download_file_content`
+   where `<uuid>` is **per-install** — read it from the session's available
+   tools; do not hard-code.
+5. **Emit the wrapper once** as the Cowork artifact (one `update_artifact`
+   approval), filling in the two values from steps 3–4.
 
-### Live skeleton (adapt)
+### The wrapper (thin — no refresh button; Cowork has its own)
 
 ```html
+<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8">
+<style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100vh;background:#fff}
+#e{font:13px system-ui;padding:12px;color:#dc2626}</style></head><body>
+<iframe id="f" sandbox="allow-same-origin allow-scripts"></iframe><div id="e" hidden></div>
 <script>
-const PROJECT = "C:\\Claude Cowork\\Sidekick\\projects\\finance"; // absolute
-const REPORT  = "seasonality-index";
-
-async function load(){
-  try{
-    // Cowork exposes callMcpTool to artifacts; confirm the exact signature.
-    const res = await callMcpTool("sidekick-data", "run_report",
-                                  {project: PROJECT, name: REPORT});
-    const payload = JSON.parse(res.content[0].text);   // MCP content array
-    if(payload.ok === false) throw new Error(payload.error || "report failed");
-    render(payload.rows);                              // live data
-  }catch(e){
-    render(SNAPSHOT.rows);                             // fallback: embedded snapshot
-    note("Showing a saved snapshot (live data unavailable: "+e.message+").");
-  }
-}
-// embedded fallback, written at generate time from data.py query / reports.py run
-const SNAPSHOT = {"rows":[{"month":"Jan","idx":0.59},{"month":"Jun","idx":1.15}]};
-function render(rows){ /* same table/chart rendering as the snapshot skeleton */ }
-function note(msg){ /* show a small muted banner */ }
-load();
-</script>
+const FILE_ID="{{DRIVE_FILE_ID}}";          // from reports.py (step 3)
+const TOOL="{{DRIVE_DOWNLOAD_TOOL}}";        // mcp__<uuid>__download_file_content (step 4)
+(async()=>{try{
+  let res=await window.cowork.callMcpTool(TOOL,{fileId:FILE_ID});
+  let p=res; if(typeof res==="string"){const i=res.indexOf("{");if(i>=0)p=JSON.parse(res.slice(i));}
+  if(p&&p.content&&p.content[0])p=JSON.parse(p.content[0].text);
+  const b64=p.base64Content??p.content??p;
+  document.getElementById("f").srcdoc=typeof b64==="string"?decodeURIComponent(escape(atob(b64))):JSON.stringify(p);
+}catch(e){const el=document.getElementById("e");el.hidden=false;el.textContent="Kon live-inhoud niet laden: "+e.message;}
+})();
+</script></body></html>
 ```
 
-The render half is identical to the snapshot skeleton — only the data source
-differs. If `callMcpTool` isn't available or errors, the user still sees the
-snapshot; that is the point of the fallback.
+The real interactivity (tabs, sort, chart) lives in the **dashboard HTML** on
+Drive, not the wrapper — hence `allow-scripts`. The wrapper only fetches and
+frames it.
 
-> Cowork's artifact→MCP bridge is still new. Verify the `callMcpTool` signature
-> and that an artifact can reach a **plugin-provided** server in your build —
-> a one-call proof artifact confirms it before you rely on it.
+### Keeping it live (the trigger)
+
+When data or a rule changes — which happens **through the chat, so you are in
+the loop** — **regenerate the dashboard HTML and re-sync**, in the same turn:
+
+1. Find affected dashboards: `reports.py uses --table <changed-table>`.
+2. For each, re-run its recipe, rebuild `artifacts/<name>.html`, run
+   `reconcile_output`. The Drive file is overwritten **in place** (same id) —
+   **no `update_artifact`, no approval.** The wrapper shows the new version on
+   Cowork's next refresh.
+
+So: editing a salary → update the record → regenerate the salary dashboard HTML
+→ re-sync → the live wrapper reflects the new totals, untouched.
+
+> Requires the Drive connector enabled (the wrapper reads it) and Output sync on
+> with a base path (the HTML reaches Drive). With neither, fall back to a plain
+> snapshot dashboard in `artifacts/` and tell the user it won't auto-update.
 
 ## Gatekeepers (reused, nothing new)
 
-- **Recipe** (save/change in `brain/reports.md`) → diff + approval.
-- **Artifact** (create/overwrite in `output/`) → confirm, default output
-  language.
+- **Recipe** (save/change in `brain/reports.md`) → diff + approval. Mirroring it
+  into `.reports.json` is part of the same approved change (no separate gate).
+- **Dashboard HTML** (create/overwrite in `artifacts/`) → confirm, default
+  output language. The **wrapper** artifact is emitted once (one approval);
+  later content refreshes go to the Drive HTML, not the artifact.
 - **Reading** the data to build either → free (it's a `query`).
 
 `sidekick-report` is therefore not read-only (unlike status/find), but it
@@ -270,11 +300,12 @@ rules already defined.
 ## What stays out of this layer
 
 - **No new `data.py` command.** Its `query`/`info` suffice; reporting added a
-  reusable `query()` *function* (called by `reports.py` and the `sidekick-data`
-  server) but **no new subcommand**. Keep `data.py` under ~16 KB (Cowork
-  truncates it on install) — recipe logic lives in `reports.py`, not `data.py`.
-- **Rules never live in the artifact.** Snapshot or live, the calculation is in
-  the recipe; the page only renders. A live artifact fetches by **report name**
-  via the read-only `sidekick-data` server — never raw SQL in the page.
+  reusable `query()` *function* (called by `reports.py`) but **no new
+  subcommand**. Keep `data.py` under ~16 KB (Cowork truncates it on install) —
+  recipe logic lives in `reports.py`, not `data.py`.
+- **Rules never live in the page.** Snapshot or live, the calculation runs in
+  the recipe and you bake **computed rows** into the HTML; the page only
+  renders. (A local MCP server for the artifact was tried and removed — the
+  sandbox blocks it; only cloud connectors are reachable.)
 - **No raw JSON.** Not to fill the page, not "just to look". Always via a
   recipe / `query`.

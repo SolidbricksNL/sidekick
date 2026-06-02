@@ -117,7 +117,9 @@ On approval, create under `projects/<slug>/`:
 - `output/` — empty.
 
 The `data/` folder is **not** created up front — it appears lazily the
-first time genuinely structured data needs storing (the first table).
+first time genuinely structured data needs storing (the first table). The
+`artifacts/` folder (generated dashboard HTML) is likewise lazy — created on
+the first dashboard.
 
 Use the slug convention: `kebab-case`, short, descriptive.
 
@@ -228,7 +230,8 @@ told otherwise. Do not produce documents here unprompted.
 
 **Output sync (optional, two-way).** If `sidekick.settings.md` has **Output
 sync: Yes** *and* an **Output sync base path** is set, keep this project's
-`output/` **in step both ways** with `<base path>/<slug>/output/`. The sync
+`output/` **and `artifacts/`** **in step both ways** with
+`<base path>/<slug>/{output,artifacts}/`. The sync
 runs through the bundled **`sidekick-sync` MCP server** (it runs *natively*, so
 its file copies actually reach the storage client — a shell copy from the
 sandbox does **not**). You pass **paths only** — **never** base64 a file
@@ -259,7 +262,7 @@ through yourself, hand-read bytes, or use a connector upload. Full protocol:
   continue — never block a local write or delete data. The next reconcile
   retries.
 - **If the `sidekick-sync` tools aren't available** (server didn't start): fall
-  back to the CLI `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/sync.py" reconcile --project projects/<slug> --base "<base path>"`, and warn the user that a sandboxed copy may not reach the storage client until the server runs.
+  back to the CLI — resolve `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`, then `python3 "$SK/sync.py" reconcile --project projects/<slug> --base "<base path>"`, and warn the user that a sandboxed copy may not reach the storage client until the server runs.
 
 When Output sync is No, or no base path is set, skip all of this.
 
@@ -274,8 +277,10 @@ one `<table>.json` per table (+ `_schema.json`). A shared spreadsheet/CSV/
 table is the trigger — propose a table on arrival rather than logging the
 rows. **All access goes through the helper `scripts/data.py`** — never the
 `sqlite3` CLI, never ad-hoc `python`, never a raw read/edit of the JSON.
-Invoke it by plugin root:
-`python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" <cmd> --project projects/<slug> …`.
+Resolve the scripts dir first (`$CLAUDE_PLUGIN_ROOT` is unset in the shell):
+`SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
+then `python3 "$SK/data.py" <cmd> --project projects/<slug> …` (see
+`references/data-discipline.md` → Locating the helper).
 `query` runs SQL over a throwaway in-memory copy (reads can't touch disk);
 writes snapshot the file first. **To answer any question about stored data,
 run `data.py query` — do not read or `grep` the JSON files, even "just to
@@ -290,10 +295,18 @@ changes need confirmation. Full protocol: `references/data-discipline.md`.
 **Presenting the data.** When the user wants to *see* the data — a
 dashboard, a chart, "give me that breakdown again" — hand off to
 `/sidekick-report` (see `references/reporting.md`). It saves reusable reports
-in `brain/reports.md` (diff + approval) and renders a self-contained, tabbed
-HTML dashboard into `output/` (confirm), always sourcing the data through
-`data.py query` (a snapshot — refresh = re-run). Do not build dashboards by
-hand-reading the JSON.
+in `brain/reports.md` (diff + approval), registers them in `.reports.json`, and
+renders a self-contained, tabbed HTML dashboard into **`artifacts/`** (confirm),
+always sourcing the data through `data.py query`. A dashboard can be a plain
+snapshot or a **live** one (the HTML synced to Drive, shown through a thin
+wrapper artifact). Do not build dashboards by hand-reading the JSON.
+
+**Keeping live dashboards fresh.** After you change a project's data (a
+`data.py` insert/update/delete), regenerate any **live** dashboard that reads
+the changed table — find them with `reports.py uses --table <t>`, rebuild each
+`artifacts/<name>.html`, and `reconcile_output` to push it to Drive. This
+overwrites the Drive HTML in place (no artifact update, no approval), so the
+live wrapper reflects the change. Skip when the project has no live dashboards.
 
 ## What to keep out of the chat
 

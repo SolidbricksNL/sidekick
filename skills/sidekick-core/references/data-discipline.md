@@ -73,15 +73,22 @@ work. It is the exception, not the routine — the helper is still the rule.
 
 ### Locating the helper in Cowork
 
-The plugin is installed outside the working directory, so call the helper by
-plugin root (the `--project` path stays relative to the Cowork root):
+The plugin installs outside the working directory, and **`$CLAUDE_PLUGIN_ROOT`
+is not set in the shell the model runs** — it only expands inside `plugin.json`
+and hook commands, never in a Bash call. So resolve the scripts dir once by
+searching, then call the helper from it (the `--project` path stays relative to
+the Cowork root):
 
 ```
-python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" <cmd> --project projects/<slug> …
+SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"
+python3 "$SK/data.py" <cmd> --project projects/<slug> …
 ```
 
-If `$CLAUDE_PLUGIN_ROOT` is unset, fall back to
-`~/.claude/plugins/sidekick/skills/sidekick-core/scripts/data.py`.
+The same `$SK` holds `reports.py` and `sync.py`. If `$SK` comes back empty the
+search didn't reach the install — widen the root (e.g. `find ~ /` ). If a helper
+dies with `SyntaxError` / "'(' was never closed", the installed copy was
+**truncated on install** (Cowork caps plugin files near ~15.8 KB); report that
+rather than falling back to raw JSON reads.
 
 ## When to use the data store
 

@@ -29,12 +29,13 @@ here — recall terms are open-ended), then search.
 2. **Text search** each project's `brain/`, `log/`, and `agenda.md` for the
    query terms (and obvious variants/synonyms). Markdown is grep-able — match
    on content, not just filenames.
-3. **Structured data.** For each project with `data/`, run
-   `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" info --project projects/<slug>`
+3. **Structured data.** Resolve the helper once — `$CLAUDE_PLUGIN_ROOT` is unset
+   in the shell, so find it:
+   `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`.
+   For each project with `data/`, run
+   `python3 "$SK/data.py" info --project projects/<slug>`
    to see tables, columns, and the listed category values. If the query matches
    a table/column/value, run a read-only `query` to pull the relevant rows.
-   (Fallback path if `$CLAUDE_PLUGIN_ROOT` is unset:
-   `~/.claude/plugins/sidekick/skills/sidekick-core/scripts/data.py`.)
 4. Never read or `grep` the raw `data/*.json` files — go through `data.py`.
 
 ## Output

@@ -29,11 +29,11 @@ For **each** non-archived project, gather (without writing anything):
 2. **Undistilled logs.** Count files in `log/` that lack the
    `> distilled to brain:` stamp (a heads-up that the brain is behind).
 3. **Last check-in.** The newest `log/YYYYMMDD-checkin.md` date, if any.
-4. **Data tables.** Run
-   `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/data.py" info --project projects/<slug>`
+4. **Data tables.** Resolve the helper once — `$CLAUDE_PLUGIN_ROOT` is unset in
+   the shell, so find it:
+   `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
+   then run `python3 "$SK/data.py" info --project projects/<slug>`
    and report each table with its row count. Skip projects with no `data/`.
-   (Fallback path if `$CLAUDE_PLUGIN_ROOT` is unset:
-   `~/.claude/plugins/sidekick/skills/sidekick-core/scripts/data.py`.)
 5. **Activity / staleness.** From the most recent `log/` modification date,
    note projects that have gone quiet (e.g. no activity in 10+ days).
 

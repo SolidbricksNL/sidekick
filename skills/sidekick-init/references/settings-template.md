@@ -29,25 +29,20 @@ _Last updated: {{DATE}}_
 - **Email:** {{EMAIL}}            <!-- Yes / No -->
 - **Messages / chat:** {{MESSAGES}}   <!-- No / Slack / Microsoft Teams / Google Chat / Other: ... -->
 - **Storage:** {{STORAGE}}        <!-- No / Outlook (OneDrive) / Google Drive / Other: ... -->
-- **Output sync:** {{OUTPUT_SYNC}}    <!-- No / Yes. Always No when Storage is No. -->
-- **Output sync target:** {{OUTPUT_SYNC_TARGET}}   <!-- Blank = use the storage connector. Or a local folder path (a mounted/synced Drive/OneDrive folder, e.g. G:\My Drive\Sidekick) for a plain, efficient file copy. Only used when Output sync is Yes. -->
+- **Output sync:** {{OUTPUT_SYNC}}    <!-- No / Yes. -->
+- **Output sync base path:** {{OUTPUT_SYNC_BASE_PATH}}   <!-- Blank, or a folder path on a mounted/synced Drive/OneDrive (e.g. G:\My Drive\sidekick). Only used when Output sync is Yes. -->
 - **Calendar:** {{CALENDAR}}      <!-- No / Google Calendar / Outlook Calendar / Other: ... -->
 
-<!-- Output sync records ONLY Yes or No here — nothing per project. When Yes,
-     Sidekick syncs each project's output/ with the storage under a folder
-     named with the fixed prefix "sidekick" plus the project slug
-     (sidekick-<slug>). That per-project postfix is derived at runtime and is
-     NEVER written into this file.
+<!-- Output sync = two-way sync of each project's output/ with external storage,
+     done by the bundled CLI scripts/sync.py (plain file copies, no data through
+     the model). Under the base path, each project gets <slug>/output/. Records
+     ONLY Yes/No + the base path here — no per-project names.
 
-     Output sync target picks HOW bytes move (efficiency):
-       - a folder PATH (a mounted/synced Drive/OneDrive folder) => plain file
-         copy: fast, binary-safe, no data through the model. Preferred.
-       - BLANK => the storage connector: OK for small text deliverables, but
-         it CANNOT move large/binary files efficiently (the model would have to
-         base64 them, which is very slow). Sidekick never base64s a file
-         through itself; for a binary on the connector it warns instead.
-     Sync only runs when a storage connector is enabled (or the target path is
-     reachable) in Cowork. -->
+     Output sync base path must be a MOUNTED/SYNCED folder (Google Drive for
+     Desktop, OneDrive) reachable from the workspace, so a copied file is picked
+     up by the storage client. BLANK => sync does not run (there is no connector
+     fallback for files). The connector route was dropped: moving a binary
+     through it forced slow base64-through-the-model. -->
 
 ## Triage
 

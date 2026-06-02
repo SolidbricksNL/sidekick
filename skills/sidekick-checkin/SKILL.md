@@ -23,7 +23,7 @@ itself. This is the plugin-wide interaction style — see
 ## Preconditions
 
 1. Read `sidekick.settings.md` (chat language, output language,
-   connected calendar, **storage connection + Output sync**).
+   connected calendar, **Output sync + Output sync base path**).
 2. List `projects/` (non-archived only — ignore `_archive/`). **Direct
    children only:** a project's `brain/<area>/` or `output/<area>/` subfolders
    are subprojects/areas, handled as part of the parent walk — not separate
@@ -100,22 +100,17 @@ disciplines:
   added.)
 - **Output:** confirm, then create/edit; record what was produced.
 - **Reconcile output sync — both directions** (only if Output sync is on
-  **and** a storage connection is enabled): for each project, reconcile
-  `output/` with its `sidekick-<slug>/` folder using the manifest
-  `projects/<slug>/.sidekick-sync.json` — **pull** external edits in, **push**
-  local ones out, copy genuinely-new files across, and stay **additive both
-  ways** (a deleted file is neither propagated nor resurrected; the orphan
-  stays). A **true conflict** — the same file changed on both sides since the
-  last sync — is **raised via the picker** (keep Cowork / keep external / keep
-  both), never silently overwritten. This runs whether or not new output was
-  approved this check-in, so it catches changes since the last reconcile.
-  Rewrite the manifest afterward. **Move bytes efficiently:** prefer copying to
-  the **Output sync target** folder when set; **never base64 a file through
-  yourself**; for a binary/large file with only a connector (no target path),
-  don't force it through — note it and suggest a synced-folder target. A failed
-  step is reported, not fatal; if the connector can only write, fall back to
-  push-only and say so; skip silently when sync is off or no storage is
-  connected. (Spec: ARCHITECTURE §7c.)
+  **and** an Output sync base path is set): for each project run
+  `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/sync.py" reconcile --project projects/<slug> --base "<base path>"`.
+  It **pulls** external edits in and **pushes** local ones out via plain file
+  copies (**additive** — a deleted file is never propagated; **never** base64 a
+  file through yourself), and reports `pushed`/`pulled`/`conflicts`/`errors`.
+  For each path in `conflicts` (same file changed both sides), **ask via the
+  picker** (keep Cowork / keep external / keep both) and run `sync.py resolve
+  … --keep …` — never silently overwrite. This runs whether or not new output
+  was approved this check-in. A failed step / unreachable base path is reported,
+  not fatal; skip silently when sync is off or no base path is set.
+  (Spec: `../sidekick-core/references/sync-discipline.md`, ARCHITECTURE §7c.)
 - **Structured data:** records that fit existing columns flow in freely via
   `scripts/data.py`; a new table or column is a structure change — confirm
   in plain language first, then update `brain/data-model.md`.

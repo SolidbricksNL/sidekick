@@ -78,12 +78,11 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
 3. **Enable connectors** you said yes to (email / messages / storage /
    calendar) in **Cowork's connector settings** — the plugin only records
    intent; you enable the actual connections. If you turned on **output sync**,
-   it keeps each project's `output/` in step **both ways** with your storage
-   folder `sidekick-<slug>/` (additive; conflicts ask you which version wins).
-   For efficiency, point **Output sync target** at a mounted/synced
-   Drive/OneDrive folder so files are **copied** there — the connector cannot
-   move large/binary files (Excel, PDF) efficiently, and Sidekick never
-   base64-streams a file through the model.
+   set **Output sync base path** to a mounted/synced Drive/OneDrive folder
+   (e.g. `G:\My Drive\sidekick`): the bundled `sync.py` CLI keeps each project's
+   `output/` in step **both ways** with `<base>\<slug>\output\` via plain file
+   copies (binary-safe, additive; conflicts ask you which version wins). No base
+   path ⇒ sync stays idle; files are never routed through the chat.
 4. **Schedule triage (optional):** attach `sidekick-triage` to a Cowork
    **scheduled task** and pick a frequency (e.g. daily). It writes findings
    to `_triage/`; the plugin does not set the frequency.
@@ -123,7 +122,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.8.1** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.9.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -134,9 +133,10 @@ file-based `data/` store via the `data.py` helper (0.3.x), a read-only layer
 (`/sidekick-report` — saved reports + tabbed HTML dashboards, 0.5.0), and an
 explicit **subproject/area** concept (areas inside a project, never nested
 projects, 0.6.0), and optional **two-way output sync** — keep each project's
-`output/` in step both ways with a connected storage folder `sidekick-<slug>/`
-(push on write, pull + reconcile at session start and check-in, additive both
-ways, conflicts ask; only yes/no recorded in settings) (0.7.0 → two-way in
-0.8.0 → efficient transport in 0.8.1: prefer a mounted-folder copy, never
-base64 a file through the model, decline big binaries on the bare connector).
-Run the manual-test checklist in Cowork before wider rollout.
+`output/` in step both ways with `<base path>\<slug>\output\` on a mounted
+storage folder (additive, conflicts ask; only yes/no + a base path recorded in
+settings). Sync evolved fast under testing: one-way mirror (0.7.0) → two-way (0.8.0) → the
+transport problem surfaced (0.8.1: pushing a binary made the model base64 it,
+a 5-minute hang) → a dedicated `sync.py` CLI doing plain file copies to a
+mounted **base path**, no bytes through the model (0.9.0). Run the manual-test
+checklist in Cowork before wider rollout.

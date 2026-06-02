@@ -229,55 +229,46 @@ plugin name needs to change again.
   without counting `X` separately.
 - [ ] PASS / FAIL
 
-### N. Output sync to external storage (two-way)
-- **Start:** post-init sandbox with **Output sync: Yes** and a storage
-  connector **actually enabled** in Cowork (Google Drive / OneDrive). An active
-  project `<slug>`. Confirm `sidekick.settings.md` records **only** `Output
-  sync: Yes` — **no per-project folder name** written into the file.
-- **Do (push):** ask for a deliverable (as in F) and confirm it; then a second
-  one in an **area** (`output/<sub>/`).
-- **Do (pull):** edit one deliverable **externally** in `sidekick-<slug>/`
-  (change its text), then start a fresh session on `<slug>` (or run
-  `/sidekick-checkin`).
-- **Do (new-external):** drop a **new** file into `sidekick-<slug>/`
-  externally, then reconcile again.
-- **Do (delete):** **delete** one deliverable **locally**, then reconcile.
-- **Do (conflict):** change the **same** file both locally and externally
-  since the last sync, then reconcile.
-- **Do (binary efficiency — the key test):** with **no Output sync target**
-  set (connector only), ask for an **Excel** deliverable and confirm it.
-- **Do (target path):** set **Output sync target** to a reachable
-  mounted/synced folder (if the sandbox can see one), then push the Excel
-  again.
+### N. Output sync via the CLI (two-way, to a mounted folder)
+- **Start:** post-init sandbox with **Output sync: Yes** and **Output sync base
+  path** set to a **mounted/synced** Drive/OneDrive folder (e.g.
+  `G:\My Drive\sidekick`). An active project `<slug>`. Settings records only
+  `Output sync: Yes` + the base path — no per-project names.
+- **Do (mechanism — the key test):** ask for an **Excel** deliverable and
+  confirm it; let Sidekick run `sync.py reconcile`. Open the storage client
+  (Drive/OneDrive **web/app**, not just disk) and check the file appears under
+  `<base>\<slug>\output\`.
+- **Do (push more):** a second deliverable in an **area** (`output/<sub>/`),
+  reconcile.
+- **Do (pull):** edit a deliverable **externally** under `<base>\<slug>\output\`,
+  start a fresh session on `<slug>` (or `/sidekick-checkin`).
+- **Do (new-external):** drop a **new** file there, reconcile.
+- **Do (delete):** delete one deliverable **locally**, reconcile.
+- **Do (conflict):** change the **same** file locally and externally, reconcile.
 - **Expect:**
-  - **Push** — after each confirmed local write the file appears in
-    `sidekick-<slug>/` (area file under `sidekick-<slug>/<sub>/`); no extra
-    confirmation beyond the output confirm.
-  - **Pull** — the externally-edited file's new content is **brought back into
-    the workspace `output/`** at session start / check-in.
-  - **New-external** — the new external file is **copied into `output/`**.
-  - **Delete** — additive both ways: the locally-deleted file is **not
-    resurrected** locally **and not deleted** externally (orphan stays).
-  - **Conflict** — Sidekick **asks via the picker** (keep Cowork / keep
-    external / keep both); it does **not** silently overwrite either side.
-  - A per-project manifest `projects/<slug>/.sidekick-sync.json` exists (at the
-    **project root**, not inside `output/`) and is **not** itself synced.
-  - If the connector can only write (no list/read), Sidekick falls back to
-    **push-only** and says so; on any failure it keeps both sides and reports,
-    never blocking or deleting.
-  - **Binary efficiency** — with connector-only, Sidekick does **NOT**
-    base64-stream the Excel through itself (no multi-minute hang); for a
-    binary it **declines to force it through the connector** and suggests an
-    Output sync target. **This is the regression test** for the 5-minute
-    base64 hang.
-  - **Target path** — with a folder path set, the Excel is **copied** to
-    `…/<target>/sidekick-<slug>/` quickly, with no base64 / no long wait.
-- **Inspect:** content matches the winning side after each reconcile; the
-  manifest updates; `output/` and `sidekick-<slug>/` converge except for
-  intentional orphans; no data lost anywhere.
-- **Also (sync off):** with **Output sync: No** (or storage No), creating a
-  deliverable syncs **nothing** — output stays only in the workspace, no
-  manifest is written.
+  - **Mechanism** — the Excel reaches the storage by **file copy** via
+    `sync.py`; **no multi-minute hang, no base64** through the chat. The CLI
+    JSON shows it under `pushed`. **This is the regression test** for the
+    5-minute base64 hang. (If it lands on disk but the storage client never
+    shows it, the CLI didn't reach the watched filesystem in this environment
+    — record it; the MCP-server wrapper is the fallback.)
+  - **Push** — files appear under `<base>\<slug>\output\` (area file under
+    `…\output\<sub>\`); no extra confirmation beyond the output confirm.
+  - **Pull / new-external** — external edits and new external files are copied
+    **back into** the workspace `output/`.
+  - **Delete** — **additive**: the locally-deleted file is not deleted
+    externally (and on the next reconcile is re-copied locally from the
+    surviving side — to truly remove, delete both sides).
+  - **Conflict** — Sidekick **asks via the picker** (keep Cowork / external /
+    both) and runs `sync.py resolve`; nothing silently overwritten. `both`
+    yields a `…​.from-external.<ext>` sibling on both sides.
+  - A manifest `projects/<slug>/.sidekick-sync.json` exists at the **project
+    root** (not inside `output/`) and is not synced.
+  - On an unreachable base path, Sidekick reports `errors` and continues —
+    never blocks a local write or deletes data.
+- **Also (no base path):** with **Output sync: Yes** but the base path blank
+  (or Output sync No), creating a deliverable syncs **nothing** — no copy, no
+  manifest.
 - [ ] PASS / FAIL
 
 ---

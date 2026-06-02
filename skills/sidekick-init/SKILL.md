@@ -57,29 +57,24 @@ list. Accept a free-text answer where it makes sense (role, "other").
 6. **Storage connection.** "Do you want to connect a storage location?"
    - Options: No / Outlook (OneDrive) / Google Drive / Other (specify).
 
-   **6b. Output sync (only ask if storage is not "No").** "Shall I keep your
-   finished deliverables in step with that storage, both ways — a folder per
-   project (`sidekick-<project>`) in its root, so edits made there also come
-   back into your workspace?"
-   - Options: Yes / No.
-   - If storage is "No", **skip this question** and record Output sync as
-     **No** automatically.
-   - Keep it non-technical: this keeps `output/` and the storage in step in
+   **6b. Output sync.** "Shall I keep your finished deliverables in step with
+   an external storage folder, both ways — so they show up in e.g. Google
+   Drive, and edits made there come back into your workspace?"
+   - Options: Yes / No. Record in **Output sync** (Yes/No only).
+   - Keep it non-technical: this keeps `output/` and the storage folder in step
      **both directions**; if the same file is changed in both places at once,
-     Sidekick asks which version to keep, and it never deletes a file as a
-     side effect of syncing.
-   - **Record only Yes or No** in the settings — never write a per-project
-     folder name. The `sidekick-<project>` naming is a fixed convention
-     Sidekick applies at runtime.
-   - **If Yes, ask about the sync target (efficiency):** "Is there a local
-     folder on this machine that already syncs to your storage — e.g. a Google
-     Drive for Desktop or OneDrive folder like `G:\My Drive\Sidekick`? If so,
-     give me the path and I'll copy files there (fast, works for Excel/PDF).
-     Otherwise leave it blank and I'll use the connector." Record the answer in
-     **Output sync target** (blank = connector). Explain plainly: a synced
-     folder is much faster because large/binary files (Excel, PowerPoint, PDF)
-     can't be moved efficiently through the connector — Sidekick will not try
-     to force a big binary through it.
+     Sidekick asks which version to keep, and it never deletes a file as a side
+     effect of syncing.
+   - **If Yes, ask for the base path:** "Give me the folder that already syncs
+     to your storage on this machine — a Google Drive for Desktop or OneDrive
+     folder, e.g. `G:\My Drive\sidekick`. I'll copy each project's deliverables
+     into `<that folder>\<project>\output\`." Record it in **Output sync base
+     path**. Explain plainly: it must be a folder the Drive/OneDrive desktop
+     app syncs (so files copied there actually upload); without such a path,
+     sync can't run. Sidekick moves files by **copying** them (works for Excel,
+     PowerPoint, PDF) — it never routes a file through the chat.
+   - If they don't have such a folder, record Output sync **Yes** but leave the
+     base path blank, and note sync stays idle until they set one (or set it No).
 
 7. **Calendar connection.** "Do you want to connect a calendar, so the
    triage and check-in can take your agenda into account?"

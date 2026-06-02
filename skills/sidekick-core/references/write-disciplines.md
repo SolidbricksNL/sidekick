@@ -30,12 +30,12 @@ keeps Cowork from sprawling. Before writing **anything**, classify it.
 - **Output is confirmed** because deliverables are deliberate artifacts
   the user will keep or share. Sidekick must never produce them
   unprompted, and never overwrite or delete them without a yes. *If the
-  optional **output sync** setting is on (and a storage connection is set),
-  `output/` is also kept **two-way** in step with the connected storage folder
-  `sidekick-<slug>/` — push on each confirmed write, pull + reconcile at
-  session start and the check-in, **additive both ways** (deletes never
-  propagate or resurrect), and a true conflict **asks** via the picker. See
-  ARCHITECTURE §7c and the core skill.*
+  optional **output sync** setting is on (and an **Output sync base path** is
+  set), `output/` is also kept **two-way** in step with `<base path>/<slug>/
+  output/` via the CLI `scripts/sync.py` (plain file copies — never base64 a
+  file through the chat): reconcile after each write and at session start / the
+  check-in, **additive** (deletes never propagate), a true conflict **asks**
+  via the picker. See `references/sync-discipline.md`, ARCHITECTURE §7c.*
 
 - **Data structure is confirmed, records are free** because the user
   approves the *shape* of the data once; after that, records flowing in

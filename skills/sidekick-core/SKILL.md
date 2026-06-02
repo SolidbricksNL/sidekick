@@ -52,10 +52,10 @@ you ask them. Full guidance in `references/interaction-style.md`.
 2. **Determine the project** (see "Project detection").
 3. **Read the project's `CLAUDE.md` and the brain files it points to**,
    plus `agenda.md`, so you have context without the user re-explaining.
-4. **If Output sync is on** (and a storage connection is set), reconcile this
-   project's `output/` with `sidekick-<slug>/` **both ways** before working, so
-   you start from the latest deliverables (see "Output sync" under Discipline
-   3). Skip silently when sync is off or no storage is connected.
+4. **If Output sync is on** (and a base path is set), run `sync.py reconcile`
+   for this project before working, so you start from the latest deliverables
+   (see "Output sync" under Discipline 3). Skip silently when sync is off or no
+   base path is set.
 5. Proceed with the work, applying the three write disciplines.
 
 ## Project detection
@@ -226,45 +226,32 @@ deleting any deliverable. Generate in the default output language unless
 told otherwise. Do not produce documents here unprompted.
 
 **Output sync (optional, two-way).** If `sidekick.settings.md` has **Output
-sync: Yes** *and* a storage connection is set, keep this project's `output/`
-**in step both ways** with the external folder `sidekick-<slug>/` (fixed
-prefix `sidekick` + the project slug; area subfolders preserved). Full spec
-and the per-file reconcile table: ARCHITECTURE §7c.
+sync: Yes** *and* an **Output sync base path** is set, keep this project's
+`output/` **in step both ways** with `<base path>/<slug>/output/`. The sync is
+done by the bundled CLI **`scripts/sync.py`** (plain file copies) — **never**
+by base64-ing a file through yourself, hand-reading bytes, or a connector
+upload. Full protocol: `references/sync-discipline.md` (and ARCHITECTURE §7c).
 
-- **Push immediately on a confirmed output write.** After you create/edit a
-  deliverable (the output gatekeeper already said yes), write locally **first**,
-  then push it to `sidekick-<slug>/`. No extra confirmation — the setting is
-  the consent.
-- **Pull + reconcile at session start and at the check-in.** When this project
-  becomes active (and again as a sweep at `/sidekick-checkin`), reconcile
-  `output/` with `sidekick-<slug>/` in **both** directions, using the manifest
-  `projects/<slug>/.sidekick-sync.json` (path → last-synced mtime; at the
-  **project root**, never inside `output/`, so it isn't synced itself):
-  one side changed → copy the newer over; a file new on one side → copy it
-  across; a file deleted on one side → **leave it** (don't resurrect, don't
-  delete the other copy — additive both ways).
-- **A true conflict (both sides changed the same file since last sync) →
-  ASK** via the picker: keep the Cowork version, keep the external version, or
-  keep both (rename one). Never silently overwrite a conflict.
-- After reconciling, rewrite the manifest to the new state. First sync (no
-  manifest) → treat all files as new, copy both ways, no false conflicts.
-- **How bytes move — efficiency (read this).** **Never base64-encode a file
-  into your own output to move it** — that streams every byte through your
-  token output (~size×1.33), which is minutes for an Excel/PDF and the exact
-  hang seen in testing. Transport order: **(1)** if **Output sync target** is a
-  folder path (a mounted/synced Drive/OneDrive folder reachable from the
-  workspace), **copy the file there** — fast, binary-safe, zero tokens;
-  **(2)** else if the connector offers an upload that takes a **path/handle**,
-  use that; **(3)** else (inline-content upload only) sync **only small text**
-  deliverables, and for a **binary or large** file do **not** push it — tell
-  the user the connector can't move it efficiently and suggest setting an
-  Output sync target (a synced folder). 
-- **Best-effort.** Two-way needs the transport to list + read + write; if it
-  can only write, fall back to push-only and say so. On any failure (connector
-  off, offline, unreachable path), leave both sides as they are, tell the user
-  what didn't sync, and continue — never block a local write or delete data.
+- **Invoke the CLI to reconcile** — after a confirmed output write, at session
+  start for this project, and at the check-in:
+  `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/sync.py" reconcile --project projects/<slug> --base "<base path>"`
+  It copies new/changed files **both ways** (additive — a delete is never
+  propagated; to remove, delete both sides) and prints JSON with `pushed`,
+  `pulled`, `in_sync`, `conflicts`, `errors`. No extra confirmation for the
+  copy — the setting is the consent.
+- **On `conflicts`** (same file changed on both sides since last sync): for
+  each, **ASK** via the picker — keep the Cowork version, keep the external,
+  or keep both — then run
+  `… sync.py resolve --project projects/<slug> --base "<base path>" --file <relpath> --keep local|external|both`.
+  Never overwrite a conflict silently.
+- **On `errors` / unreachable base path:** tell the user what didn't sync and
+  continue — never block a local write or delete data. The next reconcile
+  retries.
+- **Efficiency:** moving files is the CLI's job (copies, zero chat tokens). If
+  you ever feel tempted to base64 a file or read its bytes to "send" it —
+  don't; that is the multi-minute hang seen in testing.
 
-When Output sync is No (or no storage is connected), skip all of this.
+When Output sync is No, or no base path is set, skip all of this.
 
 **Structured-data structure** (`data/`): see `references/data-discipline.md`.
 Ask for confirmation in plain, non-technical language before any structure

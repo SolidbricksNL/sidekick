@@ -379,116 +379,90 @@ artifact (gated) — but it adds no new gatekeeper of its own.
 
 ## 7c. Optional: output sync to external storage
 
-By default `output/` lives only in the Cowork workspace. When the user has a
-**storage connection** configured (§8) they may additionally switch on
-**output sync**: Sidekick then keeps each project's deliverables **in step**
-with that external storage **in both directions**, so finished work also lands
-where the user (and colleagues) already keep files — and edits made *there*
-flow back into the workspace.
+By default `output/` lives only in the Cowork workspace. When the user sets an
+**Output sync base path** (§8) — a folder on a mounted/synced storage drive
+(Google Drive for Desktop, OneDrive, …) reachable from the workspace —
+Sidekick keeps each project's `output/` **in step both ways** with that
+storage: finished work lands where the user (and colleagues) keep files, and
+edits made *there* flow back in. Only `output/` is synced; brain, log, data,
+and the gatekeepers are untouched.
 
-**Two-way sync — neither side is sole owner.** The workspace
-`projects/<slug>/output/` and the external folder are kept reconciled: a
-change on **either** side is carried to the other. There is no daemon, so the
-reconcile happens at defined moments (below), not live. Only `output/` is
-synced — the rest of the architecture (brain, log, data, gatekeepers) is
-untouched.
+**A dedicated CLI does the sync — not the model, not a connector.** All file
+movement goes through the bundled helper `scripts/sync.py` (stdlib Python),
+which does plain **binary-safe file copies** between the local `output/` and
+the base path. Two hard reasons it exists, both found in testing:
 
-**Layout — one folder per project in the storage root.** The external root
-gets one folder per project, named with the **fixed prefix `sidekick`** plus
-the project slug — `sidekick-<slug>/` — holding that project's `output/` tree
-(area subfolders included). The prefix is constant; only the slug varies, and
-that postfix is derived at runtime — it is **not** enumerated in
-`sidekick.settings.md` (§8).
+- **No bytes through the model.** Sending a file through a storage *connector*
+  made the model **base64-encode it into its own output** (~size×1.33 tokens,
+  emitted token-by-token) — an Excel push that ran past five minutes. A file
+  copy costs **zero model tokens**.
+- **The copy must reach the watched filesystem.** Writing from the bash
+  sandbox to a Linux mountpoint did **not** trigger the storage client's sync.
+  The CLI must run where its copy lands on the filesystem the client watches
+  (the native path, e.g. `G:\My Drive\…`) — see the execution caveat (§13) and
+  `references/sync-discipline.md`.
+
+**Layout — base path, then one folder per project.** Under the base path each
+project gets `<slug>/output/`, mirroring its workspace `output/` tree (area
+subfolders included). There is **no** `sidekick-` prefix — the base path the
+user chose is itself the Sidekick root, so settings records only the path, not
+per-project names.
 
 ```
-<external-storage-root>/
-├── sidekick-<project-a>/        ↔ projects/<project-a>/output/
-│   ├── <deliverable>.docx
-│   └── <area>/                  ←   output/<area>/ subfolders preserved
-└── sidekick-<project-b>/        ↔ projects/<project-b>/output/
+<base path>/                    e.g. G:\My Drive\sidekick
+├── <project-a>/output/         ↔ projects/<project-a>/output/
+└── <project-b>/output/         ↔ projects/<project-b>/output/
 ```
 
-**When it syncs.** Push is immediate; pull and full reconcile happen at two
-moments:
+**When it syncs.** The model runs `sync.py reconcile --project
+projects/<slug> --base <path>` at three moments: **after a confirmed output
+write** (the new/edited file copies out), and **at session start for the
+active project** and **as a sweep at the check-in** (§11) — each reconcile
+pulls external edits in and pushes local ones out.
 
-1. **Push on every confirmed output write.** Right after a deliverable is
-   created or edited in `output/` (the output gatekeeper already said yes),
-   Sidekick pushes the file to `sidekick-<slug>/`. The local write happens
-   **first**; the push is a follow-on.
-2. **Pull + reconcile at session start (active project) and at the
-   check-in.** When a project becomes active, and again as a sweep over every
-   project at `/sidekick-checkin` (§11), Sidekick reconciles `output/` with
-   `sidekick-<slug>/` in **both** directions — pulling external edits into the
-   workspace and pushing local ones out.
-
-**The reconcile rule (per file).** To tell a genuine edit from a genuine
-delete, and to spot true conflicts, Sidekick keeps a small **sync manifest**
-per project at `projects/<slug>/.sidekick-sync.json` — a map of each synced
-file to its last-synced modified-time. The manifest lives at the *project*
-root, **not inside `output/`**, so it is never itself synced. Each reconcile,
-for every path across local ∪ external ∪ manifest:
+**The reconcile rule (per file).** A small **manifest**
+`projects/<slug>/.sidekick-sync.json` (path → last-synced content hash; at the
+*project* root, **not inside `output/`**, so it is never itself synced) holds
+the baseline. For every file across local ∪ external ∪ manifest:
 
 | Situation | Action |
 |---|---|
-| Present both sides, **unchanged** since the manifest | nothing |
-| Present both, **one** side changed | copy the newer over the older |
-| Present both, **both** changed since the manifest (a true **conflict**) | **ask the user** via the picker — keep the Cowork version, keep the external version, or keep both (one renamed). Never silently overwrite. |
-| Present on **one** side, **not** in the manifest (genuinely **new**) | copy it to the other side |
-| In the manifest but now **missing on one side** (a genuine **delete**) | respect it — **do not resurrect** it on the side it was removed, and **do not delete** it on the other side. The remaining copy stays as an orphan. |
+| Same content both sides | in sync |
+| **One** side changed vs the baseline | copy the changed side over the other |
+| **Both** changed vs the baseline (or no baseline, contents differ) — a **conflict** | left untouched, **reported** — the model asks the user (below), never overwrites silently |
+| File on **one** side only | copied to the other (**additive**) |
+| Gone on **both** sides | dropped from the manifest |
 
-After reconciling, Sidekick rewrites the manifest to the new state. On the
-**first** sync (no manifest yet) every file counts as new and is copied both
-ways — no false conflicts.
+After reconciling, the CLI rewrites the manifest. On the **first** sync (no
+manifest) every file counts as new and is copied across — no false conflicts.
 
-**Additive both directions — Sidekick never deletes a file as a side effect
-of sync.** A delete on one side is never propagated to the other; the other
-copy is left in place (it may go stale — the user removes orphans themselves,
-on whichever side). Conversely a deleted file is **not** resurrected from the
-other side (the manifest is how Sidekick knows it was deleted, not new). This
-is the safe default against accidental data loss in a shared drive — at the
-cost that *fully* removing a deliverable means deleting it on both sides.
+**Conflicts go to the human.** The CLI never resolves a conflict itself. On a
+reported conflict the model asks the user via the **picker** — keep the Cowork
+version, keep the external version, or keep both — then runs `sync.py resolve
+--file <path> --keep local|external|both` (`both` keeps the local file and the
+external one as `<name>.from-external<ext>` on both sides).
 
-**Gatekeepers.** A **local** write is the normal output gatekeeper (§7) — the
-deliverable was confirmed, and the push out is a mechanical consequence of
-sync being on (no extra per-file confirmation). A **pulled** external change
-overwrites a workspace file the user did not touch this session; that is the
-point of sync, so it is applied without a prompt **except** in the conflict
-case above, which always asks. The *setting itself* is the standing consent
-for routine pulls; a true conflict is the one moment Sidekick stops to ask.
+**Additive — sync never deletes.** A file on only one side is copied to the
+other, so a delete is **not** propagated; to fully remove a deliverable, delete
+it on **both** sides. This favours never losing data in a shared drive (the
+trade: a one-sided delete is re-created from the surviving side).
 
-**How files move — the efficiency rule (never base64 a file through the
-model).** Moving a file's bytes as a **base64 string in the model's own
-tool-input/output** is forbidden. Base64 inflates the file ~1.33× and the
-model emits it **token by token**, so a binary deliverable (`.xlsx`, `.pptx`,
-`.pdf`) costs minutes and a huge token bill — this is exactly the failure seen
-in testing (an Excel push that ran past five minutes). Transport must keep
-bytes **out of the model's token stream**, in this preference order:
+**Gatekeepers — none added.** The deliverable was already confirmed under the
+output gatekeeper (§7); pushing it out is a mechanical consequence of sync
+being on. A routine pull (an external edit the user made deliberately) applies
+without a prompt — the *setting* is the standing consent — **except** a true
+conflict, the one moment Sidekick stops to ask.
 
-1. **Local synced folder (preferred).** If the external storage is also a
-   **mounted/synced folder** reachable from the workspace (Google Drive for
-   Desktop, OneDrive client → e.g. `G:\My Drive\…`), sync is a plain
-   **file copy** to `…/sidekick-<slug>/`. Instant, binary-safe, zero model
-   tokens — the OS client then syncs it to the cloud. This is the target to
-   prefer whenever the sandbox can reach such a path (§8 *Output sync target*).
-2. **Connector upload by reference.** If the storage connector exposes a
-   create/upload that takes a **file path or handle** (not inline content),
-   use that — the runtime moves the bytes, not the model.
-3. **Inline-content upload — last resort, text-and-small only.** If the only
-   upload path is inline content, use it **only** for small text deliverables
-   (e.g. markdown) under a modest size cap. For a **binary or large** file,
-   do **not** auto-sync it through the model: tell the user the connector
-   can't move it efficiently and point them to option 1 (a mounted folder).
-   Never silently base64 a big binary.
-
-**Mechanism and failure handling.** Sync runs only when (a) the setting is on
-**and** (b) a transport is available — a reachable synced folder, or a storage
-connector actually enabled in Cowork (the plugin does not enable connectors,
-§8/§13). The two-way path also needs the transport to **list and read** the
-external side (not just write); a write-only connector degrades to
-**push-only** and Sidekick says so. If any step fails (connector off, offline,
-permission, unreachable mount), Sidekick keeps both sides' files as they are,
-reports what could not sync, and moves on — sync never blocks a local write or
-destroys data. The next session-start / check-in reconcile retries.
+**When it runs, and failure handling.** Sync runs only when Output sync is on
+**and** a base path is set and reachable; with no base path it simply does not
+run — there is **no connector fallback for files** (the connector route is the
+slow/broken one this design replaces). If the base path is unreachable or a
+copy fails, the CLI reports it (`errors` in its JSON) and the model tells the
+user what didn't sync and continues — sync never blocks a local write or
+deletes data. The next session-start / check-in reconcile retries. Whether a
+shell-invoked CLI reaches the watched filesystem in Cowork is the one thing to
+verify per environment (§13); if it cannot, the same engine wraps as a native
+MCP server with no logic change. Full protocol: `references/sync-discipline.md`.
 
 ---
 
@@ -503,19 +477,15 @@ One file in the root, written by the `sidekick-init` skill. Contains:
 - **Email connection** (yes / no).
 - **Messages/chat connection** (no / Slack / Teams / Google Chat / other).
 - **Storage connection** (no / Outlook / Google Drive / other).
-- **Output sync** (no / yes) — two-way sync of each project's `output/` with
-  the external storage (§7c). Recorded as a plain **yes/no only**: the
-  per-project folder `sidekick-<slug>/` uses the fixed prefix `sidekick` and a
-  runtime-derived slug, so **no per-project name is written into settings**.
-  Only meaningful when a storage connection is set; recorded as **no** (and
-  not asked) when storage is "no".
-- **Output sync target** (blank / a folder path) — *where* the sync writes,
-  and *how* (§7c "How files move"). A **folder path** (a mounted/synced Drive
-  or OneDrive folder reachable from the workspace, e.g. `G:\My Drive\Sidekick`)
-  makes sync a plain **file copy** — efficient and binary-safe, the preferred
-  route. **Blank** means use the **storage connector**, which is fine for small
-  text deliverables but cannot move large/binary files efficiently (no base64
-  through the model). Only relevant when Output sync is yes.
+- **Output sync** (no / yes) — turn two-way `output/` sync on (§7c). Recorded
+  as a plain **yes/no**; per-project folders are derived at runtime, never
+  written here.
+- **Output sync base path** (blank / a folder path) — the storage folder sync
+  copies to/from, e.g. `G:\My Drive\sidekick`. Should be a **mounted/synced
+  Drive or OneDrive folder** reachable from the workspace; under it Sidekick
+  keeps `<slug>/output/` per project (§7c). **Blank ⇒ sync does not run** —
+  there is no connector fallback for files. Only relevant when Output sync is
+  yes.
 - **Calendar connection** (no / Google Calendar / Outlook Calendar / other).
 
 Chat language and output language are deliberately separate: a user may
@@ -589,12 +559,12 @@ The user starts the check-in themselves. Operation:
 7. **After distilling a log into the brain (on approval), stamp that log
    file** with `> distilled to brain: <date>`. If the user defers a log,
    leave it unstamped (it resurfaces at the next check-in).
-8. **Reconcile output sync — both directions** (only if output sync is on and
-   a storage connection is enabled, §7c): per project, sync `output/` with
-   `sidekick-<slug>/` using the manifest rule — pull external edits in, push
-   local ones out, **ask on a true conflict** (both sides changed), and stay
-   **additive** (never delete or resurrect a file). A failed step is reported,
-   not fatal.
+8. **Reconcile output sync — both directions** (only if Output sync is on and
+   a base path is set, §7c): per project, run `sync.py reconcile --project
+   projects/<slug> --base <path>` — it pulls external edits in and pushes local
+   ones out (**additive**, never deletes). For each path in its `conflicts`
+   list, **ask the user** via the picker and run `sync.py resolve`. A failed
+   step / unreachable base path is reported, not fatal.
 
 The per-project `agenda.md` is deliberately simple (markdown): a list of
 live items with status, so the check-in can work with it well.
@@ -661,10 +631,12 @@ sidekick/
 │   │   │   ├── write-disciplines.md
 │   │   │   ├── project-structure.md
 │   │   │   ├── reporting.md
+│   │   │   ├── sync-discipline.md
 │   │   │   ├── project-claude-template.md
 │   │   │   └── agenda-template.md
 │   │   └── scripts/
-│   │       └── data.py            ← file-based structured-data helper
+│   │       ├── data.py            ← file-based structured-data helper
+│   │       └── sync.py            ← output-sync helper (output/ ↔ external base path)
 │   ├── sidekick-init/
 │   │   ├── SKILL.md
 │   │   └── references/settings-template.md
@@ -777,39 +749,35 @@ Resolved:
   output); `data.py` is **unchanged** (keeps the ~16 KB install cap). A richer
   React render was deferred — it would depend on Cowork's still-new live-artifact
   runtime, which the self-contained-HTML snapshot does not.
-- **Output sync to external storage (added 2026-06-02; made two-way same
-  day)** — an optional setting (§7c, §8) that keeps each project's `output/`
-  **in step both ways** with a connected storage folder `sidekick-<slug>/`
-  (fixed prefix `sidekick` + runtime slug; **only yes/no is recorded in
-  settings**, never a per-project name — corrected after the first cut wrote
-  the postfix into the file). Push is immediate on each confirmed output
-  write; **pull + full reconcile run at session start (active project) and at
-  the check-in** (§11). A small per-project manifest
-  `projects/<slug>/.sidekick-sync.json` (path → last-synced mtime; lives at the
-  project root, never itself synced) distinguishes edit from delete and detects
-  conflicts: one-side change → propagate; **both-side change → ask via the
-  picker** (keep Cowork / external / both); **additive both ways** — a delete
-  is never propagated and never resurrected (orphan stays). No new gatekeeper
-  for routine pulls (the setting is the consent); only a true conflict stops to
-  ask. Needs the connector to **list + read + write** (write-only degrades to
-  push-only with a note). Runs only when the setting is on **and** a storage
-  connector is actually enabled; any failure is reported, never fatal, never
-  destroys data. Recorded as **no** (and not asked at init) when storage is
-  "no". The first cut (one-way mirror) was reworked the same session per user
-  feedback — local is no longer sole canonical.
-- **Output-sync transport efficiency (added 2026-06-02, v0.8.1)** — testing
-  exposed the real bottleneck: pushing a binary (`.xlsx`) through the Google
-  Drive connector made the model **base64-encode the file into its own
-  output**, which the LLM emits token-by-token (~size×1.33) — a push that ran
-  past five minutes. Fixed with a hard **no-base64-through-the-model** rule and
-  a transport preference order (§7c "How files move"): (1) a **mounted/synced
-  folder** (Drive for Desktop / OneDrive) → plain file copy, zero model tokens;
-  (2) connector upload **by path/handle**; (3) inline-content upload only for
-  **small text**, never auto-syncing a binary. New optional setting **Output
-  sync target** (a folder path → copy there; blank → connector). Whether the
-  Cowork sandbox can reach a local mount is **unverified** — the design prefers
-  the mount and degrades safely to the connector (text-only, with a warning for
-  binaries) otherwise.
+- **Output sync to external storage (added 2026-06-02; iterated to a CLI same
+  day, v0.7.0 → v0.9.0)** — optional **two-way** sync of each project's
+  `output/` with an external storage folder (§7c, §8). Final design: a bundled
+  CLI **`scripts/sync.py`** (stdlib, ~6.6 KB) does plain **binary-safe file
+  copies** between `projects/<slug>/output/` and `<base path>/<slug>/output/`;
+  the model invokes `reconcile` after a confirmed write and at session start /
+  check-in, and `resolve` for conflicts. A manifest
+  `projects/<slug>/.sidekick-sync.json` (path → content **hash**; at the
+  project root, not synced) detects one-sided changes vs **conflicts**
+  (both-changed → the model **asks** via the picker; keep Cowork / external /
+  both). **Additive** — a delete is never propagated (to remove, delete both
+  sides). Settings records **Output sync** (yes/no) + **Output sync base path**
+  (a mounted/synced folder, e.g. `G:\My Drive\sidekick`); **no base path ⇒ no
+  sync** (no connector fallback). The iteration that got here, all the same
+  session per user testing:
+  - **v0.7.0** one-way mirror; **v0.8.0** made it two-way + settings stores
+    only yes/no (the first cut wrongly wrote the per-project postfix into the
+    file); **v0.8.1** flagged the transport problem; **v0.9.0** replaced the
+    connector transport entirely with the CLI.
+  - **Why the CLI.** Two real failures in testing: (1) pushing a binary via the
+    Google Drive **connector** made the model **base64 the file into its own
+    output** (~size×1.33 tokens, token-by-token) — an Excel push past five
+    minutes; (2) writing from the **bash sandbox** to a Linux mountpoint did
+    **not** trigger the Drive client's sync. Fix: never move bytes through the
+    model; copy files via a CLI that lands on the **watched filesystem**.
+  - **OPEN / verify per environment:** whether a shell-invoked CLI in Cowork
+    reaches the native watched path (so Drive notices). If not, the same engine
+    wraps as a native **MCP server** unchanged. `references/sync-discipline.md`
+    has the one-time test.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

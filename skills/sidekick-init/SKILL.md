@@ -71,6 +71,15 @@ list. Accept a free-text answer where it makes sense (role, "other").
    - **Record only Yes or No** in the settings — never write a per-project
      folder name. The `sidekick-<project>` naming is a fixed convention
      Sidekick applies at runtime.
+   - **If Yes, ask about the sync target (efficiency):** "Is there a local
+     folder on this machine that already syncs to your storage — e.g. a Google
+     Drive for Desktop or OneDrive folder like `G:\My Drive\Sidekick`? If so,
+     give me the path and I'll copy files there (fast, works for Excel/PDF).
+     Otherwise leave it blank and I'll use the connector." Record the answer in
+     **Output sync target** (blank = connector). Explain plainly: a synced
+     folder is much faster because large/binary files (Excel, PowerPoint, PDF)
+     can't be moved efficiently through the connector — Sidekick will not try
+     to force a big binary through it.
 
 7. **Calendar connection.** "Do you want to connect a calendar, so the
    triage and check-in can take your agenda into account?"

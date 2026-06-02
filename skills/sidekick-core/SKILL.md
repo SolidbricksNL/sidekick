@@ -248,10 +248,21 @@ and the per-file reconcile table: ARCHITECTURE §7c.
   keep both (rename one). Never silently overwrite a conflict.
 - After reconciling, rewrite the manifest to the new state. First sync (no
   manifest) → treat all files as new, copy both ways, no false conflicts.
-- **Best-effort.** Two-way needs the connector to list + read + write; if it
+- **How bytes move — efficiency (read this).** **Never base64-encode a file
+  into your own output to move it** — that streams every byte through your
+  token output (~size×1.33), which is minutes for an Excel/PDF and the exact
+  hang seen in testing. Transport order: **(1)** if **Output sync target** is a
+  folder path (a mounted/synced Drive/OneDrive folder reachable from the
+  workspace), **copy the file there** — fast, binary-safe, zero tokens;
+  **(2)** else if the connector offers an upload that takes a **path/handle**,
+  use that; **(3)** else (inline-content upload only) sync **only small text**
+  deliverables, and for a **binary or large** file do **not** push it — tell
+  the user the connector can't move it efficiently and suggest setting an
+  Output sync target (a synced folder). 
+- **Best-effort.** Two-way needs the transport to list + read + write; if it
   can only write, fall back to push-only and say so. On any failure (connector
-  off, offline), leave both sides as they are, tell the user what didn't sync,
-  and continue — never block a local write or delete data.
+  off, offline, unreachable path), leave both sides as they are, tell the user
+  what didn't sync, and continue — never block a local write or delete data.
 
 When Output sync is No (or no storage is connected), skip all of this.
 

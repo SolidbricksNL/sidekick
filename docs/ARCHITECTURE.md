@@ -456,17 +456,39 @@ point of sync, so it is applied without a prompt **except** in the conflict
 case above, which always asks. The *setting itself* is the standing consent
 for routine pulls; a true conflict is the one moment Sidekick stops to ask.
 
-**Mechanism and failure handling.** Sync goes through the **connected storage
-connector** (Google Drive, OneDrive/Outlook, …) using whatever list / read /
-write it exposes — the plugin does not enable the connector (§8, §13). It
-therefore runs only when (a) the setting is on **and** (b) a storage
-connection is actually enabled in Cowork. The two-way path additionally needs
-the connector to **list and read** the external folder (not just upload); if
-it can only write, Sidekick degrades to **push-only** and says so. If any step
-fails (connector off, offline, permission), Sidekick keeps both sides' files
-as they are, reports what could not sync, and moves on — sync never blocks a
-local write or destroys data. The next session-start / check-in reconcile
-retries.
+**How files move — the efficiency rule (never base64 a file through the
+model).** Moving a file's bytes as a **base64 string in the model's own
+tool-input/output** is forbidden. Base64 inflates the file ~1.33× and the
+model emits it **token by token**, so a binary deliverable (`.xlsx`, `.pptx`,
+`.pdf`) costs minutes and a huge token bill — this is exactly the failure seen
+in testing (an Excel push that ran past five minutes). Transport must keep
+bytes **out of the model's token stream**, in this preference order:
+
+1. **Local synced folder (preferred).** If the external storage is also a
+   **mounted/synced folder** reachable from the workspace (Google Drive for
+   Desktop, OneDrive client → e.g. `G:\My Drive\…`), sync is a plain
+   **file copy** to `…/sidekick-<slug>/`. Instant, binary-safe, zero model
+   tokens — the OS client then syncs it to the cloud. This is the target to
+   prefer whenever the sandbox can reach such a path (§8 *Output sync target*).
+2. **Connector upload by reference.** If the storage connector exposes a
+   create/upload that takes a **file path or handle** (not inline content),
+   use that — the runtime moves the bytes, not the model.
+3. **Inline-content upload — last resort, text-and-small only.** If the only
+   upload path is inline content, use it **only** for small text deliverables
+   (e.g. markdown) under a modest size cap. For a **binary or large** file,
+   do **not** auto-sync it through the model: tell the user the connector
+   can't move it efficiently and point them to option 1 (a mounted folder).
+   Never silently base64 a big binary.
+
+**Mechanism and failure handling.** Sync runs only when (a) the setting is on
+**and** (b) a transport is available — a reachable synced folder, or a storage
+connector actually enabled in Cowork (the plugin does not enable connectors,
+§8/§13). The two-way path also needs the transport to **list and read** the
+external side (not just write); a write-only connector degrades to
+**push-only** and Sidekick says so. If any step fails (connector off, offline,
+permission, unreachable mount), Sidekick keeps both sides' files as they are,
+reports what could not sync, and moves on — sync never blocks a local write or
+destroys data. The next session-start / check-in reconcile retries.
 
 ---
 
@@ -482,11 +504,18 @@ One file in the root, written by the `sidekick-init` skill. Contains:
 - **Messages/chat connection** (no / Slack / Teams / Google Chat / other).
 - **Storage connection** (no / Outlook / Google Drive / other).
 - **Output sync** (no / yes) — two-way sync of each project's `output/` with
-  the connected storage (§7c). Recorded as a plain **yes/no only**: the
+  the external storage (§7c). Recorded as a plain **yes/no only**: the
   per-project folder `sidekick-<slug>/` uses the fixed prefix `sidekick` and a
   runtime-derived slug, so **no per-project name is written into settings**.
   Only meaningful when a storage connection is set; recorded as **no** (and
   not asked) when storage is "no".
+- **Output sync target** (blank / a folder path) — *where* the sync writes,
+  and *how* (§7c "How files move"). A **folder path** (a mounted/synced Drive
+  or OneDrive folder reachable from the workspace, e.g. `G:\My Drive\Sidekick`)
+  makes sync a plain **file copy** — efficient and binary-safe, the preferred
+  route. **Blank** means use the **storage connector**, which is fine for small
+  text deliverables but cannot move large/binary files efficiently (no base64
+  through the model). Only relevant when Output sync is yes.
 - **Calendar connection** (no / Google Calendar / Outlook Calendar / other).
 
 Chat language and output language are deliberately separate: a user may
@@ -768,6 +797,19 @@ Resolved:
   destroys data. Recorded as **no** (and not asked at init) when storage is
   "no". The first cut (one-way mirror) was reworked the same session per user
   feedback — local is no longer sole canonical.
+- **Output-sync transport efficiency (added 2026-06-02, v0.8.1)** — testing
+  exposed the real bottleneck: pushing a binary (`.xlsx`) through the Google
+  Drive connector made the model **base64-encode the file into its own
+  output**, which the LLM emits token-by-token (~size×1.33) — a push that ran
+  past five minutes. Fixed with a hard **no-base64-through-the-model** rule and
+  a transport preference order (§7c "How files move"): (1) a **mounted/synced
+  folder** (Drive for Desktop / OneDrive) → plain file copy, zero model tokens;
+  (2) connector upload **by path/handle**; (3) inline-content upload only for
+  **small text**, never auto-syncing a binary. New optional setting **Output
+  sync target** (a folder path → copy there; blank → connector). Whether the
+  Cowork sandbox can reach a local mount is **unverified** — the design prefers
+  the mount and degrades safely to the connector (text-only, with a warning for
+  binaries) otherwise.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

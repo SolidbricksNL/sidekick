@@ -30,14 +30,24 @@ _Last updated: {{DATE}}_
 - **Messages / chat:** {{MESSAGES}}   <!-- No / Slack / Microsoft Teams / Google Chat / Other: ... -->
 - **Storage:** {{STORAGE}}        <!-- No / Outlook (OneDrive) / Google Drive / Other: ... -->
 - **Output sync:** {{OUTPUT_SYNC}}    <!-- No / Yes. Always No when Storage is No. -->
+- **Output sync target:** {{OUTPUT_SYNC_TARGET}}   <!-- Blank = use the storage connector. Or a local folder path (a mounted/synced Drive/OneDrive folder, e.g. G:\My Drive\Sidekick) for a plain, efficient file copy. Only used when Output sync is Yes. -->
 - **Calendar:** {{CALENDAR}}      <!-- No / Google Calendar / Outlook Calendar / Other: ... -->
 
 <!-- Output sync records ONLY Yes or No here — nothing per project. When Yes,
-     Sidekick syncs each project's output/ with the connected storage under a
-     folder named with the fixed prefix "sidekick" plus the project slug
+     Sidekick syncs each project's output/ with the storage under a folder
+     named with the fixed prefix "sidekick" plus the project slug
      (sidekick-<slug>). That per-project postfix is derived at runtime and is
-     NEVER written into this file. Only runs when a storage connector is
-     actually enabled in Cowork. -->
+     NEVER written into this file.
+
+     Output sync target picks HOW bytes move (efficiency):
+       - a folder PATH (a mounted/synced Drive/OneDrive folder) => plain file
+         copy: fast, binary-safe, no data through the model. Preferred.
+       - BLANK => the storage connector: OK for small text deliverables, but
+         it CANNOT move large/binary files efficiently (the model would have to
+         base64 them, which is very slow). Sidekick never base64s a file
+         through itself; for a binary on the connector it warns instead.
+     Sync only runs when a storage connector is enabled (or the target path is
+     reachable) in Cowork. -->
 
 ## Triage
 

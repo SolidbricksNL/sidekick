@@ -109,9 +109,13 @@ disciplines:
   last sync — is **raised via the picker** (keep Cowork / keep external / keep
   both), never silently overwritten. This runs whether or not new output was
   approved this check-in, so it catches changes since the last reconcile.
-  Rewrite the manifest afterward. A failed step is reported, not fatal; if the
-  connector can only write, fall back to push-only and say so; skip silently
-  when sync is off or no storage is connected. (Spec: ARCHITECTURE §7c.)
+  Rewrite the manifest afterward. **Move bytes efficiently:** prefer copying to
+  the **Output sync target** folder when set; **never base64 a file through
+  yourself**; for a binary/large file with only a connector (no target path),
+  don't force it through — note it and suggest a synced-folder target. A failed
+  step is reported, not fatal; if the connector can only write, fall back to
+  push-only and say so; skip silently when sync is off or no storage is
+  connected. (Spec: ARCHITECTURE §7c.)
 - **Structured data:** records that fit existing columns flow in freely via
   `scripts/data.py`; a new table or column is a structure change — confirm
   in plain language first, then update `brain/data-model.md`.

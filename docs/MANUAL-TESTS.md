@@ -244,6 +244,11 @@ plugin name needs to change again.
 - **Do (delete):** **delete** one deliverable **locally**, then reconcile.
 - **Do (conflict):** change the **same** file both locally and externally
   since the last sync, then reconcile.
+- **Do (binary efficiency — the key test):** with **no Output sync target**
+  set (connector only), ask for an **Excel** deliverable and confirm it.
+- **Do (target path):** set **Output sync target** to a reachable
+  mounted/synced folder (if the sandbox can see one), then push the Excel
+  again.
 - **Expect:**
   - **Push** — after each confirmed local write the file appears in
     `sidekick-<slug>/` (area file under `sidekick-<slug>/<sub>/`); no extra
@@ -260,6 +265,13 @@ plugin name needs to change again.
   - If the connector can only write (no list/read), Sidekick falls back to
     **push-only** and says so; on any failure it keeps both sides and reports,
     never blocking or deleting.
+  - **Binary efficiency** — with connector-only, Sidekick does **NOT**
+    base64-stream the Excel through itself (no multi-minute hang); for a
+    binary it **declines to force it through the connector** and suggests an
+    Output sync target. **This is the regression test** for the 5-minute
+    base64 hang.
+  - **Target path** — with a folder path set, the Excel is **copied** to
+    `…/<target>/sidekick-<slug>/` quickly, with no base64 / no long wait.
 - **Inspect:** content matches the winning side after each reconcile; the
   manifest updates; `output/` and `sidekick-<slug>/` converge except for
   intentional orphans; no data lost anywhere.

@@ -53,9 +53,10 @@ you ask them. Full guidance in `references/interaction-style.md`.
 3. **Read the project's `CLAUDE.md` and the brain files it points to**,
    plus `agenda.md`, so you have context without the user re-explaining.
 4. **If Output sync is on** (and a base path is set), call the
-   **`reconcile_output`** tool for this project before working, so you start
-   from the latest deliverables (see "Output sync" under Discipline 3). Skip
-   silently when sync is off or no base path is set.
+   **`reconcile_output`** tool for this project (with the **absolute** project
+   path — see "Output sync" under Discipline 3) before working, so you start
+   from the latest deliverables. Skip silently when sync is off or no base path
+   is set.
 5. Proceed with the work, applying the three write disciplines.
 
 ## Project detection
@@ -234,16 +235,26 @@ sandbox does **not**). You pass **paths only** — **never** base64 a file
 through yourself, hand-read bytes, or use a connector upload. Full protocol:
 `references/sync-discipline.md` (and ARCHITECTURE §7c).
 
+- **Always pass the ABSOLUTE project path.** `reconcile_output`/`resolve_output`
+  run in the MCP server's own process, where a relative path resolves against
+  the wrong directory (in Cowork that's a scratchpad, not your workspace) —
+  which silently syncs nothing. So pass `project` as the **full absolute path**
+  to `<workspace root>/projects/<slug>` (e.g.
+  `C:\Claude Cowork\Sidekick\projects\finance`). The **workspace root** is the
+  absolute directory that holds `sidekick.settings.md`; determine it once per
+  session (your file context knows it, or run `pwd` / `Get-Location`) and reuse
+  it. If a reconcile returns a `warnings` entry about the local dir not being
+  found, you passed a wrong/relative path — fix it and retry.
 - **Reconcile** — after a confirmed output write, at session start for this
-  project, and at the check-in: call the **`reconcile_output`** tool with
-  `project: "projects/<slug>"` and `base: "<base path>"`. It copies new/changed
-  files **both ways** (additive — a delete is never propagated; to remove,
-  delete both sides) and returns `pushed`, `pulled`, `in_sync`, `conflicts`,
-  `errors`. No extra confirmation for the copy — the setting is the consent.
+  project, and at the check-in: call **`reconcile_output`** with the absolute
+  `project` and `base: "<base path>"`. It copies new/changed files **both ways**
+  (additive — a delete is never propagated; to remove, delete both sides) and
+  returns `pushed`, `pulled`, `in_sync`, `conflicts`, `errors`, `warnings`. No
+  extra confirmation for the copy — the setting is the consent.
 - **On `conflicts`** (same file changed on both sides): for each, **ASK** via
   the picker — keep the Cowork version, keep the external, or keep both — then
-  call **`resolve_output`** (`project`, `base`, `file`, `keep`). Never overwrite
-  a conflict silently.
+  call **`resolve_output`** (absolute `project`, `base`, `file`, `keep`). Never
+  overwrite a conflict silently.
 - **On `errors` / unreachable base path:** tell the user what didn't sync and
   continue — never block a local write or delete data. The next reconcile
   retries.

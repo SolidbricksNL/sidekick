@@ -77,6 +77,13 @@ def reconcile(project, base_path, dry_run=False):
     """Two-way reconcile of <project>/output <-> <base>/<name>/output.
     Returns a summary dict. Raises RuntimeError if a side can't be read."""
     local, remote, mpath, name = _paths(project, base_path)
+    warnings = []
+    if not Path(project).is_absolute():
+        warnings.append(f"project path {project!r} is relative; pass an absolute "
+                        f"path to avoid resolving against the wrong directory")
+    if not local.exists():
+        warnings.append(f"local output dir not found: {local} - nothing local to "
+                        f"push (is the project path correct/absolute?)")
     base = _load_manifest(mpath)
     L, R = _walk(local), _walk(remote)
     try:
@@ -125,7 +132,7 @@ def reconcile(project, base_path, dry_run=False):
     return {"ok": True, "action": "reconcile", "project": name,
             "local": str(local), "remote": str(remote), "dry_run": dry_run,
             "pushed": pushed, "pulled": pulled, "in_sync": insync,
-            "conflicts": conflicts, "errors": errors}
+            "conflicts": conflicts, "errors": errors, "warnings": warnings}
 
 
 def cmd_reconcile(args):

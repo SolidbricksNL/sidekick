@@ -101,8 +101,10 @@ disciplines:
 - **Output:** confirm, then create/edit; record what was produced.
 - **Reconcile output sync — both directions** (only if Output sync is on
   **and** an Output sync base path is set): for each project call the
-  **`reconcile_output`** tool (`project: "projects/<slug>"`, `base: "<base
-  path>"`) from the bundled `sidekick-sync` MCP server. It **pulls** external
+  **`reconcile_output`** tool from the bundled `sidekick-sync` MCP server,
+  passing the **absolute** project path (`<workspace root>/projects/<slug>` —
+  a relative path resolves wrong in the server and silently syncs nothing) and
+  `base: "<base path>"`. It **pulls** external
   edits in and **pushes** local ones out via native file copies (**additive** —
   a deleted file is never propagated; **never** base64 a file through
   yourself), reporting `pushed`/`pulled`/`conflicts`/`errors`. For each path in

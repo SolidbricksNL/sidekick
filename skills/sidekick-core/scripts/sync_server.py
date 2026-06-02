@@ -32,8 +32,10 @@ _TOOLS = [
             "type": "object",
             "properties": {
                 "project": {"type": "string",
-                            "description": "project dir, e.g. projects/<slug> "
-                                           "(relative to the workspace) or an absolute path"},
+                            "description": "ABSOLUTE path to the project dir, e.g. "
+                                           "C:\\\\Claude Cowork\\\\Sidekick\\\\projects\\\\finance. "
+                                           "Pass the full path - a relative path may "
+                                           "resolve against the wrong directory."},
                 "base": {"type": "string",
                          "description": "external base path, e.g. G:\\\\My Drive\\\\sidekick"},
             },
@@ -46,7 +48,7 @@ _TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "project": {"type": "string"},
+                "project": {"type": "string", "description": "ABSOLUTE path to the project dir (same as reconcile_output)"},
                 "base": {"type": "string"},
                 "file": {"type": "string", "description": "conflicting relative path under output/"},
                 "keep": {"type": "string", "enum": ["local", "external", "both"]},

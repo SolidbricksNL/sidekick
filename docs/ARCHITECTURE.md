@@ -779,18 +779,27 @@ Resolved:
     (first cut wrongly wrote the per-project postfix into the file); **v0.8.1**
     flagged the transport problem; **v0.9.0** replaced the connector with a CLI;
     **v0.10.0** moved the transport to a native MCP server after the CLI failed
-    in Cowork.
+    in Cowork; **v0.10.1** fixed the path resolution (CONFIRMED syncing to Drive
+    in Cowork).
   - **Why the MCP server.** Three real failures: (1) connector upload made the
     model **base64 the binary into its own output** (~size×1.33 tokens) — an
     Excel push past five minutes; (2) a CLI copy from the **bash sandbox**
     reported success but the file **never reached Drive** (sandbox writes to a
     Linux mountpoint the Drive client doesn't watch); (3) fix — a **plugin MCP
     server runs as a native host process**, so its copies land on the watched
-    filesystem and sync fires. Verified locally on win32 (the server resolved
-    real `C:\…` paths and the copy landed); **remaining deploy unknown:** the
-    Cowork host must launch the server (Python on PATH) — if the
-    `sidekick-sync` tools don't appear, set an absolute interpreter in the
-    manifest `command`; the model falls back to the CLI with a warning.
+    filesystem and sync fires. **Confirmed working in Cowork (v0.10.1):** files
+    pushed to `G:\My Drive\sidekick\<slug>\output\` and appeared in Drive.
+  - **The path-resolution fix (v0.10.1).** In Cowork the server's
+    `CLAUDE_PROJECT_DIR` points to a scratchpad (AppData), **not** the workspace
+    (`C:\Claude Cowork\Sidekick`), so a **relative** `project` resolved to an
+    empty dir and the tool silently synced nothing. Fix: the tools now take the
+    **absolute** project path (the skills pass `<workspace root>/projects/<slug>`,
+    where the root is the dir holding `sidekick.settings.md`), and `reconcile`
+    returns a **`warnings`** entry when the local output dir is missing so a
+    wrong path is loud, not silent.
+  - **Deploy dependency:** the host launches the server with **Python on PATH**
+    — if the `sidekick-sync` tools don't appear, set an absolute interpreter in
+    the manifest `command`; the model falls back to the CLI with a warning.
     `references/sync-discipline.md` has the one-time Drive-appears test.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-

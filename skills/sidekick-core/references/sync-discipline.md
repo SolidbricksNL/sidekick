@@ -30,10 +30,13 @@ functions in `sync.py`.
 ## The tools (provided by the `sidekick-sync` MCP server)
 
 - **`reconcile_output(project, base)`** — two-way sync of `project`'s `output/`
-  with `<base>/<slug>/output/`. `project` is `projects/<slug>` (resolved on the
-  host against `CLAUDE_PROJECT_DIR`); `base` is the **Output sync base path**
-  from settings. Returns JSON: `pushed`, `pulled`, `in_sync`, `conflicts`,
-  `errors`. Never resolves a conflict itself.
+  with `<base>/<slug>/output/`. **`project` must be the ABSOLUTE path** to the
+  project dir, e.g. `C:\Claude Cowork\Sidekick\projects\finance` — the server
+  runs in its own process, so a relative path resolves against the wrong
+  directory (in Cowork a scratchpad) and silently syncs nothing. `base` is the
+  **Output sync base path** from settings. Returns JSON: `pushed`, `pulled`,
+  `in_sync`, `conflicts`, `errors`, `warnings`. Never resolves a conflict
+  itself.
 - **`resolve_output(project, base, file, keep)`** — settle one conflict;
   `keep` ∈ `local | external | both` (`both` keeps the local file and the
   external one as `<name>.from-external<ext>` on both sides).
@@ -78,6 +81,11 @@ one-sided delete is re-created from the surviving side.)
 
 1. **Only when Output sync is on AND a base path is set.** No base path → sync
    does not run.
+0. **Always pass the ABSOLUTE project path.** Determine the workspace root (the
+   absolute dir holding `sidekick.settings.md`; your file context knows it, or
+   run `pwd` / `Get-Location`) once per session, and pass
+   `<root>/projects/<slug>`. A `warnings` entry about a missing local dir means
+   the path was wrong/relative — fix and retry.
 2. **Push after a confirmed output write:** call `reconcile_output`.
 3. **Pull + reconcile at session start (active project) and at the check-in:**
    call `reconcile_output`.

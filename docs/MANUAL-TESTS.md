@@ -185,10 +185,28 @@ plugin name needs to change again.
 - **Inspect:** **nothing written**; hits point to real files; no false hits.
 - [ ] PASS / FAIL
 
+### L. Report (dashboard over the data store)
+- **Start:** a project with a `data/` table holding enough rows to be worth
+  charting (e.g. the contacts/revenue table from E).
+- **Do:** run `/sidekick-report` (or ask "show me this as a dashboard" / "give
+  me a breakdown by company"). Then ask to **run it again** later.
+- **Expect:** it sources data **only via `data.py info`/`query`** (no raw read
+  of the JSON); proposes a saved **recipe** in `brain/reports.md` with a
+  **diff + approval**; asks **confirmation** before writing the artifact to
+  `output/`; produces a **single self-contained `.html`** with working tabs,
+  sortable tables, and at least one chart, in the **default output language**;
+  states it's a **snapshot** and that re-running refreshes it. The second run
+  reuses the saved recipe rather than re-deriving the query.
+- **Inspect:** `output/<name>.html` opens in a browser, tabs switch, no
+  external network calls (data is **embedded** in the file); `brain/reports.md`
+  holds the recipe (purpose + `SELECT`s); the numbers match a manual
+  `data.py query`. No `data/*.json` was written or hand-read.
+- [ ] PASS / FAIL
+
 ---
 
 ## Overall result
 
-- [ ] All scenarios A–K PASS, and the command-name form (0b) is recorded.
+- [ ] All scenarios A–L PASS, and the command-name form (0b) is recorded.
 
 **Overall: PASS / FAIL** — _____________   Tester: __________   Date: __________

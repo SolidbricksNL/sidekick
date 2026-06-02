@@ -20,11 +20,11 @@ function warn(msg) { console.log(`WARN  ${msg}`); warns++; }
 function fail(msg) { console.log(`FAIL  ${msg}`); fails++; }
 function info(msg) { console.log(`      ${msg}`); }
 
-// The five skills and their expected reference files, per ARCHITECTURE §12.
+// The skills and their expected reference files, per ARCHITECTURE §12.
 // Note: the always-on main skill folder is `sidekick-core`, NOT `sidekick`. The
 // plugin itself is named `sidekick`, so a skill folder named `sidekick` would
 // collide (`sidekick:sidekick`) and break Cowork command resolution.
-const SKILLS = ['sidekick-core', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find'];
+const SKILLS = ['sidekick-core', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find', 'sidekick-report'];
 
 const EXPECTED_TREE = [
   '.claude-plugin/plugin.json',
@@ -34,6 +34,7 @@ const EXPECTED_TREE = [
   'skills/sidekick-core/references/data-discipline.md',
   'skills/sidekick-core/references/brain-protocol.md',
   'skills/sidekick-core/references/write-disciplines.md',
+  'skills/sidekick-core/references/reporting.md',
   'skills/sidekick-core/references/project-claude-template.md',
   'skills/sidekick-core/references/agenda-template.md',
   'skills/sidekick-core/scripts/data.py',
@@ -45,24 +46,26 @@ const EXPECTED_TREE = [
   'skills/sidekick-archive/SKILL.md',
   'skills/sidekick-status/SKILL.md',
   'skills/sidekick-find/SKILL.md',
+  'skills/sidekick-report/SKILL.md',
   'commands/sidekick-init.md',
   'commands/sidekick-triage.md',
   'commands/sidekick-checkin.md',
   'commands/sidekick-archive.md',
   'commands/sidekick-status.md',
   'commands/sidekick-find.md',
+  'commands/sidekick-report.md',
   'docs/ARCHITECTURE.md',
   'README.md',
 ];
 
-// The four explicit-action skills. Each needs a flat commands/<name>.md file —
+// The explicit-action skills. Each needs a flat commands/<name>.md file —
 // that is what Cowork turns into a typed `/<name>` command (skills/ alone only
 // gives model-invocation + a menu entry). Modeled on the working solidcortex
 // plugin. The plugin is named `sidekick`; the always-on main skill is therefore
 // named `sidekick-core` (a skill named `sidekick` would collide with the plugin
 // → `sidekick:sidekick` → broken resolution). The main skill is model-invoked
 // (no command file).
-const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find'];
+const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find', 'sidekick-report'];
 
 // --- Check 1: expected tree exists -----------------------------------------
 console.log('\n# Check 1 — expected tree (ARCHITECTURE §12)');

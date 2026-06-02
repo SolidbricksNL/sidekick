@@ -257,6 +257,69 @@ settings, unless the user explicitly requests another language.
 
 ---
 
+## 7b. The presentation & reporting layer (`sidekick-report`)
+
+Once a project has a `data/` store, the natural next want is to **surface**
+it: answer the same question repeatedly without re-deriving it, and present
+the data in a form a human can actually read (a dashboard, a sheet). This
+layer turns the structured store into reusable views. It owns **no new
+storage discipline** — it reuses the brain and output gatekeepers — and it
+**never** reaches the data any way but through `scripts/data.py query`.
+
+**A report is a recipe plus a rendered artifact.** The two halves live in
+the two layers that already exist:
+
+| Half | Where | Gatekeeper | What it is |
+|------|-------|------------|------------|
+| **Recipe** (the reusable "software") | `brain/reports.md` | diff + approval | a named, plain-language report: its purpose + the `SELECT`(s) it runs (+ the render kind) |
+| **Rendered artifact** (the deliverable) | `output/` | confirm | the produced file: an `.html` dashboard, a sheet, a markdown table |
+
+So the two cases this layer exists for:
+
+1. **Reusable software for a recurring ask.** "Give me the monthly revenue
+   breakdown again" should not mean re-deriving a query each time. Sidekick
+   saves the report as a **recipe** in `brain/reports.md` (a name, a plain
+   description, and the exact `SELECT`). Re-running it = look up the recipe,
+   run `data.py query`, format the result. The recipe *is* the reusable
+   software; the brain is its home because it is durable project knowledge.
+
+2. **A live, interactive artifact (tabbed dashboard).** Sidekick produces a
+   **single self-contained `output/<name>.html`** with client-side tabs,
+   sorting, filtering, and charts. Each tab is fed by one of the recipe's
+   queries.
+
+**The data flow — discipline-preserving.** The model **always** sources the
+data with `data.py query` and **bakes the result into the artifact as a
+snapshot** (embedded JSON). It never makes the artifact read a raw
+`data/*.json` file, and it never hand-reads the JSON to fill the page — the
+single-access-path rule from §4 holds here too. "Live" therefore means
+**interactive over a snapshot**: the tabs/sorting/charts run in the page,
+but the numbers are as of the moment it was generated. **Refresh = re-run
+the report**, which re-queries and rewrites the artifact.
+
+**Self-contained HTML, no external calls.** The dashboard is one `.html`
+file with the data embedded and all rendering inline (vanilla JS or small
+inline helpers). It makes **no network requests** — Cowork's artifact
+sandbox blocks outbound `fetch` anyway, and a self-contained file also opens
+fine straight from `output/` in any browser. (A richer React/artifact render
+was considered and deferred: it depends on Cowork's still-new live-artifact
+runtime, which the snapshot-HTML approach does not.)
+
+**Gatekeepers, reused as-is:**
+
+- Saving or changing a **recipe** is a brain write → **diff + approval**
+  (and it is documented in plain language, like any brain entry).
+- Producing or overwriting the **artifact** in `output/` → **confirmation**,
+  exactly like any deliverable, in the default output language.
+- Reading the data to build either → **free** (it is a `query`).
+
+The `sidekick-report` skill drives this (typed `/sidekick-report`, and the
+core skill routes a clear "show me / dashboard this / report on the data"
+intent here). It is **not** read-only — it writes a recipe (gated) and an
+artifact (gated) — but it adds no new gatekeeper of its own.
+
+---
+
 ## 8. The settings layer (`sidekick.settings.md`)
 
 One file in the root, written by the `sidekick-init` skill. Contains:
@@ -405,6 +468,7 @@ sidekick/
 │   │   │   ├── data-discipline.md
 │   │   │   ├── brain-protocol.md
 │   │   │   ├── write-disciplines.md
+│   │   │   ├── reporting.md
 │   │   │   ├── project-claude-template.md
 │   │   │   └── agenda-template.md
 │   │   └── scripts/
@@ -418,14 +482,16 @@ sidekick/
 │   ├── sidekick-checkin/SKILL.md
 │   ├── sidekick-archive/SKILL.md
 │   ├── sidekick-status/SKILL.md   ← read-only cross-project overview
-│   └── sidekick-find/SKILL.md     ← read-only cross-project recall/search
+│   ├── sidekick-find/SKILL.md     ← read-only cross-project recall/search
+│   └── sidekick-report/SKILL.md   ← saved reports + dashboards over data/ (via data.py)
 ├── commands/                      ← flat files Cowork turns into typed /<name>
 │   ├── sidekick-init.md           ← /sidekick-init → "Invoke the sidekick-init skill"
 │   ├── sidekick-triage.md
 │   ├── sidekick-checkin.md
 │   ├── sidekick-archive.md
 │   ├── sidekick-status.md
-│   └── sidekick-find.md
+│   ├── sidekick-find.md
+│   └── sidekick-report.md
 ├── docs/
 │   └── ARCHITECTURE.md            ← this document
 └── README.md
@@ -497,6 +563,16 @@ Resolved:
   see §11b. Both are read-only (no writes, no gatekeeper, no `data.py` change),
   report in prose, and reuse existing reads + `data.py info`/`query`. They round
   out the loop alongside triage (inbound) and the check-in (actions).
+- **Presentation & reporting layer (added 2026-06-02)** — `sidekick-report`
+  (§7b) surfaces the `data/` store: a **recipe** (named report = purpose +
+  `SELECT`(s)) saved in `brain/reports.md` (diff + approval) and a **rendered
+  artifact** in `output/` (confirm) — a self-contained, tabbed `.html`
+  dashboard with the queried rows **embedded as a snapshot**. Data is always
+  sourced via `data.py query` (never a raw JSON read, never an artifact reading
+  the table); refresh = re-run the report. No new gatekeeper (reuses brain +
+  output); `data.py` is **unchanged** (keeps the ~16 KB install cap). A richer
+  React render was deferred — it would depend on Cowork's still-new live-artifact
+  runtime, which the self-contained-HTML snapshot does not.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

@@ -205,6 +205,14 @@ before adding new ones**, and document them in plain language in
 `brain/data-model.md`. Reading and fitting-records-in is free; structure
 changes need confirmation. Full protocol: `references/data-discipline.md`.
 
+**Presenting the data.** When the user wants to *see* the data — a
+dashboard, a chart, "give me that breakdown again" — hand off to
+`/sidekick-report` (see `references/reporting.md`). It saves reusable reports
+in `brain/reports.md` (diff + approval) and renders a self-contained, tabbed
+HTML dashboard into `output/` (confirm), always sourcing the data through
+`data.py query` (a snapshot — refresh = re-run). Do not build dashboards by
+hand-reading the JSON.
+
 ## What to keep out of the chat
 
 - Long write-ups, analyses, drafts → `log/` (free), summary in chat.
@@ -227,3 +235,7 @@ The chat is the steering wheel; the disk is the workbench.
   asks a recall question that spans projects ("where did we decide X?",
   "which project mentions Y?"), hand it to this skill rather than searching
   ad-hoc.
+- `/sidekick-report` — present/reuse a project's `data/` store as saved
+  reports and tabbed HTML dashboards. When the user wants to *see* the data
+  ("show me X as a dashboard", "that breakdown again"), hand it here rather
+  than building a view by hand.

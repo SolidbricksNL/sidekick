@@ -73,16 +73,18 @@ def _save_manifest(p, files):
         print(f"warning: manifest not written ({e})", file=sys.stderr)
 
 
-def cmd_reconcile(args):
-    local, remote, mpath, name = _paths(args.project, args.base)
+def reconcile(project, base_path, dry_run=False):
+    """Two-way reconcile of <project>/output <-> <base>/<name>/output.
+    Returns a summary dict. Raises RuntimeError if a side can't be read."""
+    local, remote, mpath, name = _paths(project, base_path)
     base = _load_manifest(mpath)
     L, R = _walk(local), _walk(remote)
     try:
         lh = {k: _hash(v) for k, v in L.items()}
         rh = {k: _hash(v) for k, v in R.items()}
     except OSError as e:
-        _die(f"error: could not read files (storage path reachable?): {e}")
-    do = not args.dry_run
+        raise RuntimeError(f"could not read files (storage path reachable?): {e}")
+    do = not dry_run
     new, pushed, pulled, insync, conflicts, errors = {}, [], [], 0, [], []
     for k in sorted(set(lh) | set(rh) | set(base)):
         b, l, r = base.get(k), lh.get(k), rh.get(k)
@@ -120,30 +122,39 @@ def cmd_reconcile(args):
             errors.append({"file": k, "error": str(e)})
     if do:
         _save_manifest(mpath, new)
-    _emit({"ok": True, "action": "reconcile", "project": name,
-           "local": str(local), "remote": str(remote), "dry_run": args.dry_run,
-           "pushed": pushed, "pulled": pulled, "in_sync": insync,
-           "conflicts": conflicts, "errors": errors})
+    return {"ok": True, "action": "reconcile", "project": name,
+            "local": str(local), "remote": str(remote), "dry_run": dry_run,
+            "pushed": pushed, "pulled": pulled, "in_sync": insync,
+            "conflicts": conflicts, "errors": errors}
 
 
-def cmd_resolve(args):
-    local, remote, mpath, name = _paths(args.project, args.base)
+def cmd_reconcile(args):
+    try:
+        _emit(reconcile(args.project, args.base, args.dry_run))
+    except RuntimeError as e:
+        _die(f"error: {e}")
+
+
+def resolve(project, base_path, file, keep):
+    """Settle one conflict; returns a summary dict. Raises RuntimeError if the
+    chosen side's file is missing."""
+    local, remote, mpath, name = _paths(project, base_path)
     files = _load_manifest(mpath)
-    k = args.file
+    k = file
     lp, rp = local / k, remote / k
-    if args.keep == "local":
+    if keep == "local":
         if not lp.exists():
-            _die(f"error: local file {k!r} not found")
+            raise RuntimeError(f"local file {k!r} not found")
         _copy(lp, rp)
         files[k] = _hash(lp)
-    elif args.keep == "external":
+    elif keep == "external":
         if not rp.exists():
-            _die(f"error: external file {k!r} not found")
+            raise RuntimeError(f"external file {k!r} not found")
         _copy(rp, lp)
         files[k] = _hash(rp)
-    elif args.keep == "both":
+    elif keep == "both":
         if not rp.exists():
-            _die(f"error: external file {k!r} not found")
+            raise RuntimeError(f"external file {k!r} not found")
         kp = Path(k)
         alt = kp.with_name(f"{kp.stem}.from-external{kp.suffix}").as_posix()
         _copy(rp, local / alt)            # preserve external version under a new name
@@ -153,8 +164,15 @@ def cmd_resolve(args):
             _copy(lp, rp)
             files[k] = _hash(lp)
     _save_manifest(mpath, files)
-    _emit({"ok": True, "action": "resolve", "project": name,
-           "file": k, "keep": args.keep})
+    return {"ok": True, "action": "resolve", "project": name,
+            "file": k, "keep": keep}
+
+
+def cmd_resolve(args):
+    try:
+        _emit(resolve(args.project, args.base, args.file, args.keep))
+    except RuntimeError as e:
+        _die(f"error: {e}")
 
 
 def build_parser():

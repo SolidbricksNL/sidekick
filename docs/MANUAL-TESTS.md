@@ -229,29 +229,33 @@ plugin name needs to change again.
   without counting `X` separately.
 - [ ] PASS / FAIL
 
-### N. Output sync via the CLI (two-way, to a mounted folder)
-- **Start:** post-init sandbox with **Output sync: Yes** and **Output sync base
-  path** set to a **mounted/synced** Drive/OneDrive folder (e.g.
-  `G:\My Drive\sidekick`). An active project `<slug>`. Settings records only
-  `Output sync: Yes` + the base path — no per-project names.
+### N. Output sync via the MCP server (two-way, to a mounted folder)
+- **Start:** post-install. First confirm the bundled MCP server loaded —
+  the **`sidekick-sync`** tools (`reconcile_output`, `resolve_output`) are
+  available (e.g. shown in the tool list / `/mcp`). If they are **not**, the
+  host couldn't launch the server (likely Python not on PATH) — record it and
+  set an absolute interpreter in `plugin.json` `mcpServers.command`.
+- Then: **Output sync: Yes** and **Output sync base path** set to a
+  **mounted/synced** Drive/OneDrive folder (e.g. `G:\My Drive\sidekick`). An
+  active project `<slug>`. Settings records only `Output sync: Yes` + the base
+  path — no per-project names.
 - **Do (mechanism — the key test):** ask for an **Excel** deliverable and
-  confirm it; let Sidekick run `sync.py reconcile`. Open the storage client
+  confirm it; let Sidekick call `reconcile_output`. Open the storage client
   (Drive/OneDrive **web/app**, not just disk) and check the file appears under
   `<base>\<slug>\output\`.
-- **Do (push more):** a second deliverable in an **area** (`output/<sub>/`),
-  reconcile.
+- **Do (push more):** a second deliverable in an **area** (`output/<sub>/`).
 - **Do (pull):** edit a deliverable **externally** under `<base>\<slug>\output\`,
   start a fresh session on `<slug>` (or `/sidekick-checkin`).
 - **Do (new-external):** drop a **new** file there, reconcile.
 - **Do (delete):** delete one deliverable **locally**, reconcile.
 - **Do (conflict):** change the **same** file locally and externally, reconcile.
 - **Expect:**
-  - **Mechanism** — the Excel reaches the storage by **file copy** via
-    `sync.py`; **no multi-minute hang, no base64** through the chat. The CLI
-    JSON shows it under `pushed`. **This is the regression test** for the
-    5-minute base64 hang. (If it lands on disk but the storage client never
-    shows it, the CLI didn't reach the watched filesystem in this environment
-    — record it; the MCP-server wrapper is the fallback.)
+  - **Mechanism (the regression test for the 5-minute base64 hang)** — the
+    Excel reaches the storage by **file copy** via the MCP server; **no
+    multi-minute hang, no base64** through the chat; `reconcile_output` returns
+    it under `pushed`, and it **appears in the Drive/OneDrive client**. (If
+    `pushed` lists it but the client never shows it, the server isn't reaching
+    the watched filesystem — record it.)
   - **Push** — files appear under `<base>\<slug>\output\` (area file under
     `…\output\<sub>\`); no extra confirmation beyond the output confirm.
   - **Pull / new-external** — external edits and new external files are copied
@@ -260,12 +264,12 @@ plugin name needs to change again.
     externally (and on the next reconcile is re-copied locally from the
     surviving side — to truly remove, delete both sides).
   - **Conflict** — Sidekick **asks via the picker** (keep Cowork / external /
-    both) and runs `sync.py resolve`; nothing silently overwritten. `both`
+    both) and calls `resolve_output`; nothing silently overwritten. `both`
     yields a `…​.from-external.<ext>` sibling on both sides.
   - A manifest `projects/<slug>/.sidekick-sync.json` exists at the **project
     root** (not inside `output/`) and is not synced.
-  - On an unreachable base path, Sidekick reports `errors` and continues —
-    never blocks a local write or deletes data.
+  - On an unreachable base path, the tool reports `errors` and Sidekick
+    continues — never blocks a local write or deletes data.
 - **Also (no base path):** with **Output sync: Yes** but the base path blank
   (or Output sync No), creating a deliverable syncs **nothing** — no copy, no
   manifest.

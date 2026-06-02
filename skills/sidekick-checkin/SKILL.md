@@ -100,17 +100,18 @@ disciplines:
   added.)
 - **Output:** confirm, then create/edit; record what was produced.
 - **Reconcile output sync — both directions** (only if Output sync is on
-  **and** an Output sync base path is set): for each project run
-  `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/sync.py" reconcile --project projects/<slug> --base "<base path>"`.
-  It **pulls** external edits in and **pushes** local ones out via plain file
-  copies (**additive** — a deleted file is never propagated; **never** base64 a
-  file through yourself), and reports `pushed`/`pulled`/`conflicts`/`errors`.
-  For each path in `conflicts` (same file changed both sides), **ask via the
-  picker** (keep Cowork / keep external / keep both) and run `sync.py resolve
-  … --keep …` — never silently overwrite. This runs whether or not new output
-  was approved this check-in. A failed step / unreachable base path is reported,
-  not fatal; skip silently when sync is off or no base path is set.
-  (Spec: `../sidekick-core/references/sync-discipline.md`, ARCHITECTURE §7c.)
+  **and** an Output sync base path is set): for each project call the
+  **`reconcile_output`** tool (`project: "projects/<slug>"`, `base: "<base
+  path>"`) from the bundled `sidekick-sync` MCP server. It **pulls** external
+  edits in and **pushes** local ones out via native file copies (**additive** —
+  a deleted file is never propagated; **never** base64 a file through
+  yourself), reporting `pushed`/`pulled`/`conflicts`/`errors`. For each path in
+  `conflicts`, **ask via the picker** (keep Cowork / keep external / keep both)
+  and call `resolve_output` — never silently overwrite. This runs whether or
+  not new output was approved this check-in. A failed step / unreachable base
+  path is reported, not fatal; skip silently when sync is off or no base path
+  is set. (Spec: `../sidekick-core/references/sync-discipline.md`,
+  ARCHITECTURE §7c.)
 - **Structured data:** records that fit existing columns flow in freely via
   `scripts/data.py`; a new table or column is a structure change — confirm
   in plain language first, then update `brain/data-model.md`.

@@ -387,20 +387,27 @@ storage: finished work lands where the user (and colleagues) keep files, and
 edits made *there* flow back in. Only `output/` is synced; brain, log, data,
 and the gatekeepers are untouched.
 
-**A dedicated CLI does the sync — not the model, not a connector.** All file
-movement goes through the bundled helper `scripts/sync.py` (stdlib Python),
-which does plain **binary-safe file copies** between the local `output/` and
-the base path. Two hard reasons it exists, both found in testing:
+**A native MCP server does the sync — not the model, not a connector, not a
+sandboxed shell.** All file movement goes through the bundled **`sidekick-sync`
+MCP server** (`scripts/sync_server.py`, stdlib Python, declared in
+`.claude-plugin/plugin.json` under `mcpServers`), which does plain
+**binary-safe file copies** between the local `output/` and the base path. Its
+engine is shared with the `scripts/sync.py` CLI (same functions); the CLI
+remains for environments with a native shell and for local testing. Three hard
+reasons for this shape, all found in testing:
 
 - **No bytes through the model.** Sending a file through a storage *connector*
   made the model **base64-encode it into its own output** (~size×1.33 tokens,
   emitted token-by-token) — an Excel push that ran past five minutes. A file
   copy costs **zero model tokens**.
-- **The copy must reach the watched filesystem.** Writing from the bash
-  sandbox to a Linux mountpoint did **not** trigger the storage client's sync.
-  The CLI must run where its copy lands on the filesystem the client watches
-  (the native path, e.g. `G:\My Drive\…`) — see the execution caveat (§13) and
-  `references/sync-discipline.md`.
+- **The copy must reach the watched filesystem.** Writing from the **bash
+  sandbox** to a Linux mountpoint did **not** trigger the storage client's
+  sync (confirmed: a shell `reconcile` reported success but the file never
+  appeared in Drive).
+- **A plugin MCP server runs as a native host process** — so its copies land
+  on the real filesystem the storage client watches (e.g. `G:\My Drive\…`) and
+  sync fires. The model calls its tools (`reconcile_output`, `resolve_output`)
+  with **paths only**.
 
 **Layout — base path, then one folder per project.** Under the base path each
 project gets `<slug>/output/`, mirroring its workspace `output/` tree (area
@@ -414,8 +421,8 @@ per-project names.
 └── <project-b>/output/         ↔ projects/<project-b>/output/
 ```
 
-**When it syncs.** The model runs `sync.py reconcile --project
-projects/<slug> --base <path>` at three moments: **after a confirmed output
+**When it syncs.** The model calls the **`reconcile_output`** tool (`project:
+projects/<slug>`, `base: <path>`) at three moments: **after a confirmed output
 write** (the new/edited file copies out), and **at session start for the
 active project** and **as a sweep at the check-in** (§11) — each reconcile
 pulls external edits in and pushes local ones out.
@@ -433,13 +440,13 @@ the baseline. For every file across local ∪ external ∪ manifest:
 | File on **one** side only | copied to the other (**additive**) |
 | Gone on **both** sides | dropped from the manifest |
 
-After reconciling, the CLI rewrites the manifest. On the **first** sync (no
+After reconciling, the manifest is rewritten. On the **first** sync (no
 manifest) every file counts as new and is copied across — no false conflicts.
 
-**Conflicts go to the human.** The CLI never resolves a conflict itself. On a
+**Conflicts go to the human.** Reconcile never resolves a conflict itself. On a
 reported conflict the model asks the user via the **picker** — keep the Cowork
-version, keep the external version, or keep both — then runs `sync.py resolve
---file <path> --keep local|external|both` (`both` keeps the local file and the
+version, keep the external version, or keep both — then calls **`resolve_output`**
+(`file`, `keep` ∈ `local|external|both`; `both` keeps the local file and the
 external one as `<name>.from-external<ext>` on both sides).
 
 **Additive — sync never deletes.** A file on only one side is copied to the
@@ -457,12 +464,14 @@ conflict, the one moment Sidekick stops to ask.
 **and** a base path is set and reachable; with no base path it simply does not
 run — there is **no connector fallback for files** (the connector route is the
 slow/broken one this design replaces). If the base path is unreachable or a
-copy fails, the CLI reports it (`errors` in its JSON) and the model tells the
-user what didn't sync and continues — sync never blocks a local write or
-deletes data. The next session-start / check-in reconcile retries. Whether a
-shell-invoked CLI reaches the watched filesystem in Cowork is the one thing to
-verify per environment (§13); if it cannot, the same engine wraps as a native
-MCP server with no logic change. Full protocol: `references/sync-discipline.md`.
+copy fails, the tool reports it (`errors` in its result) and the model tells
+the user what didn't sync and continues — sync never blocks a local write or
+deletes data. The next session-start / check-in reconcile retries. The
+remaining deploy dependency: the host must be able to launch the MCP server
+(**Python on PATH**; otherwise set an absolute interpreter in the manifest
+`command`) — verify once (§13). If the `sidekick-sync` tools are unavailable,
+the model falls back to the `sync.py` CLI and warns that a sandboxed copy may
+not reach the storage client. Full protocol: `references/sync-discipline.md`.
 
 ---
 
@@ -560,11 +569,11 @@ The user starts the check-in themselves. Operation:
    file** with `> distilled to brain: <date>`. If the user defers a log,
    leave it unstamped (it resurfaces at the next check-in).
 8. **Reconcile output sync — both directions** (only if Output sync is on and
-   a base path is set, §7c): per project, run `sync.py reconcile --project
-   projects/<slug> --base <path>` — it pulls external edits in and pushes local
-   ones out (**additive**, never deletes). For each path in its `conflicts`
-   list, **ask the user** via the picker and run `sync.py resolve`. A failed
-   step / unreachable base path is reported, not fatal.
+   a base path is set, §7c): per project, call the **`reconcile_output`** tool
+   (`project: projects/<slug>`, `base: <path>`) — it pulls external edits in and
+   pushes local ones out (**additive**, never deletes). For each path in its
+   `conflicts`, **ask the user** via the picker and call **`resolve_output`**. A
+   failed step / unreachable base path is reported, not fatal.
 
 The per-project `agenda.md` is deliberately simple (markdown): a list of
 live items with status, so the check-in can work with it well.
@@ -619,7 +628,7 @@ standard Cowork plugin layout:
 ```
 sidekick/
 ├── .claude-plugin/
-│   ├── plugin.json                ← plugin manifest
+│   ├── plugin.json                ← plugin manifest (+ `mcpServers`: sidekick-sync)
 │   └── marketplace.json           ← self-marketplace; lists this plugin, source "./"
 ├── skills/
 │   ├── sidekick-core/             ← always-on main skill (NOT "sidekick" — see below)
@@ -636,7 +645,8 @@ sidekick/
 │   │   │   └── agenda-template.md
 │   │   └── scripts/
 │   │       ├── data.py            ← file-based structured-data helper
-│   │       └── sync.py            ← output-sync helper (output/ ↔ external base path)
+│   │       ├── sync.py            ← output-sync engine + CLI (output/ ↔ external base path)
+│   │       └── sync_server.py     ← `sidekick-sync` MCP server (native; wraps sync.py)
 │   ├── sidekick-init/
 │   │   ├── SKILL.md
 │   │   └── references/settings-template.md
@@ -749,35 +759,39 @@ Resolved:
   output); `data.py` is **unchanged** (keeps the ~16 KB install cap). A richer
   React render was deferred — it would depend on Cowork's still-new live-artifact
   runtime, which the self-contained-HTML snapshot does not.
-- **Output sync to external storage (added 2026-06-02; iterated to a CLI same
-  day, v0.7.0 → v0.9.0)** — optional **two-way** sync of each project's
-  `output/` with an external storage folder (§7c, §8). Final design: a bundled
-  CLI **`scripts/sync.py`** (stdlib, ~6.6 KB) does plain **binary-safe file
+- **Output sync to external storage (added 2026-06-02; iterated to a native
+  MCP server same day, v0.7.0 → v0.10.0)** — optional **two-way** sync of each
+  project's `output/` with an external storage folder (§7c, §8). Final design:
+  a bundled **`sidekick-sync` MCP server** (`scripts/sync_server.py`, stdlib
+  stdio, declared in `plugin.json` `mcpServers`) does plain **binary-safe file
   copies** between `projects/<slug>/output/` and `<base path>/<slug>/output/`;
-  the model invokes `reconcile` after a confirmed write and at session start /
-  check-in, and `resolve` for conflicts. A manifest
-  `projects/<slug>/.sidekick-sync.json` (path → content **hash**; at the
-  project root, not synced) detects one-sided changes vs **conflicts**
+  it shares its engine with the `scripts/sync.py` CLI. The model calls
+  **`reconcile_output`** after a confirmed write and at session start /
+  check-in, and **`resolve_output`** for conflicts — **paths only**, never
+  bytes. A manifest `projects/<slug>/.sidekick-sync.json` (path → content
+  **hash**; project root, not synced) detects one-sided changes vs **conflicts**
   (both-changed → the model **asks** via the picker; keep Cowork / external /
   both). **Additive** — a delete is never propagated (to remove, delete both
-  sides). Settings records **Output sync** (yes/no) + **Output sync base path**
-  (a mounted/synced folder, e.g. `G:\My Drive\sidekick`); **no base path ⇒ no
-  sync** (no connector fallback). The iteration that got here, all the same
-  session per user testing:
-  - **v0.7.0** one-way mirror; **v0.8.0** made it two-way + settings stores
-    only yes/no (the first cut wrongly wrote the per-project postfix into the
-    file); **v0.8.1** flagged the transport problem; **v0.9.0** replaced the
-    connector transport entirely with the CLI.
-  - **Why the CLI.** Two real failures in testing: (1) pushing a binary via the
-    Google Drive **connector** made the model **base64 the file into its own
-    output** (~size×1.33 tokens, token-by-token) — an Excel push past five
-    minutes; (2) writing from the **bash sandbox** to a Linux mountpoint did
-    **not** trigger the Drive client's sync. Fix: never move bytes through the
-    model; copy files via a CLI that lands on the **watched filesystem**.
-  - **OPEN / verify per environment:** whether a shell-invoked CLI in Cowork
-    reaches the native watched path (so Drive notices). If not, the same engine
-    wraps as a native **MCP server** unchanged. `references/sync-discipline.md`
-    has the one-time test.
+  sides). Settings: **Output sync** (yes/no) + **Output sync base path** (a
+  mounted/synced folder, e.g. `G:\My Drive\sidekick`); **no base path ⇒ no
+  sync**. The iteration, all the same session per user testing:
+  - **v0.7.0** one-way mirror; **v0.8.0** two-way + settings stores only yes/no
+    (first cut wrongly wrote the per-project postfix into the file); **v0.8.1**
+    flagged the transport problem; **v0.9.0** replaced the connector with a CLI;
+    **v0.10.0** moved the transport to a native MCP server after the CLI failed
+    in Cowork.
+  - **Why the MCP server.** Three real failures: (1) connector upload made the
+    model **base64 the binary into its own output** (~size×1.33 tokens) — an
+    Excel push past five minutes; (2) a CLI copy from the **bash sandbox**
+    reported success but the file **never reached Drive** (sandbox writes to a
+    Linux mountpoint the Drive client doesn't watch); (3) fix — a **plugin MCP
+    server runs as a native host process**, so its copies land on the watched
+    filesystem and sync fires. Verified locally on win32 (the server resolved
+    real `C:\…` paths and the copy landed); **remaining deploy unknown:** the
+    Cowork host must launch the server (Python on PATH) — if the
+    `sidekick-sync` tools don't appear, set an absolute interpreter in the
+    manifest `command`; the model falls back to the CLI with a warning.
+    `references/sync-discipline.md` has the one-time Drive-appears test.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

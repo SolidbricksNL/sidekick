@@ -52,10 +52,10 @@ you ask them. Full guidance in `references/interaction-style.md`.
 2. **Determine the project** (see "Project detection").
 3. **Read the project's `CLAUDE.md` and the brain files it points to**,
    plus `agenda.md`, so you have context without the user re-explaining.
-4. **If Output sync is on** (and a base path is set), run `sync.py reconcile`
-   for this project before working, so you start from the latest deliverables
-   (see "Output sync" under Discipline 3). Skip silently when sync is off or no
-   base path is set.
+4. **If Output sync is on** (and a base path is set), call the
+   **`reconcile_output`** tool for this project before working, so you start
+   from the latest deliverables (see "Output sync" under Discipline 3). Skip
+   silently when sync is off or no base path is set.
 5. Proceed with the work, applying the three write disciplines.
 
 ## Project detection
@@ -227,29 +227,28 @@ told otherwise. Do not produce documents here unprompted.
 
 **Output sync (optional, two-way).** If `sidekick.settings.md` has **Output
 sync: Yes** *and* an **Output sync base path** is set, keep this project's
-`output/` **in step both ways** with `<base path>/<slug>/output/`. The sync is
-done by the bundled CLI **`scripts/sync.py`** (plain file copies) — **never**
-by base64-ing a file through yourself, hand-reading bytes, or a connector
-upload. Full protocol: `references/sync-discipline.md` (and ARCHITECTURE §7c).
+`output/` **in step both ways** with `<base path>/<slug>/output/`. The sync
+runs through the bundled **`sidekick-sync` MCP server** (it runs *natively*, so
+its file copies actually reach the storage client — a shell copy from the
+sandbox does **not**). You pass **paths only** — **never** base64 a file
+through yourself, hand-read bytes, or use a connector upload. Full protocol:
+`references/sync-discipline.md` (and ARCHITECTURE §7c).
 
-- **Invoke the CLI to reconcile** — after a confirmed output write, at session
-  start for this project, and at the check-in:
-  `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/sync.py" reconcile --project projects/<slug> --base "<base path>"`
-  It copies new/changed files **both ways** (additive — a delete is never
-  propagated; to remove, delete both sides) and prints JSON with `pushed`,
-  `pulled`, `in_sync`, `conflicts`, `errors`. No extra confirmation for the
-  copy — the setting is the consent.
-- **On `conflicts`** (same file changed on both sides since last sync): for
-  each, **ASK** via the picker — keep the Cowork version, keep the external,
-  or keep both — then run
-  `… sync.py resolve --project projects/<slug> --base "<base path>" --file <relpath> --keep local|external|both`.
-  Never overwrite a conflict silently.
+- **Reconcile** — after a confirmed output write, at session start for this
+  project, and at the check-in: call the **`reconcile_output`** tool with
+  `project: "projects/<slug>"` and `base: "<base path>"`. It copies new/changed
+  files **both ways** (additive — a delete is never propagated; to remove,
+  delete both sides) and returns `pushed`, `pulled`, `in_sync`, `conflicts`,
+  `errors`. No extra confirmation for the copy — the setting is the consent.
+- **On `conflicts`** (same file changed on both sides): for each, **ASK** via
+  the picker — keep the Cowork version, keep the external, or keep both — then
+  call **`resolve_output`** (`project`, `base`, `file`, `keep`). Never overwrite
+  a conflict silently.
 - **On `errors` / unreachable base path:** tell the user what didn't sync and
   continue — never block a local write or delete data. The next reconcile
   retries.
-- **Efficiency:** moving files is the CLI's job (copies, zero chat tokens). If
-  you ever feel tempted to base64 a file or read its bytes to "send" it —
-  don't; that is the multi-minute hang seen in testing.
+- **If the `sidekick-sync` tools aren't available** (server didn't start): fall
+  back to the CLI `python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/sync.py" reconcile --project projects/<slug> --base "<base path>"`, and warn the user that a sandboxed copy may not reach the storage client until the server runs.
 
 When Output sync is No, or no base path is set, skip all of this.
 

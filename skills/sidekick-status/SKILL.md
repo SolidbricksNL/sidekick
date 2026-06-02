@@ -13,7 +13,10 @@ is a glance, not a decision point. (The check-in is where actions happen.)
 
 1. Read `sidekick.settings.md` (chat language, connected calendar). If it is
    missing, say the workspace isn't initialized and point to `/sidekick-init`.
-2. List `projects/` — non-archived only (ignore `_archive/`).
+2. List `projects/` — non-archived only (ignore `_archive/`). **Direct
+   children only:** a project's internal `brain/<area>/` or `output/<area>/`
+   subfolders are **subprojects/areas**, covered as part of their parent — not
+   separate projects. Never descend into a project looking for more projects.
 3. If a calendar is connected, fetch upcoming items in the near term
    (e.g. next 7–14 days). **Read-only.**
 

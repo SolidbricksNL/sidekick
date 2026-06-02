@@ -16,6 +16,7 @@ output language.
 <!-- 2. brain/{{MAIN_TOPIC}}.md — current status and knowledge -->
 <!-- 3. brain/decisions.md — decisions made so far -->
 <!-- 4. brain/data-model.md — the data/ tables (plain language) -->
+<!-- 5. brain/<subproject>/overview.md — an area within this project -->
 
 ## Write disciplines (reminder)
 
@@ -29,3 +30,8 @@ output language.
 ## Notes
 
 <!-- project-specific conventions, if any -->
+<!-- Subprojects / areas: a strand of work within this project lives in
+     brain/<sub>/ + output/<sub>/ — NOT a nested project. List each area's
+     brain/<sub>/overview.md under "Read at session start" above, and keep its
+     agenda items in this project's agenda.md (optionally under a "## <sub>"
+     heading). -->

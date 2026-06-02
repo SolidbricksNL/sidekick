@@ -24,7 +24,10 @@ itself. This is the plugin-wide interaction style — see
 
 1. Read `sidekick.settings.md` (chat language, output language,
    connected calendar).
-2. List `projects/` (non-archived only — ignore `_archive/`).
+2. List `projects/` (non-archived only — ignore `_archive/`). **Direct
+   children only:** a project's `brain/<area>/` or `output/<area>/` subfolders
+   are subprojects/areas, handled as part of the parent walk — not separate
+   projects. The parent's `agenda.md` already carries the area's items.
 3. Read the **latest** `_triage/` file(s) since the previous check-in. If
    there is none, the check-in still runs from agendas and calendar; just
    note that there are no new triage findings.

@@ -91,6 +91,13 @@ Setup must roll out the structure, so create **at least one** project:
 3. Also create the root-level system folders if absent: `_triage/` and
    `_archive/projects/`.
 
+Create only a **single top-level** project (a direct child of `projects/`).
+Do **not** create nested subprojects or areas during init, and never a
+`projects/<parent>/<sub>/` folder — a project is always `projects/<slug>/`.
+Subprojects/areas (a strand within a project) are introduced later by the
+main `sidekick` skill as `brain/<sub>/` + `output/<sub>/` subfolders, never as
+nested projects (see `../sidekick-core/references/project-structure.md`).
+
 ## Closing: explain scheduling and connectors
 
 After everything is written, give the user a short, non-technical

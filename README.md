@@ -27,6 +27,11 @@ enforcing three **write disciplines**.
 └── _archive/projects/        # archived projects (moved, never deleted)
 ```
 
+Projects are flat: each is a direct child of `projects/`. A strand of work
+*within* a project is a **subproject/area**, not a nested project — it lives in
+the parent's `brain/<area>/` and `output/<area>/` and shares the parent's
+`agenda.md`, so triage, check-in, status, and find cover it automatically.
+
 ## The three write disciplines
 
 | What | Where | Gatekeeper |
@@ -112,7 +117,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.5.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.6.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -120,5 +125,6 @@ install-blocker through 0.2.5 was a malformed `repository` manifest field — an
 object where the schema needs a string — fixed in 0.2.6). Since then: a
 file-based `data/` store via the `data.py` helper (0.3.x), a read-only layer
 (`/sidekick-status`, `/sidekick-find`, 0.4.0), and a presentation layer
-(`/sidekick-report` — saved reports + tabbed HTML dashboards, 0.5.0). Run the
-manual-test checklist in Cowork before wider rollout.
+(`/sidekick-report` — saved reports + tabbed HTML dashboards, 0.5.0), and an
+explicit **subproject/area** concept (areas inside a project, never nested
+projects, 0.6.0). Run the manual-test checklist in Cowork before wider rollout.

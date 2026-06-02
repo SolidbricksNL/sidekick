@@ -36,7 +36,10 @@ task, so you must be safe: **read-only, write only to `_triage/`.**
    there is nothing to scan and that connectors can be enabled in Cowork.
    Then stop.
 3. Read `projects/` (names + each `agenda.md` summary) so you can suggest
-   which project a finding likely belongs to. Ignore `_archive/`.
+   which project a finding likely belongs to. Ignore `_archive/`. **Direct
+   children of `projects/` only** — a project's internal `brain/<area>/` or
+   `output/<area>/` are subprojects/areas, part of their parent, never
+   separate projects; a finding for an area is tagged to the **parent**.
 
 ## What to scan
 

@@ -66,10 +66,10 @@ the **root**. Everything lives underneath it.
 │   ├── <project-slug>/
 │   │   ├── CLAUDE.md              ← how Sidekick runs THIS project + brain index
 │   │   ├── agenda.md              ← live items / planning per project
-│   │   ├── brain/                 ← distilled, durable knowledge
+│   │   ├── brain/                 ← distilled, durable knowledge (areas: brain/<sub>/)
 │   │   ├── log/                   ← structured logbook (date + slug)
 │   │   ├── archive/               ← processed source files (originals)
-│   │   ├── output/                ← clean deliverables
+│   │   ├── output/                ← clean deliverables (areas: output/<sub>/)
 │   │   └── data/                  ← structured data: one JSON file per table
 │   │       ├── <table>.json       ←   a JSON array of row objects
 │   │       └── _schema.json       ←   table → columns (+ types)
@@ -87,13 +87,22 @@ When a new project is created, Sidekick scaffolds the full structure:
 directories. `data/` is created lazily on the first structured data
 (the first `create` makes `data/` and its first `<table>.json`).
 
+Scaffolding applies **only to top-level projects** (direct children of
+`projects/`). A **subproject** — an area *within* a project (§3.4) — is
+**never** scaffolded: it adds only a `brain/<sub>/` and an `output/<sub>/`
+subfolder inside its parent and reuses the parent's `agenda.md` and
+`CLAUDE.md`. It gets no `CLAUDE.md`, no `agenda.md`, and never a nested
+`projects/<parent>/<sub>/`.
+
 ### 3.1 Project detection (every session)
 
 At the start of every substantive session, Sidekick first determines
 **which project** is meant, before anything happens:
 
 1. Read `projects/` and the `agenda.md` + brain index of existing
-   projects.
+   projects. **Only the direct children of `projects/` are projects** — a
+   folder nested inside a project is never a standalone project (nested work
+   is a subproject/area, §3.4).
 2. Match the chat intent against existing projects.
 3. **On a clear match:** briefly confirm which project is active and
    proceed.
@@ -101,8 +110,14 @@ At the start of every substantive session, Sidekick first determines
    *"Does this belong to project X, or shall I start a new project Y?"* —
    and do nothing until the user chooses.
 5. **New project** → scaffold the full project structure (see 3.0).
+6. **Subproject / area intent** → when the user clearly means a strand
+   *within* an existing project ("a subproject of X", "an area under X",
+   "part of X"), route to the **subproject flow** (§3.4) — do **not** create
+   a new or nested project. When it is unclear whether something is a new
+   project or an area inside one, **ask** (via the picker).
 
-Sidekick **never silently** creates a new project.
+Sidekick **never silently** creates a new project, and **never silently
+turns an area into a nested project** (or a new project into an area).
 
 ### 3.2 Project slug convention
 
@@ -115,6 +130,48 @@ Archiving a project = moving the entire project folder to
 `_archive/projects/<slug>/`. Nothing is deleted. Archived projects no
 longer participate in project detection, triage, or check-in, but remain
 consultable. Handled by the `sidekick-archive` skill.
+
+### 3.4 Subprojects (areas within a project)
+
+A **subproject is not a project.** It is a named **area within an existing
+project's harness** — a looser separation than a top-level project, for a
+strand of work big enough to keep apart but still clearly belonging to the
+parent. It gets **no own `CLAUDE.md`, no own `agenda.md`, no separate
+scaffold, and never a nested `projects/<parent>/<sub>/`.** It reuses the
+parent's harness:
+
+- **Knowledge** → `projects/<parent>/brain/<subproject>/` — a brain
+  subfolder, which may itself hold per-topic files/subfolders. Its anchor is
+  `brain/<subproject>/overview.md` (what the area is).
+- **Deliverables** → `projects/<parent>/output/<subproject>/`.
+- **Agenda** → items live in the parent's existing `agenda.md` (optionally
+  under a `## <subproject>` heading). There is **no** separate agenda.
+- **Logs / archive** stay shared at the parent level (a log slug may name the
+  area, e.g. `20260602-<subproject>-research.md`).
+- The **parent `CLAUDE.md`** describes the subproject as an area and adds
+  `brain/<subproject>/overview.md` to its "Read at session start" list.
+
+Because everything lives inside the parent, the subproject is **automatically
+covered** by project detection, triage, check-in, status, and find — it is
+never enumerated as a separate project and never falls outside the loop (the
+exact failure of a nested project).
+
+**Project vs subproject — how to choose.** A **new top-level project** is a
+distinct body of work with its own agenda and lifecycle (its own client,
+mandate, product). A **subproject/area** is a strand *within* such a body of
+work that shares the parent's agenda, context, and people. Signals for an
+area: the user says "under", "within", "part of", "a sub-area of <existing
+project>", or the work would share the parent's agenda. **When in doubt,
+ask** — via the picker — "a new project, or an area inside <parent>?"
+
+**Example.** "Add a subproject *competitor-scan* under *market-strategy*"
+produces `projects/market-strategy/brain/competitor-scan/overview.md` and
+`projects/market-strategy/output/competitor-scan/`, puts its agenda items
+under a heading in `projects/market-strategy/agenda.md`, and adds the
+overview to `projects/market-strategy/CLAUDE.md`. It does **not** create
+`projects/market-strategy/competitor-scan/CLAUDE.md` or any nested project.
+
+See `references/project-structure.md` for the full protocol.
 
 ---
 
@@ -468,6 +525,7 @@ sidekick/
 │   │   │   ├── data-discipline.md
 │   │   │   ├── brain-protocol.md
 │   │   │   ├── write-disciplines.md
+│   │   │   ├── project-structure.md
 │   │   │   ├── reporting.md
 │   │   │   ├── project-claude-template.md
 │   │   │   └── agenda-template.md
@@ -563,6 +621,16 @@ Resolved:
   see §11b. Both are read-only (no writes, no gatekeeper, no `data.py` change),
   report in prose, and reuse existing reads + `data.py info`/`query`. They round
   out the loop alongside triage (inbound) and the check-in (actions).
+- **Subprojects / areas (added 2026-06-02)** — a subproject is **not** a
+  nested project; it is an area inside a parent (§3.4): knowledge in
+  `parent/brain/<sub>/`, deliverables in `parent/output/<sub>/`, agenda items
+  in the parent's `agenda.md`, and the parent `CLAUDE.md` lists
+  `brain/<sub>/overview.md`. **No** `parent/<sub>/CLAUDE.md`, no separate
+  scaffold, never a nested `projects/<parent>/<sub>/`. Only direct children of
+  `projects/` count as projects, so triage/check-in/status/find cover the area
+  as part of the parent without counting it separately. Protocol in
+  `references/project-structure.md`; the always-on skill and `sidekick-init`
+  both enforce the project-vs-area split.
 - **Presentation & reporting layer (added 2026-06-02)** — `sidekick-report`
   (§7b) surfaces the `data/` store: a **recipe** (named report = purpose +
   `SELECT`(s)) saved in `brain/reports.md` (diff + approval) and a **rendered

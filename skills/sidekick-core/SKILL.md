@@ -58,7 +58,10 @@ you ask them. Full guidance in `references/interaction-style.md`.
 
 Everything you do belongs to a project, so **at the start of every
 conversation determine the active project before doing real work.**
-Projects live under `projects/<slug>/` in the Cowork root.
+Projects live under `projects/<slug>/` in the Cowork root. **Only the direct
+children of `projects/` are projects.** A strand of work *within* a project is
+a **subproject / area**, not a new or nested project — see "Subprojects
+(areas within a project)" below and `references/project-structure.md`.
 
 1. List `projects/` and read each project's `agenda.md` and brain index
    (the brain files named in its `CLAUDE.md`).
@@ -69,6 +72,10 @@ Projects live under `projects/<slug>/` in the Cowork root.
   project") → adopt it and say one line: "Working in *okrs*."
 - They ask for a new project ("let's start a new project *X*") → that is
   explicit approval; scaffold it (see "Scaffolding a project") and proceed.
+- They ask for a **subproject / area** within an existing project ("a
+  subproject *X* under *Y*", "an area for *X* in *Y*", "part of *Y*") → that is
+  an **area**, not a new project. Set it up per "Subprojects (areas within a
+  project)" below — never scaffold a new or nested project.
 
 **Case B — it is not clearly one project → offer the interactive
 multiple-choice picker, NEVER an open question.** Do **not** ask "what is
@@ -86,7 +93,10 @@ choose. If no project exists yet, offer just **"New project"** /
 
 **Never silently create a project, and never fall back to an open-ended
 "which project?" question** — always present your guessed options as the
-picker.
+picker. **Never nest a project inside another project** — a strand of work
+within a project is an *area* (below), not a nested project. When it is
+unclear whether something is a new project or an area inside one, **ask** via
+the picker.
 
 ### Scaffolding a project
 
@@ -105,6 +115,36 @@ The `data/` folder is **not** created up front — it appears lazily the
 first time genuinely structured data needs storing (the first table).
 
 Use the slug convention: `kebab-case`, short, descriptive.
+
+Scaffolding applies **only to top-level projects**. A subproject/area gets
+**no** scaffold — see next.
+
+### Subprojects (areas within a project)
+
+A **subproject is not a project.** It is an **area within a parent project** —
+a looser separation for a strand of work that still belongs to the parent. It
+reuses the parent's harness and gets **no own `CLAUDE.md`, no own `agenda.md`,
+no scaffold, and never a nested `projects/<parent>/<sub>/`.** Full protocol:
+`references/project-structure.md`.
+
+To set up an area inside parent `<Y>` (after confirming it's an area, not a
+new project):
+
+1. Create `projects/<Y>/brain/<sub>/` and seed
+   `projects/<Y>/brain/<sub>/overview.md` (what the area is) — a **brain
+   write: show the diff, write after approval**.
+2. Create `projects/<Y>/output/<sub>/` for the area's deliverables (output
+   gatekeeper still applies to files inside it).
+3. Put the area's agenda items in the **parent's** `projects/<Y>/agenda.md`
+   (optionally under a `## <sub>` heading) — **no** separate agenda.
+4. Add `brain/<sub>/overview.md` to the parent `CLAUDE.md`'s "Read at session
+   start" list, plus a one-line note naming the area.
+5. Log the creation in the parent's `log/` (free).
+
+Never create `projects/<Y>/<sub>/`, a `<sub>/CLAUDE.md`, or a `<sub>/agenda.md`.
+Because the area lives inside the parent, triage, check-in, status, and find
+cover it as part of `<Y>` automatically — it is never counted as a separate
+project.
 
 ## The three write disciplines
 

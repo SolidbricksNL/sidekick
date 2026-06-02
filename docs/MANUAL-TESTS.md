@@ -203,10 +203,30 @@ plugin name needs to change again.
   `data.py query`. No `data/*.json` was written or hand-read.
 - [ ] PASS / FAIL
 
+### M. Subproject (area within a project)
+- **Start:** an existing project `Y` (e.g. `market-strategy`).
+- **Do:** ask for *"a subproject `X` under `Y`"* (e.g. "a competitor-scan
+  area under market-strategy"). Share a note for it; ask for a small
+  deliverable in it; add an agenda item for it.
+- **Expect:** it recognizes this as an **area, not a new project** (asks to
+  confirm if unsure); creates `projects/Y/brain/X/` with an approved
+  `overview.md` and `projects/Y/output/X/`; puts the agenda item in
+  `projects/Y/agenda.md` (optionally under a `## X` heading); updates
+  `projects/Y/CLAUDE.md` to read `brain/X/overview.md` at session start and to
+  name the area. It does **NOT** create `projects/Y/X/CLAUDE.md`,
+  `projects/Y/X/agenda.md`, or any nested `projects/Y/X/` project scaffold.
+- **Inspect:** the tree shows `projects/Y/brain/X/overview.md` +
+  `projects/Y/output/X/`, **no** `projects/Y/X/` project folder; the agenda
+  item lives in `Y/agenda.md`. Then run `/sidekick-status` and `/sidekick-find
+  <X-term>`: `Y` is reported/searched **including** area `X`, and `X` is
+  **not** listed as a separate project. A check-in walks `Y` (and its area)
+  without counting `X` separately.
+- [ ] PASS / FAIL
+
 ---
 
 ## Overall result
 
-- [ ] All scenarios A–L PASS, and the command-name form (0b) is recorded.
+- [ ] All scenarios A–M PASS, and the command-name form (0b) is recorded.
 
 **Overall: PASS / FAIL** — _____________   Tester: __________   Date: __________

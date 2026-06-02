@@ -34,6 +34,7 @@ const EXPECTED_TREE = [
   'skills/sidekick-core/references/data-discipline.md',
   'skills/sidekick-core/references/brain-protocol.md',
   'skills/sidekick-core/references/write-disciplines.md',
+  'skills/sidekick-core/references/project-structure.md',
   'skills/sidekick-core/references/reporting.md',
   'skills/sidekick-core/references/project-claude-template.md',
   'skills/sidekick-core/references/agenda-template.md',

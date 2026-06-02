@@ -22,7 +22,10 @@ here — recall terms are open-ended), then search.
 ## How to search
 
 1. Read `sidekick.settings.md` for the chat language. List `projects/`
-   (non-archived only).
+   (non-archived only). **Direct children only** — a project's
+   `brain/<area>/` or `output/<area>/` subfolders are subprojects/areas;
+   search them as part of the parent and report the hit under the parent
+   project (note the area), never as a separate project.
 2. **Text search** each project's `brain/`, `log/`, and `agenda.md` for the
    query terms (and obvious variants/synonyms). Markdown is grep-able — match
    on content, not just filenames.

@@ -87,6 +87,13 @@ once a file grows too large or too broad. Typical brain files:
 Keep every file **lean and current.** A brain full of outdated or
 duplicate information becomes worthless.
 
+**Subprojects / areas live as brain subfolders.** A sizable strand of work
+within the project is an **area**, not a nested project: its knowledge goes in
+`brain/<sub>/` (anchored by `brain/<sub>/overview.md`, with per-topic files
+underneath as it grows), its deliverables in `output/<sub>/`, and its agenda
+items in the project's own `agenda.md`. It gets no separate `CLAUDE.md` or
+agenda. See `project-structure.md`.
+
 ## Four rules for a healthy brain
 
 1. **Distill, don't copy.** The essence belongs in the brain, not raw

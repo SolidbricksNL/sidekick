@@ -221,6 +221,20 @@ protocol in `references/brain-protocol.md`. Essence:
 deleting any deliverable. Generate in the default output language unless
 told otherwise. Do not produce documents here unprompted.
 
+**Output sync (optional mirror).** If `sidekick.settings.md` has **Output
+sync: Yes** *and* a storage connection is set, also **mirror** each
+deliverable to the connected storage after the confirmed local write: push
+it to a `sidekick-<slug>/` folder in the storage root (area subfolders
+preserved). It is **one-way** — the local `output/` stays the original — and
+**additive**: never delete or rename in the external storage, even if the
+local file is removed. Write locally **first** (that is the gatekept,
+canonical step); the mirror is a follow-on copy and needs **no extra
+confirmation** (the setting is the consent). If the push fails (connector off,
+offline), keep the local deliverable, tell the user the mirror didn't update,
+and continue — never block the local write. The check-in reconciles any
+missed pushes. When Output sync is No (or no storage is connected), skip all
+of this. Full spec: ARCHITECTURE §7c.
+
 **Structured-data structure** (`data/`): see `references/data-discipline.md`.
 Ask for confirmation in plain, non-technical language before any structure
 change (new table, new column). Never present SQL or jargon as the question.

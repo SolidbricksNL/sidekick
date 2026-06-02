@@ -23,7 +23,7 @@ itself. This is the plugin-wide interaction style — see
 ## Preconditions
 
 1. Read `sidekick.settings.md` (chat language, output language,
-   connected calendar).
+   connected calendar, **storage connection + Output sync**).
 2. List `projects/` (non-archived only — ignore `_archive/`). **Direct
    children only:** a project's `brain/<area>/` or `output/<area>/` subfolders
    are subprojects/areas, handled as part of the parent walk — not separate
@@ -99,6 +99,14 @@ disciplines:
   at the next check-in. (The original log stays in `log/`; only the stamp is
   added.)
 - **Output:** confirm, then create/edit; record what was produced.
+- **Reconcile the output mirror** (only if Output sync is on **and** a storage
+  connection is enabled): for each project, push any `output/` deliverable
+  that is newer than or missing from its `sidekick-<slug>/` folder on the
+  external storage. **One-way and additive** — never delete or rename there.
+  This runs whether or not new output was approved this check-in, so it
+  catches pushes that were skipped or failed since the last one. A failed push
+  is reported, not fatal; skip silently when sync is off or no storage is
+  connected. (Spec: ARCHITECTURE §7c.)
 - **Structured data:** records that fit existing columns flow in freely via
   `scripts/data.py`; a new table or column is a structure change — confirm
   in plain language first, then update `brain/data-model.md`.

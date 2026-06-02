@@ -29,7 +29,11 @@ keeps Cowork from sprawling. Before writing **anything**, classify it.
 
 - **Output is confirmed** because deliverables are deliberate artifacts
   the user will keep or share. Sidekick must never produce them
-  unprompted, and never overwrite or delete them without a yes.
+  unprompted, and never overwrite or delete them without a yes. *If the
+  optional **output sync** setting is on (and a storage connection is set),
+  the confirmed deliverable is also **mirrored** one-way to the connected
+  storage as `sidekick-<slug>/` — additive, no extra confirmation, local
+  copy canonical. See ARCHITECTURE §7c and the core skill.*
 
 - **Data structure is confirmed, records are free** because the user
   approves the *shape* of the data once; after that, records flowing in

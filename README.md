@@ -77,7 +77,9 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
    turn any connector on.
 3. **Enable connectors** you said yes to (email / messages / storage /
    calendar) in **Cowork's connector settings** — the plugin only records
-   intent; you enable the actual connections.
+   intent; you enable the actual connections. If you turned on **output sync**,
+   it mirrors each project's `output/` to your storage as `sidekick-<slug>/`
+   (one-way, additive) — but only once the storage connector is enabled.
 4. **Schedule triage (optional):** attach `sidekick-triage` to a Cowork
    **scheduled task** and pick a frequency (e.g. daily). It writes findings
    to `_triage/`; the plugin does not set the frequency.
@@ -117,7 +119,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.6.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.7.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -127,4 +129,7 @@ file-based `data/` store via the `data.py` helper (0.3.x), a read-only layer
 (`/sidekick-status`, `/sidekick-find`, 0.4.0), and a presentation layer
 (`/sidekick-report` — saved reports + tabbed HTML dashboards, 0.5.0), and an
 explicit **subproject/area** concept (areas inside a project, never nested
-projects, 0.6.0). Run the manual-test checklist in Cowork before wider rollout.
+projects, 0.6.0), and optional **output sync** — mirror each project's
+`output/` one-way to a connected storage as `sidekick-<slug>/`, additive,
+write-through plus a check-in reconcile (0.7.0). Run the manual-test checklist
+in Cowork before wider rollout.

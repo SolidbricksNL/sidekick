@@ -29,7 +29,23 @@ _Last updated: {{DATE}}_
 - **Email:** {{EMAIL}}            <!-- Yes / No -->
 - **Messages / chat:** {{MESSAGES}}   <!-- No / Slack / Microsoft Teams / Google Chat / Other: ... -->
 - **Storage:** {{STORAGE}}        <!-- No / Outlook (OneDrive) / Google Drive / Other: ... -->
+- **Output sync:** {{OUTPUT_SYNC}}    <!-- No / Yes — mirror each project's output/ to the connected storage as sidekick-<slug>/. Always No when Storage is No. -->
 - **Calendar:** {{CALENDAR}}      <!-- No / Google Calendar / Outlook Calendar / Other: ... -->
+
+<!-- Output sync mirrors output/ one-way to external storage (local stays the
+     source of truth), additive (never deletes there), on each confirmed output
+     write plus a reconcile at the check-in. Only runs when a storage connector
+     is actually enabled in Cowork. -->
+
+## Output sync
+
+{{OUTPUT_SYNC_NOTE}}
+
+<!-- When Output sync is Yes: each project's output/ is mirrored to the
+     connected storage's root as sidekick-<slug>/. One-way (local canonical),
+     additive (external copies are never deleted), updated on each confirmed
+     output write and reconciled at /sidekick-checkin. When No, omit or set to
+     "Output is kept only in the workspace." -->
 
 ## Triage
 

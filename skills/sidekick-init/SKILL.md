@@ -1,6 +1,6 @@
 ---
 name: sidekick-init
-description: One-time (or re-run) setup for Sidekick. Use when the user runs /sidekick-init, when sidekick.settings.md is missing, or when the user asks to set up, configure, or re-configure their Sidekick workspace, role, languages, or connections. Walks the user through a short multiple-choice questionnaire (role, chat language, default output language, email/messages/storage/calendar connections), writes sidekick.settings.md to the Cowork root, scaffolds at least one initial project, and then explains how to schedule the triage and which connectors may need enabling.
+description: One-time (or re-run) setup for Sidekick. Use when the user runs /sidekick-init, when sidekick.settings.md is missing, or when the user asks to set up, configure, or re-configure their Sidekick workspace, role, languages, or connections. Walks the user through a short multiple-choice questionnaire (role, chat language, default output language, email/messages/storage/calendar connections, and — when storage is connected — optional output sync to that storage), writes sidekick.settings.md to the Cowork root, scaffolds at least one initial project, and then explains how to schedule the triage and which connectors may need enabling.
 ---
 
 # Sidekick — Init
@@ -56,6 +56,17 @@ list. Accept a free-text answer where it makes sense (role, "other").
 
 6. **Storage connection.** "Do you want to connect a storage location?"
    - Options: No / Outlook (OneDrive) / Google Drive / Other (specify).
+
+   **6b. Output sync (only ask if storage is not "No").** "Shall I also
+   keep your finished deliverables on that storage — a folder per project
+   (`sidekick-<project>`) in its root, kept in step with each project's
+   output?"
+   - Options: Yes / No.
+   - If storage is "No", **skip this question** and record Output sync as
+     **No** automatically.
+   - Keep it non-technical: this mirrors `output/` one-way to the storage
+     (the workspace stays the original); Sidekick only adds and updates
+     there, never deletes.
 
 7. **Calendar connection.** "Do you want to connect a calendar, so the
    triage and check-in can take your agenda into account?"
@@ -115,7 +126,10 @@ wrap-up:
    and remind them that these must be **enabled in Cowork's connector
    settings** for the triage to actually read them. If they chose "No"
    everywhere, note that triage will have nothing to scan until a
-   connector is added.
+   connector is added. **If they turned on output sync,** add that it only
+   runs once the **storage connector is enabled** in Cowork — until then
+   deliverables stay in the workspace and the mirror catches up at the next
+   check-in.
 4. **What's next.** They can now just start working — the always-on
    `sidekick` skill will pick the right project and keep things
    structured. They can run `/sidekick-checkin` for a cross-project

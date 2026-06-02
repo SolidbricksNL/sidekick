@@ -377,6 +377,67 @@ artifact (gated) — but it adds no new gatekeeper of its own.
 
 ---
 
+## 7c. Optional: output sync to external storage
+
+By default `output/` lives only in the Cowork workspace. When the user has a
+**storage connection** configured (§8) they may additionally switch on
+**output sync**: Sidekick then **mirrors** each project's deliverables to that
+external storage, so finished work also lands where the user (and colleagues)
+already keep files.
+
+**One-way mirror — the local `output/` stays canonical.** The workspace
+`projects/<slug>/output/` remains the source of truth and the workbench; the
+external copy is a downstream mirror Sidekick keeps up to date. Sync never
+reads *from* external back into the workspace, and the rest of the
+architecture (brain, log, data, gatekeepers) is untouched — only `output/` is
+mirrored, nothing else.
+
+**Layout — one folder per project in the storage root.** The external root
+gets a `sidekick-<slug>/` folder per project, mirroring that project's
+`output/` tree (area subfolders included):
+
+```
+<external-storage-root>/
+├── sidekick-<project-a>/        ← mirrors projects/<project-a>/output/
+│   ├── <deliverable>.docx
+│   └── <area>/                  ←   output/<area>/ subfolders preserved
+└── sidekick-<project-b>/        ← mirrors projects/<project-b>/output/
+```
+
+**When it syncs — write-through, with a check-in reconcile as the safety
+net.** Two moments:
+
+1. **On every confirmed output write.** Right after a deliverable is
+   created or edited in `output/` (the normal output gatekeeper already
+   said yes), Sidekick also pushes the file to `sidekick-<slug>/` in the
+   external storage. The local write happens **first** and is canonical; the
+   mirror is a follow-on copy.
+2. **A reconcile sweep at the check-in.** The check-in (§11) walks each
+   project's `output/` and pushes anything newer or missing in the mirror,
+   so a push that was skipped or failed between check-ins is caught.
+
+**Additive — Sidekick never deletes in the external storage.** Sync only
+creates and overwrites the mirror; if a deliverable is deleted or renamed
+locally, the old external copy is **left in place** (it may go stale — the
+user manages external deletions themselves). This is the safe default
+against accidental data loss in a shared drive.
+
+**No new gatekeeper.** The deliverable was already confirmed under the output
+gatekeeper (§7); the mirror is a mechanical consequence of the user having
+turned sync on. The *setting itself* is the consent. Sync adds no extra
+confirmation per file.
+
+**Mechanism and failure handling.** The push goes through the **connected
+storage connector** (Google Drive, OneDrive/Outlook, …) using whatever
+write/upload it exposes — the plugin does not enable the connector (§8, §13).
+Sync therefore runs only when (a) the setting is on **and** (b) a storage
+connection is actually enabled in Cowork. If the push fails (connector off,
+offline, permission), Sidekick **keeps the local deliverable**, tells the user
+the mirror could not be updated, and moves on — a failed mirror never blocks
+or undoes the local write. The check-in reconcile retries it later.
+
+---
+
 ## 8. The settings layer (`sidekick.settings.md`)
 
 One file in the root, written by the `sidekick-init` skill. Contains:
@@ -388,6 +449,9 @@ One file in the root, written by the `sidekick-init` skill. Contains:
 - **Email connection** (yes / no).
 - **Messages/chat connection** (no / Slack / Teams / Google Chat / other).
 - **Storage connection** (no / Outlook / Google Drive / other).
+- **Output sync** (no / yes) — mirror each project's `output/` to the
+  connected storage (§7c). Only meaningful when a storage connection is set;
+  recorded as **no** (and not asked) when storage is "no".
 - **Calendar connection** (no / Google Calendar / Outlook Calendar / other).
 
 Chat language and output language are deliberately separate: a user may
@@ -461,6 +525,10 @@ The user starts the check-in themselves. Operation:
 7. **After distilling a log into the brain (on approval), stamp that log
    file** with `> distilled to brain: <date>`. If the user defers a log,
    leave it unstamped (it resurfaces at the next check-in).
+8. **Reconcile the external output mirror** (only if output sync is on and a
+   storage connection is enabled, §7c): push any deliverable that is newer or
+   missing in `sidekick-<slug>/` on the external storage. Additive — never
+   delete there. A failed push is reported, not fatal.
 
 The per-project `agenda.md` is deliberately simple (markdown): a list of
 live items with status, so the check-in can work with it well.
@@ -593,8 +661,10 @@ putting a choice to the user, ask with **multiple choice** by default
 
 Resolved:
 
-- **Init questionnaire** — finalized as seven multiple-choice questions
-  mapped 1:1 to `sidekick.settings.md` (plan 03; field spec there).
+- **Init questionnaire** — seven multiple-choice questions mapped 1:1 to
+  `sidekick.settings.md` (plan 03; field spec there), plus a **conditional
+  output-sync question (6b)** asked only when a storage connection is chosen
+  (added 2026-06-02 with §7c; recorded as Output sync: No when storage is no).
 - **`agenda.md` template** — finalized (plan 04), alongside the
   `project-claude-template.md` fix (brain read-line commented until the
   first brain file exists).
@@ -641,6 +711,16 @@ Resolved:
   output); `data.py` is **unchanged** (keeps the ~16 KB install cap). A richer
   React render was deferred — it would depend on Cowork's still-new live-artifact
   runtime, which the self-contained-HTML snapshot does not.
+- **Output sync to external storage (added 2026-06-02)** — an optional
+  setting (§7c, §8) that **mirrors** each project's `output/` to a connected
+  storage as `sidekick-<slug>/` per project in the storage root. **One-way**
+  (local `output/` stays canonical), **additive** (never deletes external),
+  pushed **write-through on each confirmed output write** plus a **reconcile
+  sweep at the check-in** (§11). No new gatekeeper — the deliverable was
+  already confirmed; the *setting* is the consent. Runs only when the setting
+  is on **and** a storage connector is actually enabled; a failed push keeps
+  the local file and is reported, never fatal. Recorded as **no** (and not
+  asked at init) when storage is "no".
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

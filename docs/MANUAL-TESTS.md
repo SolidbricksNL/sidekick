@@ -55,16 +55,22 @@ plugin name needs to change again.
 
 ### A. Init
 - **Start:** empty `/sandbox/`, no `sidekick.settings.md`.
-- **Do:** run `/sidekick-init`; answer the seven multiple-choice questions. Use a
+- **Do:** run `/sidekick-init`; answer the multiple-choice questions. Use a
   **different chat vs output language** (e.g. chat Nederlands, output English).
-- **Expect:** one question at a time as multiple choice; a summary + confirm
-  before writing; `sidekick.settings.md` written; a first project scaffolded;
+  Pick a **storage** (e.g. Google Drive) so the conditional **output-sync**
+  question (6b) appears; answer it Yes.
+- **Expect:** one question at a time as multiple choice; the **output-sync
+  question shown only because storage ≠ No**; a summary + confirm before
+  writing; `sidekick.settings.md` written; a first project scaffolded;
   `_triage/` and `_archive/projects/` created; a closing explanation of how to
-  schedule triage and which connectors to enable; **no connector actually
-  enabled**.
-- **Inspect:** `sandbox/sidekick.settings.md` (all 7 fields, languages differ);
-  `sandbox/projects/<slug>/` (CLAUDE.md, agenda.md, empty brain/log/archive/
-  output, no data/); `sandbox/_triage/`, `sandbox/_archive/projects/`.
+  schedule triage and which connectors to enable (incl. that output sync needs
+  the storage connector on); **no connector actually enabled**.
+- **Inspect:** `sandbox/sidekick.settings.md` (all fields incl. **Output sync:
+  Yes**, languages differ); `sandbox/projects/<slug>/` (CLAUDE.md, agenda.md,
+  empty brain/log/archive/output, no data/); `sandbox/_triage/`,
+  `sandbox/_archive/projects/`.
+- **Also (storage = No):** re-run with storage **No** → the output-sync
+  question is **skipped** and the file records **Output sync: No**.
 - [ ] PASS / FAIL
 
 ### B. Project creation / detection
@@ -223,10 +229,33 @@ plugin name needs to change again.
   without counting `X` separately.
 - [ ] PASS / FAIL
 
+### N. Output sync to external storage
+- **Start:** post-init sandbox with **Output sync: Yes** and a storage
+  connector **actually enabled** in Cowork (Google Drive / OneDrive). An active
+  project `<slug>`.
+- **Do:** ask for a deliverable (as in F) and confirm it. Then ask for a
+  second one in an **area** (`output/<sub>/`). Then **delete** the first one
+  locally. Then run `/sidekick-checkin`.
+- **Expect:** after each confirmed local write, the file is **also mirrored**
+  to `sidekick-<slug>/` in the **storage root** (area file under
+  `sidekick-<slug>/<sub>/`) — **one-way**, **no extra confirmation** beyond the
+  output confirm. The deleted local file is **left in place externally**
+  (additive — never deleted there). The check-in **reconciles**: anything
+  newer/missing is pushed; nothing external is removed. If the connector is
+  off/offline, Sidekick keeps the local file, **says the mirror didn't
+  update**, and does not block.
+- **Inspect:** the storage shows `sidekick-<slug>/<deliverable>` and
+  `sidekick-<slug>/<sub>/<deliverable>`; the local `output/` is unchanged as
+  the original; the externally-orphaned (locally deleted) file still exists
+  externally.
+- **Also (sync off):** with **Output sync: No** (or storage No), creating a
+  deliverable mirrors **nothing** — output stays only in the workspace.
+- [ ] PASS / FAIL
+
 ---
 
 ## Overall result
 
-- [ ] All scenarios A–M PASS, and the command-name form (0b) is recorded.
+- [ ] All scenarios A–N PASS, and the command-name form (0b) is recorded.
 
 **Overall: PASS / FAIL** — _____________   Tester: __________   Date: __________

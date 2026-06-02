@@ -87,8 +87,7 @@ def _write_rows(project, table, rows):
 
 
 def _snapshot(project, table):
-    # Pre-mutation copy into .snapshots/. Best-effort: a sandbox that blocks
-    # the copy or prune must never abort the write.
+    # Pre-mutation copy into .snapshots/ (best-effort; never abort the write).
     src = _table_path(project, table)
     if not src.exists():
         return
@@ -263,16 +262,17 @@ def _sqlval(v):
     return v
 
 
-def cmd_query(args):
+def query(project, sql):
     # SELECT over a throwaway in-memory SQLite; on-disk JSON is never touched.
-    sql = args.sql.strip().rstrip(";").strip()
+    # Returns a result dict; raises ValueError (callers: CLI + sidekick-data MCP).
+    sql = sql.strip().rstrip(";").strip()
     if not (sql.lstrip("(").lower().startswith(("select", "with"))):
-        _die("error: query only runs SELECT statements (reads). "
-             "Use insert/update/delete to change data.")
-    data_dir = _data_dir(args.project)
+        raise ValueError("query only runs SELECT statements (reads). "
+                         "Use insert/update/delete to change data.")
+    data_dir = _data_dir(project)
     if not data_dir.exists():
-        _die(f"error: no data/ for project {args.project!r}")
-    schema = _load_schema(args.project)
+        raise ValueError(f"no data/ for project {project!r}")
+    schema = _load_schema(project)
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
     for f in sorted(data_dir.glob("*.json")):
@@ -284,7 +284,7 @@ def cmd_query(args):
         rows = json.loads(f.read_text(encoding="utf-8"))
         if not isinstance(rows, list):
             continue
-        cols = _table_columns(args.project, table, schema)
+        cols = _table_columns(project, table, schema)
         if not cols:
             continue
         collist = ",".join(f'"{c}"' for c in cols)
@@ -295,10 +295,17 @@ def cmd_query(args):
     try:
         out = [dict(r) for r in conn.execute(sql).fetchall()]
     except sqlite3.Error as e:
-        _die(f"error: query failed: {e}")
+        raise ValueError(f"query failed: {e}")
     finally:
         conn.close()
-    _emit({"ok": True, "action": "query", "rowcount": len(out), "rows": out})
+    return {"ok": True, "action": "query", "rowcount": len(out), "rows": out}
+
+
+def cmd_query(args):
+    try:
+        _emit(query(args.project, args.sql))
+    except ValueError as e:
+        _die(f"error: {e}")
 
 
 def _distinct_values(rows, name):
@@ -338,8 +345,7 @@ def cmd_info(args):
         cols = []
         for c in base:
             col = dict(c)
-            # Categorical columns carry their distinct values so the model
-            # matches exact spellings (e.g. "ON-PREM", not "ONPREM").
+            # Categorical columns carry distinct values (exact spelling match).
             vals = _distinct_values(rows, c["name"])
             if vals is not None:
                 col["values"] = vals

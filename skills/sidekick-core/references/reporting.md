@@ -16,10 +16,20 @@ you do **not** use the `sqlite3` CLI or ad-hoc `python`. The page carries a
 `SELECT` — embedded in the file. This keeps the single-access-path rule from
 `data-discipline.md` intact even for a "live"-feeling dashboard.
 
-"Live" here means **interactive over a snapshot**: tabs, sorting, filtering,
-and charts run in the page, but the numbers are as of generation time.
-**Refresh = re-run the report** (re-query, rewrite the artifact). Say so to
-the user — the dashboard is a snapshot, not a live feed.
+There are **two render modes** (pick per need — both keep data coming only
+from `query`):
+
+- **Snapshot (default).** "Live" means **interactive over a snapshot**: tabs,
+  sorting, charts run in the page, but the numbers are as of generation time.
+  **Refresh = re-run the report.** Self-contained, no server needed — opens
+  anywhere. Use this unless the user needs always-fresh numbers.
+- **Live (MCP-backed, optional).** The artifact calls the read-only
+  `sidekick-data` MCP server's **`run_report`** tool and renders the result, so
+  it shows current data each time it loads. Needs the plugin's server running
+  (Cowork session). See "Live artifact" below.
+
+In **both** modes the calculation rule lives in the **recipe** (the agent owns
+it), never in the page's JavaScript — the artifact only renders.
 
 ## A report = recipe + artifact
 
@@ -56,6 +66,25 @@ Queries:
 Saving or changing a recipe is a **brain write** → show the diff, get
 approval. Keep the SQL in step with the real columns (run `data.py info`
 first; match exact category spellings — `ON-PREM`, not `ONPREM`).
+
+### Also register the recipe (for live artifacts)
+
+`brain/reports.md` is the human-readable, gated source of truth. For a recipe
+a **live artifact** will run by name, also write a machine-readable copy via
+the registry helper — one named `SELECT` per call:
+
+```
+python3 "$CLAUDE_PLUGIN_ROOT/skills/sidekick-core/scripts/reports.py" \
+    save --project projects/<slug> --name <report-name> \
+    --sql "SELECT …" --desc "<one line>"
+```
+
+This stores it in `projects/<slug>/.reports.json` (project root — never
+scanned as a data table). The `sidekick-data` MCP server runs recipes **by
+name** from there, so the artifact only ever knows the name, never the SQL.
+`reports.py list` shows what's registered; `reports.py run --name <n>` runs one
+(same engine as `data.py query`). Registering mirrors an already-approved brain
+recipe, so it needs no separate gate. Skip the registry for one-off snapshots.
 
 ## Choosing the render kind
 
@@ -171,6 +200,62 @@ TABS.forEach((t,i)=>{
 Adapt freely: more tabs, different columns, a different chart, the user's
 output language for headings. Keep it **one file, no network, data embedded**.
 
+## Live artifact (MCP-backed, optional)
+
+When the user wants **always-fresh** numbers (data or a rule changes → the view
+updates on reload) instead of a snapshot, the artifact fetches its data at
+runtime from the **`sidekick-data`** MCP server rather than embedding it.
+
+Preconditions and rules:
+
+1. The recipe is **registered** (`reports.py save`, above) so it can be run by
+   **name**. The artifact passes only the name — never SQL (no rule leaks into
+   the page; no injection surface).
+2. Pass the project as an **absolute path** (the server runs in its own process;
+   a relative path resolves wrong — same lesson as the sync server). Bake the
+   absolute path in when you generate the artifact.
+3. **Always include a snapshot fallback.** A saved artifact opened later (no
+   session, or in a plain browser) has no server. Embed a last-known snapshot
+   and fall back to it when the tool call fails, so the file is never blank.
+4. The tool result is an **MCP content array** — read
+   `result.content[0].text` and `JSON.parse` it (not a plain string).
+
+### Live skeleton (adapt)
+
+```html
+<script>
+const PROJECT = "C:\\Claude Cowork\\Sidekick\\projects\\finance"; // absolute
+const REPORT  = "seasonality-index";
+
+async function load(){
+  try{
+    // Cowork exposes callMcpTool to artifacts; confirm the exact signature.
+    const res = await callMcpTool("sidekick-data", "run_report",
+                                  {project: PROJECT, name: REPORT});
+    const payload = JSON.parse(res.content[0].text);   // MCP content array
+    if(payload.ok === false) throw new Error(payload.error || "report failed");
+    render(payload.rows);                              // live data
+  }catch(e){
+    render(SNAPSHOT.rows);                             // fallback: embedded snapshot
+    note("Showing a saved snapshot (live data unavailable: "+e.message+").");
+  }
+}
+// embedded fallback, written at generate time from data.py query / reports.py run
+const SNAPSHOT = {"rows":[{"month":"Jan","idx":0.59},{"month":"Jun","idx":1.15}]};
+function render(rows){ /* same table/chart rendering as the snapshot skeleton */ }
+function note(msg){ /* show a small muted banner */ }
+load();
+</script>
+```
+
+The render half is identical to the snapshot skeleton — only the data source
+differs. If `callMcpTool` isn't available or errors, the user still sees the
+snapshot; that is the point of the fallback.
+
+> Cowork's artifact→MCP bridge is still new. Verify the `callMcpTool` signature
+> and that an artifact can reach a **plugin-provided** server in your build —
+> a one-call proof artifact confirms it before you rely on it.
+
 ## Gatekeepers (reused, nothing new)
 
 - **Recipe** (save/change in `brain/reports.md`) → diff + approval.
@@ -184,9 +269,12 @@ rules already defined.
 
 ## What stays out of this layer
 
-- **No new `data.py` command.** Reporting needs only `query`/`info`, which
-  exist. Don't grow the helper (Cowork truncates it past ~16 KB).
-- **No live data binding.** The artifact never reads `data/` at runtime; it
-  carries a snapshot. (A React/Cowork-artifact render that binds to live data
-  was deferred — it depends on the still-new live-artifact runtime.)
-- **No raw JSON.** Not to fill the page, not "just to look". Always `query`.
+- **No new `data.py` command.** Its `query`/`info` suffice; reporting added a
+  reusable `query()` *function* (called by `reports.py` and the `sidekick-data`
+  server) but **no new subcommand**. Keep `data.py` under ~16 KB (Cowork
+  truncates it on install) — recipe logic lives in `reports.py`, not `data.py`.
+- **Rules never live in the artifact.** Snapshot or live, the calculation is in
+  the recipe; the page only renders. A live artifact fetches by **report name**
+  via the read-only `sidekick-data` server — never raw SQL in the page.
+- **No raw JSON.** Not to fill the page, not "just to look". Always via a
+  recipe / `query`.

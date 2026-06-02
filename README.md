@@ -125,7 +125,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.10.1** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.11.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -143,5 +143,8 @@ transport problem surfaced (0.8.1: pushing a binary made the model base64 it,
 a 5-minute hang) → a `sync.py` CLI (0.9.0) → which failed in Cowork (sandbox
 writes don't reach the Drive client), so a native **`sidekick-sync` MCP server**
 now does the file copies (0.10.0) — confirmed syncing to Drive, with the model
-passing the **absolute** project path (0.10.1). Run the manual-test checklist in
-Cowork before wider rollout.
+passing the **absolute** project path (0.10.1). Then a second, read-only
+**`sidekick-data` MCP server** (0.11.0) lets a **live artifact fetch a saved
+report recipe by name** (`run_report`) so calculation rules stay in the recipe,
+not the page — JSON remains the record, Excel-as-store was considered and
+rejected. Run the manual-test checklist in Cowork before wider rollout.

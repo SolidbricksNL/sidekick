@@ -1,6 +1,6 @@
 ---
 name: sidekick-report
-description: Surface a project's structured data/ store as reusable reports and interactive dashboards. Use when the user runs /sidekick-report or asks to see, present, visualize, chart, summarize, or build a dashboard/report over stored table data — "show me X as a dashboard", "give me the monthly breakdown again", "make a report of the contacts", "chart revenue by line". Sources data only via scripts/data.py query (never a raw JSON read). Saves the reusable report as a recipe in brain/reports.md (diff + approval) and renders a self-contained, tabbed HTML dashboard (or sheet) into output/ (confirmation). Snapshot, not live — refresh = re-run. The always-on sidekick-core skill routes clear "present/visualize the data" intents here.
+description: Surface a project's structured data/ store as reusable reports and interactive dashboards. Use when the user runs /sidekick-report or asks to see, present, visualize, chart, summarize, or build a dashboard/report over stored table data — "show me X as a dashboard", "give me the monthly breakdown again", "make a report of the contacts", "chart revenue by line". Sources data only via scripts/data.py query (never a raw JSON read). Saves the reusable report as a recipe in brain/reports.md (diff + approval) and renders a tabbed HTML dashboard into output/ (confirmation). Default is a self-contained snapshot (refresh = re-run); optionally a live artifact that fetches a saved recipe by name via the read-only sidekick-data MCP server. The always-on sidekick-core skill routes clear "present/visualize the data" intents here.
 ---
 
 # Sidekick — Report (present & reuse the data store)
@@ -13,11 +13,14 @@ its one rule. Full protocol: `../sidekick-core/references/reporting.md`
 
 ## The one rule
 
-**All data comes from `data.py query`.** Never hand-read `data/*.json`,
-never make the rendered page read the raw table, never use the `sqlite3` CLI
-or ad-hoc `python`. The artifact carries a **snapshot** of your query
-results, embedded in the file. "Live" = interactive over that snapshot;
-**refresh = re-run the report**. Tell the user it's a snapshot.
+**All data comes from `data.py query`** (or a saved recipe, which runs the
+same engine). Never hand-read `data/*.json`, never make the page read the raw
+table, never use the `sqlite3` CLI or ad-hoc `python`. **Default: snapshot** —
+the artifact carries your query results embedded; refresh = re-run. **Optional:
+live** — the artifact fetches a saved recipe **by name** via the read-only
+`sidekick-data` MCP server (`run_report`), with a snapshot fallback baked in.
+Either way the **calculation rule lives in the recipe, never in the page**.
+Full protocol incl. the live skeleton: `../sidekick-core/references/reporting.md`.
 
 ## When you run
 
@@ -52,9 +55,14 @@ results, embedded in the file. "Live" = interactive over that snapshot;
 7. **Save the recipe** if this is something they'll want again: add/update a
    section in `brain/reports.md` (name, plain-language purpose, the exact
    `SELECT`(s), the render target) — a **brain write → show the diff, get
-   approval**.
+   approval**. For a **live** artifact, also register it machine-readably:
+   `reports.py save --project projects/<slug> --name <n> --sql "…"` (writes
+   `.reports.json`; the `sidekick-data` server runs it by name).
 8. **Write the artifact** to `output/` only after **confirmation** (it's a
-   deliverable). Then say it's a snapshot and that re-running refreshes it.
+   deliverable). **Snapshot** (default): embed the query results. **Live**
+   (if the user wants always-fresh): have the page call `run_report` by name
+   and **embed a snapshot fallback** too (see reporting.md). Then tell the user
+   which mode it is and how to refresh.
 
 ## Gatekeepers (reused — no new one)
 
@@ -71,7 +79,9 @@ results, embedded in the file. "Live" = interactive over that snapshot;
 - **Don't write data.** Reporting reads and presents; it never
   `insert`/`update`/`delete`/`create`/`addcol`. If the user wants to change
   records or structure, hand back to the normal `sidekick-core` data flow.
-- **Don't grow `data.py`.** Reporting needs only the existing `query`/`info`
-  (Cowork truncates the helper past ~16 KB).
+- **Don't grow `data.py`.** Reporting uses its existing `query`/`info`
+  (Cowork truncates the helper past ~16 KB). Recipe-registry logic lives in
+  `reports.py`, not `data.py`. Registering a recipe (`reports.py save`) mirrors
+  an approved `brain/reports.md` entry — it is not a data-record write.
 - **Self-contained artifacts.** One file, data embedded, no external
   CSS/JS/fetch — opens straight from `output/` and works in the sandbox.

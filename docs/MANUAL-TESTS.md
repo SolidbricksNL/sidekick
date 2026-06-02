@@ -275,10 +275,38 @@ plugin name needs to change again.
   manifest.
 - [ ] PASS / FAIL
 
+### O. Live report artifact via the sidekick-data MCP server
+- **Start:** post-install, **`sidekick-data`** tools present (`run_report`,
+  `list_reports` — check `/mcp` / tool list; if absent → Python not on host
+  PATH, set absolute interpreter in `plugin.json`). A project `<slug>` with a
+  `data/` table (e.g. `seasonality`).
+- **Do (recipe + register):** ask for a report/dashboard of the table. Expect:
+  a recipe saved in `brain/reports.md` (diff + approval) **and** registered via
+  `reports.py save` → `projects/<slug>/.reports.json` exists with the named
+  `SELECT`. `reports.py run --name <n>` returns the computed rows.
+- **Do (live artifact):** ask for it as a **live** dashboard. Expect a
+  self-contained `.html` in `output/` (confirm) that calls **`run_report`**
+  (name only, absolute project path), parses the MCP content array, renders the
+  list/totals + chart, and **embeds a snapshot fallback**.
+- **Expect / verify:**
+  - The artifact shows **current** data; change a row (`data.py update`) or the
+    recipe, reload → the view reflects it (live), without re-generating the file.
+  - **No SQL/calc rule in the page** — only the report name; the rule is in the
+    recipe. The agent answering the same question in chat gives the **same**
+    numbers (single source).
+  - Open the saved `.html` with **no session / in a plain browser** → it falls
+    back to the embedded snapshot (not blank).
+  - `.reports.json` lives at the **project root** and is **not** picked up as a
+    data table by `data.py query`.
+- **If `callMcpTool` is unavailable / the artifact can't reach the server:**
+  record it — this is the one unproven Cowork bridge; the snapshot mode still
+  works as the fallback.
+- [ ] PASS / FAIL
+
 ---
 
 ## Overall result
 
-- [ ] All scenarios A–N PASS, and the command-name form (0b) is recorded.
+- [ ] All scenarios A–O PASS, and the command-name form (0b) is recorded.
 
 **Overall: PASS / FAIL** — _____________   Tester: __________   Date: __________

@@ -354,13 +354,33 @@ single-access-path rule from §4 holds here too. "Live" therefore means
 but the numbers are as of the moment it was generated. **Refresh = re-run
 the report**, which re-queries and rewrites the artifact.
 
-**Self-contained HTML, no external calls.** The dashboard is one `.html`
-file with the data embedded and all rendering inline (vanilla JS or small
-inline helpers). It makes **no network requests** — Cowork's artifact
-sandbox blocks outbound `fetch` anyway, and a self-contained file also opens
-fine straight from `output/` in any browser. (A richer React/artifact render
-was considered and deferred: it depends on Cowork's still-new live-artifact
-runtime, which the snapshot-HTML approach does not.)
+**Self-contained HTML, no external calls (the default).** The snapshot
+dashboard is one `.html` file with the data embedded and all rendering inline
+(vanilla JS). No network requests; opens straight from `output/` in any
+browser. This is the robust default.
+
+**Optional: a live (MCP-backed) artifact.** When the user wants always-fresh
+numbers rather than a snapshot, the artifact fetches its data at load time from
+a **read-only MCP server, `sidekick-data`** (`scripts/reports_server.py`),
+which runs a saved recipe **by name** and returns its computed rows. So:
+
+- The recipe is registered machine-readably in `projects/<slug>/.reports.json`
+  (project root — never scanned as a data table) via `scripts/reports.py`,
+  alongside the human-readable `brain/reports.md`. The server's tools —
+  **`run_report(project, name)`** and **`list_reports(project)`** — execute it
+  through the same `data.py query` engine (read-only; SQL over all tables, so
+  multi-table JOINs work).
+- The artifact calls `run_report` (e.g. via Cowork's `callMcpTool`), parses the
+  MCP content array, and renders. It passes only the **name** (the calculation
+  rule stays in the recipe, never in the page — no rule duplication, no SQL
+  injection surface) and an **absolute** project path.
+- Every live artifact also embeds a **snapshot fallback**, so a file opened
+  with no server (saved, or a plain browser) still renders.
+
+Rules live in the recipe in **both** modes; the artifact only renders. The
+live path depends on Cowork's still-new artifact→MCP bridge (verify the
+`callMcpTool` signature and plugin-server reach), which is why snapshot stays
+the default and live is opt-in.
 
 **Gatekeepers, reused as-is:**
 
@@ -628,7 +648,7 @@ standard Cowork plugin layout:
 ```
 sidekick/
 ├── .claude-plugin/
-│   ├── plugin.json                ← plugin manifest (+ `mcpServers`: sidekick-sync)
+│   ├── plugin.json                ← plugin manifest (+ `mcpServers`: sidekick-sync, sidekick-data)
 │   └── marketplace.json           ← self-marketplace; lists this plugin, source "./"
 ├── skills/
 │   ├── sidekick-core/             ← always-on main skill (NOT "sidekick" — see below)
@@ -644,7 +664,9 @@ sidekick/
 │   │   │   ├── project-claude-template.md
 │   │   │   └── agenda-template.md
 │   │   └── scripts/
-│   │       ├── data.py            ← file-based structured-data helper
+│   │       ├── data.py            ← file-based structured-data helper (+ query() function)
+│   │       ├── reports.py         ← report-recipe registry + CLI (.reports.json; runs via data.query)
+│   │       ├── reports_server.py  ← `sidekick-data` MCP server (read-only; run_report/list_reports)
 │   │       ├── sync.py            ← output-sync engine + CLI (output/ ↔ external base path)
 │   │       └── sync_server.py     ← `sidekick-sync` MCP server (native; wraps sync.py)
 │   ├── sidekick-init/
@@ -801,6 +823,26 @@ Resolved:
     — if the `sidekick-sync` tools don't appear, set an absolute interpreter in
     the manifest `command`; the model falls back to the CLI with a warning.
     `references/sync-discipline.md` has the one-time Drive-appears test.
+- **Live (MCP-backed) reporting — `sidekick-data` server (added 2026-06-02,
+  v0.11.0)** — a second, **read-only** plugin MCP server lets a **live artifact
+  fetch a saved recipe's output by name** so calculation rules live in the
+  recipe (the agent owns + verifies them), never in the artifact's JS. Pieces:
+  a recipe **registry** `projects/<slug>/.reports.json` managed by
+  `scripts/reports.py` (mirrors the gated `brain/reports.md`); `data.py`'s query
+  refactored into a reusable **`query()` function** (no new subcommand; trimmed
+  back under the ~16 KB cap); the `sidekick-data` server (`reports_server.py`)
+  exposing **`run_report`** / **`list_reports`** (read-only, executes via
+  `query()` — SQL over all tables, multi-table JOINs included). The artifact
+  passes only the **name** + an **absolute** project path, parses the MCP
+  content array, and **always embeds a snapshot fallback** for when no server is
+  present. Snapshot stays the default; live is opt-in. Decision rationale
+  (this session): Excel-as-store was considered and **rejected** — it re-creates
+  the SQLite failure (binary blob, dependency, and openpyxl writes formulas it
+  can't evaluate, so the agent can't verify computed values); JSON stays the
+  record, calc rules live as SQL recipes the agent runs, Excel only as an
+  optional human-facing export. **Open:** Cowork's artifact→plugin-MCP bridge is
+  new — verify `callMcpTool` reaches `sidekick-data` (the seasonality artifact
+  is the first live test).
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

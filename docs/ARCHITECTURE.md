@@ -952,6 +952,20 @@ Resolved:
   Cowork artifact** (`mcp__cowork__create_artifact` wrapping the Drive html) is
   the primary deliverable, not the file. reporting.md / ui-kit.md / core + report
   SKILLs rewritten accordingly; validator tracks the two new files.
+- **Wrapper response-shape + truncation guard (2026-06-03, v0.14.1).** Cowork
+  testing on a **pre-0.14.0 install** still showed a blank dashboard for two
+  reasons. (a) The Drive download tool returns **`{content: "<base64>"}`** (a
+  string), but the wrapper assumed an array (`p.content[0].text`) → it threw and
+  showed the error. Replaced with a recursive `unwrap()` that peels every shape
+  (`"<json>"`, `{content:str}`, `{content:[{text}]}`, `{base64Content}`, bare
+  base64) to the base64 string. (b) The dashboard html was built by the **old
+  paste flow** (the install had no `dashboard.py`) and the agent's inline paste of
+  the ~11.4 KB kernel truncated → blank. The shipped `ui.js` is complete on disk;
+  `dashboard.py` (0.14.0) already fixes the cause by reading it **natively**. As a
+  belt-and-suspenders, `dashboard.py` now **self-verifies** the assets (ui.js must
+  end with `render();`, ui.css with `}`) and **aborts loudly without writing**
+  rather than ever baking a blank page. The user must **reinstall** so the
+  build-script flow + fixed wrapper actually ship.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

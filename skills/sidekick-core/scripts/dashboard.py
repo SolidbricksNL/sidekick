@@ -48,6 +48,17 @@ def _skeleton(title):
 def _assemble(data):
     css = (ASSETS / "ui.css").read_text(encoding="utf-8")
     js = (ASSETS / "ui.js").read_text(encoding="utf-8")
+    # Truncation guard. A bad copy / install can cut an asset; baking a partial
+    # kernel renders a BLANK page. Verify the end-sentinels and abort loudly with
+    # the size instead of writing a broken dashboard. (The kernel must end with the
+    # `render();` call; ui.css with a closing brace.)
+    if not js.rstrip().endswith("render();"):
+        sys.exit("ERROR: ui.js looks truncated (%d B; must end with 'render();'). "
+                 "Reinstall the plugin — the dashboard was NOT written."
+                 % len(js.encode("utf-8")))
+    if len(css) < 4000 or not css.rstrip().endswith("}"):
+        sys.exit("ERROR: ui.css looks truncated (%d B). Reinstall the plugin — "
+                 "the dashboard was NOT written." % len(css.encode("utf-8")))
     logo = ""
     png = ASSETS / "solidbricks.png"
     if png.exists():

@@ -171,17 +171,26 @@ So: build the html → sync → **create the live artifact**, and present *that*
 ```html
 <!DOCTYPE html><html lang="nl"><head><meta charset="utf-8">
 <style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100vh;background:#fff}
-#e{font:13px system-ui;padding:12px;color:#dc2626}</style></head><body>
+#e{font:13px system-ui;padding:12px;color:#dc2626;white-space:pre-wrap}</style></head><body>
 <iframe id="f" sandbox="allow-same-origin allow-scripts"></iframe><div id="e" hidden></div>
 <script>
 const FILE_ID="{{DRIVE_FILE_ID}}";          // from reports.py (step 3)
 const TOOL="{{DRIVE_DOWNLOAD_TOOL}}";        // mcp__<uuid>__download_file_content (step 4)
+// Drive tools differ in shape; unwrap() peels them ALL to a base64 string:
+//   "<json>" | {content:"<b64>"} | {content:[{text}]} | {base64Content:"<b64>"} | "<b64>"
+function unwrap(x){
+  if(x==null) return "";
+  if(typeof x==="string"){ const s=x.trim();
+    if(s[0]==="{"||s[0]==="["){ try{ return unwrap(JSON.parse(s)); }catch(e){ return s; } }
+    return s; }                                  // already base64
+  if(Array.isArray(x)) return unwrap(x[0]);
+  return unwrap(x.base64Content ?? x.content ?? x.text ?? x.data ?? "");
+}
 (async()=>{try{
-  let res=await window.cowork.callMcpTool(TOOL,{fileId:FILE_ID});
-  let p=res; if(typeof res==="string"){const i=res.indexOf("{");if(i>=0)p=JSON.parse(res.slice(i));}
-  if(p&&p.content&&p.content[0])p=JSON.parse(p.content[0].text);
-  const b64=p.base64Content??p.content??p;
-  document.getElementById("f").srcdoc=typeof b64==="string"?decodeURIComponent(escape(atob(b64))):JSON.stringify(p);
+  const res=await window.cowork.callMcpTool(TOOL,{fileId:FILE_ID});
+  const b64=unwrap(res);
+  if(!b64) throw new Error("empty response from "+TOOL);
+  document.getElementById("f").srcdoc=decodeURIComponent(escape(atob(b64)));
 }catch(e){const el=document.getElementById("e");el.hidden=false;el.textContent="Kon live-inhoud niet laden: "+e.message;}
 })();
 </script></body></html>

@@ -79,12 +79,12 @@ On approval, create under `projects/<slug>/` (slug = `kebab-case`, short):
 `CLAUDE.md` (seed from `references/project-claude-template.md`), `agenda.md`
 (seed from `references/agenda-template.md`), and empty `brain/`, `log/`,
 `archive/`, `output/`. The `data/` folder is **lazy** (first table). Then build
-the project's **standard dashboard skeleton** (`$SK` resolved as for `data.py`):
-`python3 "$SK/dashboard.py" build --project "<ABS>/projects/<slug>" --slug <slug> --title "<Project> Dashboard"`
-(if Output sync is on, also sync it + create the live artifact). Every project
-starts with an empty "<Project> Dashboard" that later "show me…" requests fill;
-it is **self-healing** — if the user deleted it, recreate it (reporting.md →
-Lifecycle). Scaffolding is **top-level only**; an area gets **no** scaffold.
+the project's **standard dashboard skeleton** — call the `build_dashboard` tool
+`{project:"<ABS>/projects/<slug>", slug, title:"<Project> Dashboard"}` (if Output
+sync is on, also sync + create the live artifact). Every project starts with an
+empty "<Project> Dashboard"; later "show me…" requests fill it, and it self-heals
+if deleted (reporting.md → Lifecycle). Scaffolding is **top-level only**; an area
+gets **no** scaffold.
 
 ### Subprojects (areas within a project)
 
@@ -138,21 +138,21 @@ this goes wrong, all forbidden:
    never freelance a chart inline.
 2. **Data only via `data.py query`** — never hand-read `data/*.json`, the
    `sqlite3` CLI, ad-hoc `python`, or hardcoded rows.
-3. **Build with `dashboard.py`, never paste the kernel.** Each project has **one**
-   dashboard; you edit its small `<slug>-dashboard.sk.json` (the `window.SK` data,
-   at the **project root**, not the Drive-synced `artifacts/`) then run
-   `dashboard.py build` — it bakes the kit + logo. Never paste
-   `ui.js`/`ui.css` inline (Cowork truncates the read → blank
-   page), never Chart.js/D3/a CDN.
+3. **Build via the `build_dashboard` MCP tool, never paste the kernel.** Each
+   project has **one** dashboard; you edit its small `<slug>-dashboard.sk.json`
+   (the `window.SK` data, at the **project root**, not the Drive-synced
+   `artifacts/`) then call the `sidekick-sync` tool **`build_dashboard`** — it
+   runs natively and bakes the kit + logo. Never paste `ui.js`/`ui.css` inline
+   (the sandbox mount truncates the read; bash `dashboard.py` is fallback only),
+   never Chart.js/D3/a CDN.
 4. **Add to the project's existing dashboard** (in `artifacts/`), never `output/`.
    A **new/separate** dashboard only on explicit request.
 5. **Live Cowork artifact is the deliverable** (`mcp__cowork__create_artifact`
    wrapping the Drive html), **not** `present_files` on the `.html`. Drive file
    id from `.reports.json`, download tool name from the session tools.
-6. **Save the recipe** — `brain/reports.md` (diff + approval) + `.reports.json`
-   (`reports.py save`).
+6. **Save the recipe** — `brain/reports.md` (diff + approval) + `.reports.json`.
 
-After a data change: edit the dashboard's `.sk.json`, re-run `dashboard.py build`,
+After a data change: edit the dashboard's `.sk.json`, call `build_dashboard`,
 `reconcile_output` (overwrites the Drive file in place, no new artifact, no
 approval). Protocol: `references/reporting.md` + `references/ui-kit.md`. (A bare
 number / one-off answer needs no dashboard — just `data.py query` and say it.)

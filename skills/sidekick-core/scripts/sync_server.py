@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sync  # noqa: E402  (sibling module: the shared sync engine)
+import dashboard  # noqa: E402  (sibling: the dashboard builder)
 
 _PROTOCOL = "2024-11-05"
 _TOOLS = [
@@ -54,6 +55,29 @@ _TOOLS = [
                 "keep": {"type": "string", "enum": ["local", "external", "both"]},
             },
             "required": ["project", "base", "file", "keep"],
+        },
+    },
+    {
+        "name": "build_dashboard",
+        "description": ("Build a project's dashboard HTML from its "
+                        "<slug>-dashboard.sk.json (which lives at the project "
+                        "ROOT). Runs NATIVELY so it reads the full UI kit + logo "
+                        "from disk - prefer this over the bash dashboard.py, which "
+                        "the sandbox mount can truncate. Writes "
+                        "artifacts/<slug>-dashboard.html and returns JSON "
+                        "(data, html, collections). Then call reconcile_output to "
+                        "push it to Drive."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": {"type": "string",
+                            "description": "ABSOLUTE path to the project dir (same as reconcile_output)"},
+                "slug": {"type": "string", "description": "project slug, e.g. finance"},
+                "title": {"type": "string",
+                          "description": "optional dashboard title, e.g. 'Finance Dashboard' "
+                                         "(only needed for a fresh skeleton)"},
+            },
+            "required": ["project", "slug"],
         },
     },
 ]
@@ -96,6 +120,9 @@ def _call_tool(req_id, name, args):
         if name == "resolve_output":
             proj = _resolve_project(args["project"])
             return _ok(req_id, sync.resolve(proj, args["base"], args["file"], args["keep"]))
+        if name == "build_dashboard":
+            proj = _resolve_project(args["project"])
+            return _ok(req_id, dashboard.build(proj, args["slug"], args.get("title")))
         return _tool_error(req_id, f"unknown tool {name!r}")
     except KeyError as e:
         return _tool_error(req_id, f"missing argument {e}")

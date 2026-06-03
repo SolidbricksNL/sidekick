@@ -63,7 +63,7 @@ def _concat(glob_pat):
     parts = sorted(ASSETS.glob(glob_pat),
                    key=lambda p: int(p.name.split(".")[1]))
     if not parts:
-        sys.exit("ERROR: no %s chunks found in %s — reinstall the plugin." % (glob_pat, ASSETS))
+        raise RuntimeError("no %s chunks found in %s — reinstall the plugin." % (glob_pat, ASSETS))
     return "".join(p.read_text(encoding="utf-8") for p in parts)
 
 
@@ -71,17 +71,16 @@ def _assemble(data):
     css = _concat("ui.*.css")
     js = _concat("ui.*.js")
     # Truncation guard. If a chunk still came back short (flaky mount), baking a
-    # partial kernel renders a BLANK page — so verify the end-sentinels and abort
-    # loudly with the size instead of writing a broken dashboard. (The kernel must
-    # end with the `render();` call; the CSS with a closing brace.)
+    # partial kernel renders a BLANK page — so verify the end-sentinels and raise
+    # instead of writing a broken dashboard. (Kernel must end with `render();`,
+    # the CSS with a closing brace.)
     if not js.rstrip().endswith("render();"):
-        sys.exit("ERROR: ui.js chunks assembled short (%d B; must end with 'render();'). "
-                 "A plugin file was truncated on read — retry, or reinstall. The "
-                 "dashboard was NOT written." % len(js.encode("utf-8")))
+        raise RuntimeError("ui.js chunks assembled short (%d B; must end with 'render();') "
+                           "— a plugin file was truncated on read; retry or reinstall."
+                           % len(js.encode("utf-8")))
     if len(css) < 4000 or not css.rstrip().endswith("}"):
-        sys.exit("ERROR: ui.css chunks assembled short (%d B). A plugin file was "
-                 "truncated on read — retry, or reinstall. The dashboard was NOT "
-                 "written." % len(css.encode("utf-8")))
+        raise RuntimeError("ui.css chunks assembled short (%d B) — a plugin file was "
+                           "truncated on read; retry or reinstall." % len(css.encode("utf-8")))
     logo = ""
     png = ASSETS / "solidbricks.png"
     if png.exists():
@@ -118,24 +117,33 @@ def _paths(project, slug):
             proj / "artifacts" / (slug + "-dashboard.html"))
 
 
-def cmd_build(a):
-    if not Path(a.project).is_absolute():
-        sys.exit("ERROR: --project must be an ABSOLUTE path (got: %s)" % a.project)
-    art, data_path, html_path = _paths(a.project, a.slug)
+def build(project, slug, title=None):
+    """Build (or skeleton) a project's dashboard. Returns a result dict; raises
+    RuntimeError on bad input or a truncated asset — so both the CLI and the
+    `sidekick-sync` MCP server (which runs NATIVELY, with reliable filesystem
+    access) handle it the same way. Building via the MCP server sidesteps the
+    sandbox bash mount that truncates large script-reads of plugin files."""
+    if not Path(project).is_absolute():
+        raise RuntimeError("project must be an ABSOLUTE path (got: %s)" % project)
+    art, data_path, html_path = _paths(project, slug)
     art.mkdir(parents=True, exist_ok=True)
     if data_path.exists():
         data = json.loads(data_path.read_text(encoding="utf-8"))
-        if a.title:
-            data["workspace"] = a.title
+        if title:
+            data["workspace"] = title
     else:
-        data = _skeleton(a.title or (a.slug.replace("-", " ").title() + " Dashboard"))
+        data = _skeleton(title or (slug.replace("-", " ").title() + " Dashboard"))
         data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     html_path.write_text(_assemble(data), encoding="utf-8")
-    print(json.dumps({
-        "data": str(data_path), "html": str(html_path),
-        "collections": len(data.get("collections", [])),
-        "created_skeleton": not a.title and not html_path.exists(),
-    }))
+    return {"data": str(data_path), "html": str(html_path),
+            "collections": len(data.get("collections", []))}
+
+
+def cmd_build(a):
+    try:
+        print(json.dumps(build(a.project, a.slug, a.title)))
+    except RuntimeError as e:
+        sys.exit("ERROR: " + str(e))
 
 
 def cmd_path(a):

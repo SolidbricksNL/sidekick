@@ -992,6 +992,20 @@ Resolved:
   ~11 KB → chunks + Read tool; `artifacts/` placeholders → reconcile, don't
   read-back; Write-tool truncation → python heredoc) so the agent follows the
   flow instead of improvising.
+- **Dashboard build moved into the native MCP server (2026-06-03, v0.15.0).**
+  Real-run finding: the sandbox `.remote-plugins` mount truncates a **bash
+  exec/read** of plugin files (lazy/partial hydration — `dashboard.py` came back
+  98/161 lines → `SyntaxError`), even though the file is fine on disk and the Read
+  tool gets it whole. So a bash-run builder is unreliable. Fix: the build now runs
+  in the **`sidekick-sync` MCP server** — a **native host process** with real
+  filesystem access (the same reason sync works) — via a new **`build_dashboard`**
+  tool. `dashboard.py` was refactored to a `build(project, slug, title)` function
+  (raises `RuntimeError`) that both the CLI and the server call; the server reads
+  the full UI-kit chunks + logo natively and writes `artifacts/<slug>-dashboard.html`.
+  The agent now: writes the small `<slug>-dashboard.sk.json` (project root) →
+  calls `build_dashboard` → `reconcile_output` → live artifact. The bash
+  `dashboard.py` stays as a fallback. This removes the build's dependence on
+  bash-reading plugin files entirely.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

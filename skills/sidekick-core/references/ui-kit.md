@@ -41,41 +41,47 @@ projects/<slug>/<slug>-dashboard.sk.json            <- the window.SK data (you e
 projects/<slug>/artifacts/<slug>-dashboard.html     <- built output (synced to Drive)
 ```
 
-Resolve the scripts dir (`$CLAUDE_PLUGIN_ROOT` is unset) and run the builder:
+**Build via the `build_dashboard` MCP tool (primary).** Call the
+`sidekick-sync` server's **`build_dashboard`** tool — `{project: "<ABSOLUTE>/projects/<slug>",
+slug: "<slug>", title: "<Project> Dashboard"}`. It runs **natively** (real
+filesystem), so it reads the full UI-kit chunks + logo and bakes the html
+reliably — **the bash `dashboard.py` is truncated by the sandbox mount** (it came
+back 98/161 lines → `SyntaxError`), so don't depend on it. The tool reads the
+project's `<slug>-dashboard.sk.json` (project ROOT) and writes
+`artifacts/<slug>-dashboard.html`.
 
-```
-SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"
-python3 "$SK/dashboard.py" build --project "<ABSOLUTE>/projects/<slug>" --slug <slug> --title "<Project> Dashboard"
-```
-
-- First run with no `.sk.json` writes an **empty skeleton** (branded shell + one
-  placeholder collection) and builds the html. This is what project scaffolding does.
+- First call with no `.sk.json` writes an **empty skeleton** (branded shell + one
+  placeholder collection) and builds the html — project scaffolding does this.
 - To **add or change content**: edit `<slug>-dashboard.sk.json` (the `window.SK`
-  shape below — values from `data.py query`, computed rows baked in), then re-run
-  `dashboard.py build`. The html is regenerated in place; re-sync to Drive and the
-  live artifact updates — **no new artifact**.
-- Build a **new, separate** dashboard html only when the user explicitly asks for
-  one. Otherwise everything lands in the project's standard dashboard.
+  shape below — values from `data.py query`, computed rows baked in), then call
+  `build_dashboard` again + `reconcile_output`. Regenerated in place; the live
+  artifact updates — **no new artifact**.
+- A **new, separate** dashboard only when the user explicitly asks. Otherwise
+  everything lands in the project's standard dashboard.
 
-`--project` is the **absolute** project dir (same rule as the sync tools). All
-labels = the **default output language**. `theme` ∈ light|paper|dark, `accent` ∈
-blue|orange — set them inside the `.sk.json`.
+All labels = the **default output language**. `theme` ∈ light|paper|dark,
+`accent` ∈ blue|orange — set them inside the `.sk.json`.
 
-> **Cowork environment gotchas — follow the flow above, don't improvise.**
-> - The `.remote-plugins` mount truncates a *script-read* of any file over ~11 KB
->   — hence the kit chunks (`ui.1/2.js`, `ui.1/2.css`, <9 KB each) that
->   `dashboard.py` reads whole and concatenates. **`dashboard.py` is small (~6 KB)
->   — run it straight from the plugin dir; don't copy it elsewhere first.**
-> - **`artifacts/` is Drive-synced**, so files there can be **cloud-only
->   placeholders**: `stat()` sees them, `open()` fails until hydrated. That's why
->   the editable **`.sk.json` lives at the project ROOT** (local, reliable), and
->   why you **never read the built html back** — `dashboard.py` only writes it and
->   the wrapper loads it from Drive. After a build, `reconcile_output` hydrates +
->   pushes to Drive.
+**Fallback (only if the MCP tool is unavailable):** the bash CLI
+`SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
+`python3 "$SK/dashboard.py" build --project "<ABS>/projects/<slug>" --slug <slug> --title "…"`.
+If it errors with a `SyntaxError`/truncation, the mount truncated the script —
+use the MCP tool instead (or Read `dashboard.py` to hydrate it, then retry).
+
+> **Cowork environment gotchas — use the MCP tool, don't improvise.**
+> - The sandbox **`.remote-plugins` mount truncates bash reads/exec** of plugin
+>   files (lazy/partial hydration — even `dashboard.py` came back short). The
+>   **native MCP server is the reliable path** (it reads real files). The Read
+>   tool also gets full content; bash does not.
+> - **`artifacts/` is Drive-synced** → files there can be **cloud-only
+>   placeholders** (`stat()` ok, `open()` fails until hydrated). So the editable
+>   **`.sk.json` lives at the project ROOT** (local, reliable) and you **never read
+>   the built html back** — `build_dashboard` only writes it; the wrapper loads it
+>   from Drive; `reconcile_output` hydrates + pushes.
 > - The **Write tool** truncates large content: if a big `.sk.json` write comes
->   back short, write it via a Python heredoc instead.
-> - `dashboard.py` self-verifies the assembled kernel and aborts loudly (never
->   bakes a blank page) if a chunk still reads short — retry or reinstall.
+>   back short, write it via a Python heredoc.
+> - The builder self-verifies the assembled kernel and **errors instead of baking
+>   a blank page** if anything read short.
 
 ## The `window.SK` data model
 

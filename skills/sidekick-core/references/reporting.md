@@ -130,15 +130,16 @@ read (~11.4 KB) and emit a **blank page**. The bundled **`dashboard.py`** reads
    Drive-synced and may serve cloud-only placeholders). A `window.SK` object
    (collections → views, each `kind: dashboard | grid | listdetail | home`). Bake
    **computed** rows in; the calc rule stays in the recipe, never in the page.
-3. **Build:** resolve the scripts dir (`$CLAUDE_PLUGIN_ROOT` is unset) and run
-   `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
-   then `python3 "$SK/dashboard.py" build --project "<ABS>/projects/<slug>" --slug <slug> --title "<Project> Dashboard"`.
-   It writes `artifacts/<slug>-dashboard.html` (a branded **skeleton** if there is
-   no `.sk.json` yet — that is what project scaffolding does).
+3. **Build via the `build_dashboard` MCP tool** (the `sidekick-sync` server):
+   `{project: "<ABS>/projects/<slug>", slug: "<slug>", title: "<Project> Dashboard"}`.
+   It runs **natively** (reliable FS) and writes `artifacts/<slug>-dashboard.html`
+   (a branded **skeleton** if there is no `.sk.json` yet). **Do not** lean on the
+   bash `dashboard.py` — the sandbox mount truncates it (98/161 lines →
+   `SyntaxError`); it's a fallback only.
 4. **Show it as the live Cowork artifact** (next section) — that is the deliverable.
 
 **One per project; edit in place.** "Add X to the dashboard" → edit the
-`<slug>-dashboard.sk.json` + re-run `dashboard.py build` + re-sync. Do **not**
+`<slug>-dashboard.sk.json` + re-run `build_dashboard` + re-sync. Do **not**
 spin up a new artifact. Only an explicit "make a *new/separate* dashboard"
 warrants a second html (different `--slug`). Labels in the **default output
 language**.
@@ -204,7 +205,7 @@ frames it.
 ### Lifecycle — created at scaffold, self-healing if deleted
 
 - **At project creation** the dashboard is realized as an **empty skeleton**
-  (`dashboard.py build` writes the html + `.sk.json`). If **Output sync is on**,
+  (`build_dashboard` writes the html + `.sk.json`). If **Output sync is on**,
   also sync it and **create the live artifact** right away, so a fresh project
   already shows its "<Project> Dashboard". If sync is off, the skeleton waits
   locally and the live artifact is created the first time a dashboard is shown
@@ -215,8 +216,8 @@ frames it.
 - **If a dashboard is expected and the live artifact is gone, recreate it** —
   call `mcp__cowork__create_artifact` again with the stored Drive file id (cheap,
   nothing lost). If the html/Drive file is gone too, rebuild from the `.sk.json`
-  (`dashboard.py build` → `reconcile_output`) first; if even the `.sk.json` is
-  gone, `dashboard.py build` makes a fresh skeleton. **Never error on a missing
+  (`build_dashboard` → `reconcile_output`) first; if even the `.sk.json` is
+  gone, `build_dashboard` makes a fresh skeleton. **Never error on a missing
   dashboard — (re)build and (re)create it.**
 
 ### Keeping it live (the trigger)
@@ -227,7 +228,7 @@ the data and rebuild in the same turn, **no new artifact**:
 1. Edit the dashboard's `<slug>-dashboard.sk.json` (fresh `data.py query` rows).
    (`reports.py uses --table <changed-table>` finds which dashboards a table
    change touches.)
-2. Re-run `dashboard.py build`, then `reconcile_output`. The Drive file is
+2. Re-run `build_dashboard`, then `reconcile_output`. The Drive file is
    overwritten **in place** (same id) — **no `mcp__cowork__create_artifact`, no
    approval.** The live artifact shows the new version on Cowork's next refresh.
 
@@ -242,7 +243,7 @@ build` → re-sync → the live artifact reflects the new totals, untouched.
 
 - **Recipe** (save/change in `brain/reports.md`) → diff + approval. Mirroring it
   into `.reports.json` is part of the same approved change (no separate gate).
-- **Dashboard** (`dashboard.py build` → overwrite in `artifacts/`) → default
+- **Dashboard** (`build_dashboard` → overwrite in `artifacts/`) → default
   output language. The **live artifact** (`mcp__cowork__create_artifact`) is
   created once; later content refreshes go to the Drive html, not the artifact.
 - **Reading** the data to build either → free (it's a `query`).

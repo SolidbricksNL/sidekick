@@ -979,6 +979,19 @@ Resolved:
   the larger SKILL/reference files also exceed ~11 KB and are a latent risk on a
   flaky mount, but they have worked; the critical routing rules are placed early
   in `sidekick-core/SKILL.md` so a tail-truncation can't drop them.)
+- **Dashboard source moved off the Drive-synced folder (2026-06-03, v0.14.3).**
+  Real-run lesson: building in `artifacts/` (Drive-synced) hit **cloud-only
+  placeholders** — `stat()` sees a file but `open()` fails until it's hydrated —
+  so the agent flailed (heredoc vs Write vs `python -c`, copying `dashboard.py`,
+  `reconcile_output` to hydrate). Fixes: (1) the editable
+  **`<slug>-dashboard.sk.json` now lives at the project ROOT** (local, reliable
+  read), not in `artifacts/`; only the built html stays in `artifacts/`, and it's
+  **write-only** (never read back — the wrapper loads it from Drive). (2)
+  `dashboard.py` is small (~6 KB) and runs straight from the plugin dir — no need
+  to copy it. (3) ui-kit.md now spells out the environment gotchas (mount read
+  ~11 KB → chunks + Read tool; `artifacts/` placeholders → reconcile, don't
+  read-back; Write-tool truncation → python heredoc) so the agent follows the
+  flow instead of improvising.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

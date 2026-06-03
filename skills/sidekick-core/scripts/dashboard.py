@@ -10,8 +10,16 @@ Why a script: pasting the kernel inline made Cowork's agent-read truncate it
 (~11.4 KB), producing blank dashboards. A native read sidesteps that entirely.
 
 Layout (one dashboard per project; new one only on explicit request):
-  <project>/artifacts/<slug>-dashboard.sk.json   <- source of truth (agent edits)
-  <project>/artifacts/<slug>-dashboard.html      <- built output (synced to Drive)
+  <project>/<slug>-dashboard.sk.json   <- source of truth (agent edits) — at the
+                                          PROJECT ROOT, NOT in artifacts/. artifacts/
+                                          is Drive-synced and its files can be
+                                          cloud-only placeholders (stat ok, open
+                                          fails); the root is local, so reads here
+                                          are reliable.
+  <project>/artifacts/<slug>-dashboard.html   <- built output (synced to Drive).
+                                          dashboard.py only WRITES it; never read it
+                                          back (a placeholder open would fail) — the
+                                          live wrapper loads it from Drive.
 
 Usage:
   dashboard.py build  --project <ABS_PROJECT_DIR> --slug <slug> [--title "<T>"]
@@ -102,8 +110,12 @@ def _esc(s):
 
 
 def _paths(project, slug):
-    art = Path(project) / "artifacts"
-    return art, art / (slug + "-dashboard.sk.json"), art / (slug + "-dashboard.html")
+    proj = Path(project)
+    # data at the project ROOT (local, reliable read — not the Drive-synced
+    # artifacts/, whose files can be cloud-only placeholders); html in artifacts/.
+    return (proj / "artifacts",
+            proj / (slug + "-dashboard.sk.json"),
+            proj / "artifacts" / (slug + "-dashboard.html"))
 
 
 def cmd_build(a):

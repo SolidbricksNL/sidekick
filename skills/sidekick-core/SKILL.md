@@ -139,9 +139,10 @@ this goes wrong, all forbidden:
 2. **Data only via `data.py query`** — never hand-read `data/*.json`, the
    `sqlite3` CLI, ad-hoc `python`, or hardcoded rows.
 3. **Build with `dashboard.py`, never paste the kernel.** Each project has **one**
-   dashboard; you edit its small `artifacts/<slug>-dashboard.sk.json` (the
-   `window.SK` data) and run `dashboard.py build` — the script bakes the UI kit +
-   logo. Never paste `ui.js`/`ui.css` inline (Cowork truncates the read → blank
+   dashboard; you edit its small `<slug>-dashboard.sk.json` (the `window.SK` data,
+   at the **project root**, not the Drive-synced `artifacts/`) then run
+   `dashboard.py build` — it bakes the kit + logo. Never paste
+   `ui.js`/`ui.css` inline (Cowork truncates the read → blank
    page), never Chart.js/D3/a CDN.
 4. **Add to the project's existing dashboard** (in `artifacts/`), never `output/`.
    A **new/separate** dashboard only on explicit request.

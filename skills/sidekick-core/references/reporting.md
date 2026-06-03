@@ -126,9 +126,10 @@ read (~11.4 KB) and emit a **blank page**. The bundled **`dashboard.py`** reads
 
 1. **Query** each section with `data.py query` (or `reports.py run`); collect JSON.
 2. **Shape** the results into the dashboard's small data file
-   `artifacts/<slug>-dashboard.sk.json` — a `window.SK` object (collections →
-   views, each `kind: dashboard | grid | listdetail | home`). Bake **computed**
-   rows in; the calc rule stays in the recipe, never in the page.
+   `<slug>-dashboard.sk.json` — **at the project root** (not `artifacts/`, which is
+   Drive-synced and may serve cloud-only placeholders). A `window.SK` object
+   (collections → views, each `kind: dashboard | grid | listdetail | home`). Bake
+   **computed** rows in; the calc rule stays in the recipe, never in the page.
 3. **Build:** resolve the scripts dir (`$CLAUDE_PLUGIN_ROOT` is unset) and run
    `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
    then `python3 "$SK/dashboard.py" build --project "<ABS>/projects/<slug>" --slug <slug> --title "<Project> Dashboard"`.

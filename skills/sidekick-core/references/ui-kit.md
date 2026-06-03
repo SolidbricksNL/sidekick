@@ -34,8 +34,11 @@ Each active project has **one** dashboard, named "<Project> Dashboard". Its
 source of truth is a tiny JSON file you edit — never the big html:
 
 ```
-projects/<slug>/artifacts/<slug>-dashboard.sk.json   <- the window.SK data (you edit this)
-projects/<slug>/artifacts/<slug>-dashboard.html      <- built output (synced to Drive)
+projects/<slug>/<slug>-dashboard.sk.json            <- the window.SK data (you edit this)
+                                                       at the PROJECT ROOT (local,
+                                                       reliable read — NOT in the
+                                                       Drive-synced artifacts/)
+projects/<slug>/artifacts/<slug>-dashboard.html     <- built output (synced to Drive)
 ```
 
 Resolve the scripts dir (`$CLAUDE_PLUGIN_ROOT` is unset) and run the builder:
@@ -58,13 +61,21 @@ python3 "$SK/dashboard.py" build --project "<ABSOLUTE>/projects/<slug>" --slug <
 labels = the **default output language**. `theme` ∈ light|paper|dark, `accent` ∈
 blue|orange — set them inside the `.sk.json`.
 
-> **Cowork truncation gotchas.** Its `.remote-plugins` mount truncates a
-> *script-read* of any file over ~11 KB — that's why the kit ships as
-> `ui.1.js`/`ui.2.js` + `ui.1.css`/`ui.2.css` chunks (<9 KB each) that
-> `dashboard.py` reads whole and concatenates. The **Write tool** also truncates
-> large content: if writing a big `.sk.json` comes back short, write it via a
-> Python heredoc instead. `dashboard.py` self-verifies the assembled kernel and
-> aborts loudly (never bakes a blank page) if a chunk still reads short.
+> **Cowork environment gotchas — follow the flow above, don't improvise.**
+> - The `.remote-plugins` mount truncates a *script-read* of any file over ~11 KB
+>   — hence the kit chunks (`ui.1/2.js`, `ui.1/2.css`, <9 KB each) that
+>   `dashboard.py` reads whole and concatenates. **`dashboard.py` is small (~6 KB)
+>   — run it straight from the plugin dir; don't copy it elsewhere first.**
+> - **`artifacts/` is Drive-synced**, so files there can be **cloud-only
+>   placeholders**: `stat()` sees them, `open()` fails until hydrated. That's why
+>   the editable **`.sk.json` lives at the project ROOT** (local, reliable), and
+>   why you **never read the built html back** — `dashboard.py` only writes it and
+>   the wrapper loads it from Drive. After a build, `reconcile_output` hydrates +
+>   pushes to Drive.
+> - The **Write tool** truncates large content: if a big `.sk.json` write comes
+>   back short, write it via a Python heredoc instead.
+> - `dashboard.py` self-verifies the assembled kernel and aborts loudly (never
+>   bakes a blank page) if a chunk still reads short — retry or reinstall.
 
 ## The `window.SK` data model
 

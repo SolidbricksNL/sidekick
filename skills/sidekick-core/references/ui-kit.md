@@ -58,6 +58,14 @@ python3 "$SK/dashboard.py" build --project "<ABSOLUTE>/projects/<slug>" --slug <
 labels = the **default output language**. `theme` ∈ light|paper|dark, `accent` ∈
 blue|orange — set them inside the `.sk.json`.
 
+> **Cowork truncation gotchas.** Its `.remote-plugins` mount truncates a
+> *script-read* of any file over ~11 KB — that's why the kit ships as
+> `ui.1.js`/`ui.2.js` + `ui.1.css`/`ui.2.css` chunks (<9 KB each) that
+> `dashboard.py` reads whole and concatenates. The **Write tool** also truncates
+> large content: if writing a big `.sk.json` comes back short, write it via a
+> Python heredoc instead. `dashboard.py` self-verifies the assembled kernel and
+> aborts loudly (never bakes a blank page) if a chunk still reads short.
+
 ## The `window.SK` data model
 
 ```js

@@ -45,20 +45,35 @@ def _skeleton(title):
     }
 
 
+def _concat(glob_pat):
+    """Read + join the kit chunks (ui.1.css, ui.2.css, … / ui.1.js, ui.2.js, …).
+
+    The kit is shipped in <9 KB chunks because Cowork's `.remote-plugins` mount
+    truncates a script-read of a larger file (~11 KB observed: a 12 KB ui.js came
+    back at 11421 B). Each small chunk reads whole; we join in numeric order.
+    """
+    parts = sorted(ASSETS.glob(glob_pat),
+                   key=lambda p: int(p.name.split(".")[1]))
+    if not parts:
+        sys.exit("ERROR: no %s chunks found in %s — reinstall the plugin." % (glob_pat, ASSETS))
+    return "".join(p.read_text(encoding="utf-8") for p in parts)
+
+
 def _assemble(data):
-    css = (ASSETS / "ui.css").read_text(encoding="utf-8")
-    js = (ASSETS / "ui.js").read_text(encoding="utf-8")
-    # Truncation guard. A bad copy / install can cut an asset; baking a partial
-    # kernel renders a BLANK page. Verify the end-sentinels and abort loudly with
-    # the size instead of writing a broken dashboard. (The kernel must end with the
-    # `render();` call; ui.css with a closing brace.)
+    css = _concat("ui.*.css")
+    js = _concat("ui.*.js")
+    # Truncation guard. If a chunk still came back short (flaky mount), baking a
+    # partial kernel renders a BLANK page — so verify the end-sentinels and abort
+    # loudly with the size instead of writing a broken dashboard. (The kernel must
+    # end with the `render();` call; the CSS with a closing brace.)
     if not js.rstrip().endswith("render();"):
-        sys.exit("ERROR: ui.js looks truncated (%d B; must end with 'render();'). "
-                 "Reinstall the plugin — the dashboard was NOT written."
-                 % len(js.encode("utf-8")))
+        sys.exit("ERROR: ui.js chunks assembled short (%d B; must end with 'render();'). "
+                 "A plugin file was truncated on read — retry, or reinstall. The "
+                 "dashboard was NOT written." % len(js.encode("utf-8")))
     if len(css) < 4000 or not css.rstrip().endswith("}"):
-        sys.exit("ERROR: ui.css looks truncated (%d B). Reinstall the plugin — "
-                 "the dashboard was NOT written." % len(css.encode("utf-8")))
+        sys.exit("ERROR: ui.css chunks assembled short (%d B). A plugin file was "
+                 "truncated on read — retry, or reinstall. The dashboard was NOT "
+                 "written." % len(css.encode("utf-8")))
     logo = ""
     png = ASSETS / "solidbricks.png"
     if png.exists():

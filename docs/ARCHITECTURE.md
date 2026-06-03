@@ -689,8 +689,8 @@ sidekick/
 │   │   │   ├── project-claude-template.md
 │   │   │   └── agenda-template.md
 │   │   ├── assets/                ← baked into dashboards by dashboard.py (agent never pastes them)
-│   │   │   ├── ui.css             ← Solidbricks design tokens + component CSS (3 themes)
-│   │   │   ├── ui.js              ← render kernel: shell + dashboard/grid/listdetail/home
+│   │   │   ├── ui.1.css ui.2.css  ← design tokens + component CSS (3 themes), split <9 KB/chunk
+│   │   │   ├── ui.1.js  ui.2.js   ← render kernel (shell + dashboard/grid/listdetail/home), split <9 KB
 │   │   │   └── solidbricks.png    ← real maker logo (footer; base64-embedded at build)
 │   │   └── scripts/
 │   │       ├── data.py            ← file-based structured-data helper (+ query() function)
@@ -966,6 +966,19 @@ Resolved:
   end with `render();`, ui.css with `}`) and **aborts loudly without writing**
   rather than ever baking a blank page. The user must **reinstall** so the
   build-script flow + fixed wrapper actually ship.
+- **Mount truncates large reads → kernel split into chunks (2026-06-03,
+  v0.14.2).** After a clean reinstall, `dashboard.py`'s self-verify fired
+  correctly: *"ui.js is truncated (11421 B) and doesn't end with render();"*. Root
+  cause **confirmed**: Cowork's `.remote-plugins` mount serves a **truncated
+  script-read** of a larger file (the 12101-byte `ui.js` came back at 11421 B),
+  while the agent's **Read tool gets the full file**. `dashboard.py` itself
+  (5.6 KB) read whole and ran — so the threshold is ~11 KB for a mount read. Fix:
+  **ship the kit in <9 KB chunks** — `ui.1.css`+`ui.2.css`, `ui.1.js`+`ui.2.js`
+  — which `dashboard.py` reads (each whole) and concatenates in numeric order
+  before baking. The self-verify still guards the assembled result. (data.py and
+  the larger SKILL/reference files also exceed ~11 KB and are a latent risk on a
+  flaky mount, but they have worked; the critical routing rules are placed early
+  in `sidekick-core/SKILL.md` so a tail-truncation can't drop them.)
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

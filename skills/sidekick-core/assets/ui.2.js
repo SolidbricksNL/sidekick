@@ -1,0 +1,28 @@
+function viewGrid(v){let rows=v.rows.slice();if(sortS){const k=sortS.k,d=sortS.d;rows.sort((a,b)=>{let x=a[k],y=b[k];const nx=parseFloat(String(x).replace(/[^\d.-]/g,'')),ny=parseFloat(String(y).replace(/[^\d.-]/g,''));if(!isNaN(nx)&&!isNaN(ny))return(nx-ny)*d;return String(x).localeCompare(String(y))*d})}
+ const head='<tr>'+v.columns.map(c=>'<th data-sort="'+c.key+'" class="'+(c.num?'num':'')+'">'+E(c.label)+(sortS&&sortS.k===c.key?(sortS.d>0?' ▲':' ▼'):'')+'</th>').join('')+'</tr>';
+ const tb=rows.map(r=>'<tr>'+v.columns.map(c=>'<td class="'+(c.num?'num':'')+'">'+E(r[c.key])+'</td>').join('')+'</tr>').join('');
+ const tot=v.totals?'<tr class="tot">'+v.columns.map((c,i)=>'<td class="'+(c.num?'num':'')+'">'+E(v.totals[c.key]!=null?v.totals[c.key]:(i===0?'Totals':''))+'</td>').join('')+'</tr>':'';
+ return '<div class="gridv">'+(v.title?'<div style="padding:11px 20px;border-bottom:1px solid var(--bs)"><b style="font-size:13.5px">'+E(v.title)+'</b> <span style="color:var(--fg3);font-size:12px">· '+rows.length+' rows</span></div>':'')+'<div class="gridtb"><table><thead>'+head+'</thead><tbody>'+tb+tot+'</tbody></table></div></div>'}
+function detail(i){const f=(i.fields||[]).map(x=>'<div class="fld"><div class="fl">'+E(x.label)+'</div><div class="fv '+(x.mono?'mono':'')+'">'+E(x.value)+'</div></div>').join('');const b=(i.blocks||[]).map(x=>'<div class="blk"><h3>'+E(x.label)+'</h3><p>'+E(x.text)+'</p></div>').join('');const tg=i.tags&&i.tags.length?'<div class="blk"><h3>Tags</h3><div style="display:flex;gap:8px;flex-wrap:wrap">'+i.tags.map(t=>'<span class="tag">'+E(t)+'</span>').join('')+'</div></div>':'';return '<div class="dd"><div style="display:flex;align-items:center;gap:16px">'+(i.initials?'<span class="av" style="width:60px;height:60px;font-size:22px;background:'+(i.color||'var(--blue)')+'">'+E(i.initials)+'</span>':'')+'<div style="flex:1"><h1>'+E(i.title)+'</h1><div style="display:flex;align-items:center;gap:10px;margin-top:4px"><span style="color:var(--fg2)">'+E(i.subtitle)+'</span>'+(i.status?pill(i.status):'')+'</div></div></div>'+(f?'<div class="fields">'+f+'</div>':'')+b+tg+'</div>'}
+function viewList(v){const items=v.items||[];const sel=items.find(i=>i.id===selId)||items[0];const list=items.map(i=>'<div class="li'+(sel&&i.id===sel.id?' on':'')+'" data-sel="'+E(i.id)+'">'+(i.initials?'<span class="av" style="background:'+(i.color||'var(--blue)')+'">'+E(i.initials)+'</span>':'')+'<div style="flex:1;min-width:0"><div class="t">'+E(i.title)+'</div><div class="s">'+E(i.subtitle)+'</div></div>'+(i.status?pill(i.status):'')+'</div>').join('');return '<div class="ld"><div class="list">'+list+'</div><div class="detail">'+(sel?detail(sel):'')+'</div></div>'}
+function viewEmpty(c){const o=[['layout','Dashboard','Pin the numbers that matter — totals, trends and a chart or two.'],['grid','Grid','A spreadsheet-style table. Sort and scan rows like a sheet.'],['list','List + detail','A scannable list on the left, the full record on the right.']];return '<div class="empty"><div class="box"><div>'+icon('sparkle',54)+'</div><div><h1>Set up “'+E(c.label)+'”</h1><p>Every collection is yours to shape. Point your sidekick at the data you keep here, then choose how to see it.</p></div><div class="opts">'+o.map(x=>'<div class="opt"><span class="ic">'+icon(x[0],20)+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small></div>').join('')+'</div></div></div>'}
+
+function tt(){const th=SK.theme||'paper';return '<div class="tt">'+['light','paper','dark'].map(t=>'<button data-th="'+t+'" class="'+(t===th?'on':'')+'">'+t[0].toUpperCase()+t.slice(1)+'</button>').join('')+'</div>'}
+function render(){
+ const c=coll(nav&&nav.c)||SK.collections[0];
+ document.documentElement.setAttribute('data-theme',SK.theme||'paper');
+ document.body.setAttribute('data-accent',SK.accent||'blue');
+ const ni=x=>'<button class="navi'+(x.id===c.id?' active':'')+'" data-go="'+x.id+'">'+icon(x.icon)+'<span class="lbl">'+E(x.label)+'</span>'+(x.count!=null?'<span class="cnt">'+x.count+'</span>':'')+(x.empty?'<span class="setup">set up</span>':'')+'</button>';
+ const top=SK.collections.filter(x=>x.section==='top'),cols=SK.collections.filter(x=>x.section!=='top');
+ let vs=c.views||[],view=null,tabs='';
+ if(!c.home&&!c.empty&&vs.length){view=vs.find(v=>v.id===(nav&&nav.v))||vs[0];
+   tabs='<div class="tabs">'+vs.map(v=>'<button class="tab'+(v===view?' on':'')+'" data-go="'+c.id+'" data-v="'+v.id+'">'+icon(v.kind==='grid'?'grid':v.kind==='listdetail'?'list':'layout',15)+E(v.label)+'</button>').join('')+'</div>'}
+ let body=c.home?viewHome(c):c.empty?viewEmpty(c):view&&view.kind==='grid'?viewGrid(view):view&&view.kind==='listdetail'?viewList(view):viewDash(view||{});
+ var sbmark=(typeof window!=='undefined'&&window.SB_LOGO)?'<img src="'+window.SB_LOGO+'" width="16" height="16" alt="" style="display:block;border-radius:3px">':SBLOGO;
+ root.innerHTML='<aside><div class="brandrow">'+LOGO+'<div><b>Sidekick</b><small>your alter ego</small></div></div><nav>'+top.map(ni).join('')+'<div class="navsec"><span>Collections</span><i></i></div>'+cols.map(ni).join('')+'</nav><div class="foot">'+sbmark+'<span>by <b>Solidbricks</b></span></div></aside><main><header class="top"><span class="wtitle">'+E(SK.workspace||'')+'</span>'+tt()+'</header>'+tabs+'<div class="content">'+body+'</div></main>';
+ root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go,b.dataset.v));
+ root.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{SK.theme=b.dataset.th;render()});
+ root.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{selId=b.dataset.sel;render()});
+ root.querySelectorAll('th[data-sort]').forEach(t=>t.onclick=()=>{const k=t.dataset.sort;sortS=sortS&&sortS.k===k?{k,d:-sortS.d}:{k,d:1};render()});
+}
+render();

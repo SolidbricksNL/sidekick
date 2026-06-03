@@ -44,6 +44,9 @@ $RECYCLE.BIN/
 # derived from — kept local for provenance, too heavy to track. The runnable
 # distilled preview (plan/sidekick-ui-base.html) IS committed.
 /plan/Sidekick (offline).html
+# Source drop of the Solidbricks logo — the shipped copy is
+# skills/sidekick-core/assets/solidbricks.png (tracked); this plan/ copy is redundant.
+/plan/256-solidbricks.png
 *.log
 .env
 .env.local

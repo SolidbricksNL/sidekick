@@ -56,7 +56,8 @@ function render(){
  if(!c.home&&!c.empty&&vs.length){view=vs.find(v=>v.id===(nav&&nav.v))||vs[0];
    tabs='<div class="tabs">'+vs.map(v=>'<button class="tab'+(v===view?' on':'')+'" data-go="'+c.id+'" data-v="'+v.id+'">'+icon(v.kind==='grid'?'grid':v.kind==='listdetail'?'list':'layout',15)+E(v.label)+'</button>').join('')+'</div>'}
  let body=c.home?viewHome(c):c.empty?viewEmpty(c):view&&view.kind==='grid'?viewGrid(view):view&&view.kind==='listdetail'?viewList(view):viewDash(view||{});
- root.innerHTML='<aside><div class="brandrow">'+LOGO+'<div><b>Sidekick</b><small>your alter ego</small></div></div><nav>'+top.map(ni).join('')+'<div class="navsec"><span>Collections</span><i></i></div>'+cols.map(ni).join('')+'</nav><div class="foot">'+SBLOGO+'<span>by <b>Solidbricks</b></span></div></aside><main><header class="top"><span class="wtitle">'+E(SK.workspace||'')+'</span>'+tt()+'</header>'+tabs+'<div class="content">'+body+'</div></main>';
+ var sbmark=(typeof window!=='undefined'&&window.SB_LOGO)?'<img src="'+window.SB_LOGO+'" width="16" height="16" alt="" style="display:block;border-radius:3px">':SBLOGO;
+ root.innerHTML='<aside><div class="brandrow">'+LOGO+'<div><b>Sidekick</b><small>your alter ego</small></div></div><nav>'+top.map(ni).join('')+'<div class="navsec"><span>Collections</span><i></i></div>'+cols.map(ni).join('')+'</nav><div class="foot">'+sbmark+'<span>by <b>Solidbricks</b></span></div></aside><main><header class="top"><span class="wtitle">'+E(SK.workspace||'')+'</span>'+tt()+'</header>'+tabs+'<div class="content">'+body+'</div></main>';
  root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go,b.dataset.v));
  root.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{SK.theme=b.dataset.th;render()});
  root.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{selId=b.dataset.sel;render()});

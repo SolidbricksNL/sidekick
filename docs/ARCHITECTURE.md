@@ -363,34 +363,36 @@ dashboard/list/grid artifact starts from one shared design system (the
 Solidbricks/Visma look: collapsible sidebar, centered workspace title, tabbed
 views, light/paper/dark toggle, KPI & section cards, bar / horizontal-bar
 charts, sortable grids, list+detail; brand orange `#F47800` + blue `#1493E8`,
-Ubuntu/Open Sans/JetBrains type stacks). It ships as **two raw assets** —
-`skills/sidekick-core/assets/ui.css` + `ui.js` — that the agent pastes into the
-artifact in full, driven by a single `window.SK` data object built from the
-query results (collections → views, each `kind: dashboard | grid | listdetail |
-home`). Two files rather than one because Cowork truncates any single installed
-plugin file past ~15.8 KB; the written artifact (in `projects/<slug>/artifacts/`)
-has no such limit. The kit is self-contained and makes no network calls, so the
-same file is both the snapshot and the body the live wrapper loads. Full guide +
-data model: `references/ui-kit.md`. It is the default starting point, not a cage
-— the user can restyle freely. Two ways to show it:
+Ubuntu/Open Sans/JetBrains type stacks; the real Solidbricks logo in the footer).
+The kit ships as assets — `assets/ui.css` + `ui.js` + `solidbricks.png` — that a
+build script, **`scripts/dashboard.py`**, reads from disk and bakes into the
+page. The agent **never reads or pastes the kernel** (an inline paste made Cowork
+truncate *the read* at ~11 KB → blank pages, v0.14.0); it only edits a small
+per-project **`artifacts/<slug>-dashboard.sk.json`** — the `window.SK` data
+(collections → views, each `kind: dashboard | grid | listdetail | home`), built
+from query results. Each active project has **one** dashboard, "<Project>
+Dashboard", created as an empty skeleton at scaffold time; adding content edits
+the `.sk.json` and rebuilds in place. The kit is self-contained (no network), so
+the built file is both the snapshot and the body the live artifact loads. Full
+guide + data model: `references/ui-kit.md`. The user can restyle freely.
 
-**Self-contained snapshot (the default).** One `.html` with data embedded,
-rendering inline (vanilla JS), no network calls. Opens anywhere. **Refresh =
-regenerate the file.** Robust; no Drive, no connector.
+**Live Cowork artifact (the primary deliverable).** In Cowork the dashboard the
+user sees is a **live artifact**, not a file handed over with `present_files`.
+The artifact sandbox blocks **local files and local MCP servers** (a local
+`sidekick-data` server was tried and removed) — only **cloud connectors** are
+reachable. So the live artifact is a **thin wrapper**, created **once** with
+`mcp__cowork__create_artifact`, that loads the dashboard html from Drive via the
+**Drive connector** (`download_file_content`, base64 → iframe `srcdoc`); it is the
+only artifact that calls a connector.
 
-**Live dashboard (Drive-wrapped, optional).** The artifact sandbox blocks
-**local files and local MCP servers** (a local `sidekick-data` server was tried
-and removed) — only **cloud connectors** are reachable, and **every
-`update_artifact` is approval-gated**. So a live dashboard is shown indirectly:
-
-- The generated `artifacts/<name>.html` is **synced to Drive** (the sync now
+- The built `artifacts/<slug>-dashboard.html` is **synced to Drive** (the sync
   covers `artifacts/` as well as `output/`, §7c).
-- A **thin wrapper artifact** — emitted **once** (one approval) — loads that
-  Drive HTML via the **Drive connector** (`download_file_content`, base64 →
-  iframe `srcdoc`). It is the only artifact that calls a connector.
-- On a data/rule change the agent **regenerates the HTML and re-syncs**,
-  overwriting the **same Drive file in place** (stable file id) — **no
-  `update_artifact`, no approval**. Cowork's own refresh re-pulls it.
+- On a data/rule change the agent **edits the `.sk.json`, re-runs
+  `dashboard.py build`, and re-syncs**, overwriting the **same Drive file in
+  place** (stable file id) — **no new artifact, no approval**. Cowork's refresh
+  re-pulls it.
+- Without Drive/sync, fall back to presenting the built `.html` as a one-off
+  **snapshot** (opens anywhere, no auto-update) — the same file, shown directly.
 - The recipe is registered in `projects/<slug>/.reports.json` (project root,
   never scanned as a table) via `scripts/reports.py` — recording its `sql`,
   the `artifact` path, the `tables` it reads (so a change knows what to
@@ -686,11 +688,13 @@ sidekick/
 │   │   │   ├── sync-discipline.md
 │   │   │   ├── project-claude-template.md
 │   │   │   └── agenda-template.md
-│   │   ├── assets/                ← pasted into generated artifacts (split to dodge ~15.8 KB cap)
+│   │   ├── assets/                ← baked into dashboards by dashboard.py (agent never pastes them)
 │   │   │   ├── ui.css             ← Solidbricks design tokens + component CSS (3 themes)
-│   │   │   └── ui.js              ← render kernel: shell + dashboard/grid/listdetail/home
+│   │   │   ├── ui.js              ← render kernel: shell + dashboard/grid/listdetail/home
+│   │   │   └── solidbricks.png    ← real maker logo (footer; base64-embedded at build)
 │   │   └── scripts/
 │   │       ├── data.py            ← file-based structured-data helper (+ query() function)
+│   │       ├── dashboard.py       ← builds <slug>-dashboard.html from <slug>-dashboard.sk.json + the kit
 │   │       ├── reports.py         ← report-recipe registry + CLI (.reports.json; runs via data.query)
 │   │       ├── sync.py            ← sync engine + CLI (output/ + artifacts/ ↔ external base path)
 │   │       └── sync_server.py     ← `sidekick-sync` MCP server (native; wraps sync.py)
@@ -927,6 +931,27 @@ Resolved:
   truncation can't recur (`data.py` hit the same cliff at 0.3.3/0.11.1). The fix
   is plugin-side, so it reaches every install + every project on reinstall — no
   per-workspace `CLAUDE.md`/settings band-aid needed.
+- **Dashboards: build script + per-project + live-artifact-primary (2026-06-03,
+  v0.14.0).** A second Cowork run surfaced three issues. (a) **Agent-read
+  truncation:** the agent had to read+paste the ~11 KB `ui.js` to assemble a
+  dashboard, and Cowork truncated *the read* at ~11.4 KB (`E(SK.workspa…`) →
+  blank pages. The shipped `ui.js` was complete on disk; the failure was the
+  inline paste, not install truncation. (b) The hand-built footer used a
+  hand-drawn SVG instead of the **real Solidbricks logo**. (c) The skill pointed
+  at a `.html` file + `present_files` rather than the **live Cowork artifact**
+  that is the actual deliverable. Fixes: a new **`dashboard.py`** reads
+  `ui.css`+`ui.js`+`solidbricks.png` from disk (native, full — no context limit)
+  and bakes the complete page, so **the agent never reads or pastes the kernel**;
+  it only edits a tiny per-project **`artifacts/<slug>-dashboard.sk.json`** (the
+  `window.SK` data). The real 256-px logo is base64-embedded (in the generated
+  html, which has no cap) and exposed as `window.SB_LOGO`; the sidebar name is
+  hard-coded "Sidekick" (header = workspace, footer = "by Solidbricks"). Each
+  **active project gets one dashboard**, "<Project> Dashboard", built as an empty
+  skeleton at scaffold time; "add X to the dashboard" edits the `.sk.json` and
+  rebuilds in place — a **new** artifact only on explicit request. The **live
+  Cowork artifact** (`mcp__cowork__create_artifact` wrapping the Drive html) is
+  the primary deliverable, not the file. reporting.md / ui-kit.md / core + report
+  SKILLs rewritten accordingly; validator tracks the two new files.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

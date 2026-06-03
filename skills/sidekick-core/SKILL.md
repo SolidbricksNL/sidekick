@@ -78,27 +78,25 @@ project or an area inside one, **ask** via the picker.
 On approval, create under `projects/<slug>/` (slug = `kebab-case`, short):
 `CLAUDE.md` (seed from `references/project-claude-template.md`), `agenda.md`
 (seed from `references/agenda-template.md`), and empty `brain/`, `log/`,
-`archive/`, `output/`. The `data/` and `artifacts/` folders are **lazy** —
-created on the first table / first dashboard, not up front. Scaffolding applies
-**only to top-level projects**; a subproject/area gets **no** scaffold — see
-next.
+`archive/`, `output/`. The `data/` folder is **lazy** (first table). Then build
+the project's **standard dashboard skeleton** (`$SK` resolved as for `data.py`):
+`python3 "$SK/dashboard.py" build --project "<ABS>/projects/<slug>" --slug <slug> --title "<Project> Dashboard"`
+(if Output sync is on, also sync it + create the live artifact). Every project
+starts with an empty "<Project> Dashboard" that later "show me…" requests fill;
+it is **self-healing** — if the user deleted it, recreate it (reporting.md →
+Lifecycle). Scaffolding is **top-level only**; an area gets **no** scaffold.
 
 ### Subprojects (areas within a project)
 
-A **subproject is not a project.** It is an **area within a parent project** —
-a looser separation for a strand of work that still belongs to the parent. It
-reuses the parent's harness and gets **no own `CLAUDE.md`, no own `agenda.md`,
-no scaffold, and never a nested `projects/<parent>/<sub>/`.** Full protocol:
-`references/project-structure.md`.
-
-To set up an area inside parent `<Y>` (after confirming it's an area, not a new
-project): seed `projects/<Y>/brain/<sub>/overview.md` (a **brain write — diff +
-approval**), make `projects/<Y>/output/<sub>/` for its deliverables, keep its
+A **subproject is not a project** — it is an **area inside a parent**, reusing the
+parent's harness with **no own `CLAUDE.md`/`agenda.md`, no scaffold, never a
+nested `projects/<parent>/<sub>/`.** To set one up inside `<Y>` (after confirming
+it's an area, not a new project): seed `projects/<Y>/brain/<sub>/overview.md` (a
+**brain write — diff + approval**), make `projects/<Y>/output/<sub>/`, keep its
 agenda items in the **parent's** `agenda.md` (optional `## <sub>` heading), and
-list `brain/<sub>/overview.md` in the parent `CLAUDE.md`. **Never** create
-`projects/<Y>/<sub>/`, a `<sub>/CLAUDE.md`, or a `<sub>/agenda.md`. The area
-lives inside the parent, so triage/check-in/status/find cover it automatically.
-Full steps: `references/project-structure.md`.
+list `brain/<sub>/overview.md` in the parent `CLAUDE.md`. The area lives inside
+the parent, so triage/check-in/status/find cover it automatically. Full steps:
+`references/project-structure.md`.
 
 ## The three write disciplines
 
@@ -140,21 +138,23 @@ this goes wrong, all forbidden:
    never freelance a chart inline.
 2. **Data only via `data.py query`** — never hand-read `data/*.json`, the
    `sqlite3` CLI, ad-hoc `python`, or hardcoded rows.
-3. **HTML = the Sidekick UI kit** (`assets/ui.css` + a `window.SK` object +
-   `assets/ui.js`, found via `find ~ -ipath '*/sidekick-core/assets'`) — never
-   Chart.js, D3, a CDN, or your own framework.
-4. **Dashboards go in `artifacts/`**, never `output/` (output is for
-   Word/Excel/PDF deliverables; artifacts are HTML dashboards).
-5. **Live wrapper = the exact template in `reporting.md`** — never write your
-   own; Drive file id from `.reports.json`, tool name from the session tools.
+3. **Build with `dashboard.py`, never paste the kernel.** Each project has **one**
+   dashboard; you edit its small `artifacts/<slug>-dashboard.sk.json` (the
+   `window.SK` data) and run `dashboard.py build` — the script bakes the UI kit +
+   logo. Never paste `ui.js`/`ui.css` inline (Cowork truncates the read → blank
+   page), never Chart.js/D3/a CDN.
+4. **Add to the project's existing dashboard** (in `artifacts/`), never `output/`.
+   A **new/separate** dashboard only on explicit request.
+5. **Live Cowork artifact is the deliverable** (`mcp__cowork__create_artifact`
+   wrapping the Drive html), **not** `present_files` on the `.html`. Drive file
+   id from `.reports.json`, download tool name from the session tools.
 6. **Save the recipe** — `brain/reports.md` (diff + approval) + `.reports.json`
    (`reports.py save`).
 
-After a data change, regenerate any **live** dashboard that reads the changed
-table: `reports.py uses --table <t>` → rebuild the HTML → `reconcile_output`
-(overwrites the Drive file in place, no approval). Protocol:
-`references/reporting.md` + `references/ui-kit.md`. (A bare number / one-off
-answer needs no dashboard — just `data.py query` and say it.)
+After a data change: edit the dashboard's `.sk.json`, re-run `dashboard.py build`,
+`reconcile_output` (overwrites the Drive file in place, no new artifact, no
+approval). Protocol: `references/reporting.md` + `references/ui-kit.md`. (A bare
+number / one-off answer needs no dashboard — just `data.py query` and say it.)
 
 ### Discipline 1 — Log freely (`log/`)
 
@@ -221,21 +221,19 @@ change (new table, new column). Never present SQL or jargon as the question.
 
 ## The data store, in brief
 
-Structured data lives in **plain JSON files** under `projects/<slug>/data/`,
-one `<table>.json` per table (+ `_schema.json`). A shared spreadsheet/CSV/table
-is the trigger — propose a table on arrival rather than logging the rows. **All
-access goes through `scripts/data.py`** — never the `sqlite3` CLI, ad-hoc
-`python`, or a raw read/edit of the JSON. Resolve the scripts dir first
-(`$CLAUDE_PLUGIN_ROOT` is unset in the shell):
+Structured data lives in **plain JSON files** under `projects/<slug>/data/`. A
+shared spreadsheet/CSV/table is the trigger — propose a table rather than logging
+the rows. **All access goes through `scripts/data.py`** — never the `sqlite3`
+CLI, ad-hoc `python`, or a raw read/edit of the JSON. Resolve the scripts dir
+first (`$CLAUDE_PLUGIN_ROOT` is unset in the shell):
 `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
 then `python3 "$SK/data.py" <cmd> --project projects/<slug> …`. **To answer any
-question about stored data, run `data.py query`** (SQL over a throwaway
-in-memory copy) — never read/`grep` the JSON, even "just to look". Before
-filtering a category/text column, check its exact values with `data.py info` or
-`SELECT DISTINCT` (match the real spelling, e.g. `ON-PREM` not `ONPREM`). Extend
-existing tables before adding new ones; document them in `brain/data-model.md`.
-Reading and fitting records in is free; structure changes need confirmation.
-Full protocol: `references/data-discipline.md`.
+question about stored data, run `data.py query`** — never read/`grep` the JSON,
+even "just to look". Before filtering a category/text column, check its exact
+values with `data.py info` or `SELECT DISTINCT` (real spelling, e.g. `ON-PREM`
+not `ONPREM`). Extend existing tables before adding new ones. Reading and fitting
+records in is free; structure changes need confirmation. Full protocol:
+`references/data-discipline.md`.
 
 ## What to keep out of the chat
 

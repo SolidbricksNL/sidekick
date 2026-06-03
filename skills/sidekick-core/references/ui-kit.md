@@ -10,55 +10,53 @@ charts, sortable tables, status pills, list+detail). It is brand-consistent
 *and* as the body the live Drive-wrapper loads. The user can restyle freely;
 this is the starting point, not a cage.
 
-The kit ships as two raw files you **paste** into the artifact you generate:
+**Never hand-assemble the page and never paste the kernel — a build script does
+it.** The kit ships as:
 
-| File | What | Goes into |
-|------|------|-----------|
-| `assets/ui.css` | all tokens + component CSS (3 themes) | the `<style>` block |
-| `assets/ui.js`  | the render kernel (shell + 4 view kinds) | a `<script>` after the data |
+| File | What |
+|------|------|
+| `assets/ui.css` | tokens + component CSS (3 themes) |
+| `assets/ui.js`  | the render kernel (shell + 4 view kinds) |
+| `assets/solidbricks.png` | the real Solidbricks maker logo (footer) |
+| `scripts/dashboard.py` | **builds the dashboard html** from a small data file |
 
-You never edit these. The **only** thing that changes per report is the
-`window.SK` data object (built from `data.py query` results). A combined,
-runnable preview lives at `plan/sidekick-ui-base.html` (open it in a browser to
-see the look) — do not read that at runtime; read the two asset files.
+> **Why a script, not paste.** The kernel is ~11 KB of dense JS. When the agent
+> read it inline to paste, Cowork **truncated the read at ~11.4 KB** and produced
+> a blank page. `dashboard.py` reads the assets from disk **natively** (full, no
+> context limit) and bakes the complete page — so you never read or paste the
+> kernel, and the real logo is embedded for you. A combined runnable preview
+> lives at `plan/sidekick-ui-base.html` (open in a browser to see the look) — do
+> not read it at runtime.
 
-> Two raw files, not one, because Cowork truncates any single installed plugin
-> file past ~15.8 KB. The artifact you *write* (to `projects/<slug>/artifacts/`)
-> has no such limit — paste both in full.
+## One dashboard per project — edit the data, rebuild
 
-## Locating the assets
-
-`$CLAUDE_PLUGIN_ROOT` is unset in the shell — resolve by search (same pattern
-as the scripts dir):
+Each active project has **one** dashboard, named "<Project> Dashboard". Its
+source of truth is a tiny JSON file you edit — never the big html:
 
 ```
-UI="$(find ~ -ipath '*/sidekick-core/assets' -type d 2>/dev/null | head -1)"
-# read "$UI/ui.css" and "$UI/ui.js"
+projects/<slug>/artifacts/<slug>-dashboard.sk.json   <- the window.SK data (you edit this)
+projects/<slug>/artifacts/<slug>-dashboard.html      <- built output (synced to Drive)
 ```
 
-## Assembling an artifact
+Resolve the scripts dir (`$CLAUDE_PLUGIN_ROOT` is unset) and run the builder:
 
-```html
-<!doctype html><html lang="{{LANG}}" data-theme="paper"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>{{TITLE}}</title>
-<style>
-/* ← paste the full contents of assets/ui.css here */
-</style></head>
-<body data-accent="blue"><div id="root" class="app"></div>
-
-<script>
-window.SK = { /* ← your data, shaped as below (built from data.py query results) */ };
-</script>
-
-<script>
-/* ← paste the full contents of assets/ui.js here */
-</script>
-</body></html>
+```
+SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"
+python3 "$SK/dashboard.py" build --project "<ABSOLUTE>/projects/<slug>" --slug <slug> --title "<Project> Dashboard"
 ```
 
-`{{LANG}}` and all visible labels = the **default output language**.
-`data-theme` ∈ `light|paper|dark` (the user can flip it live).
-`data-accent` ∈ `blue|orange`.
+- First run with no `.sk.json` writes an **empty skeleton** (branded shell + one
+  placeholder collection) and builds the html. This is what project scaffolding does.
+- To **add or change content**: edit `<slug>-dashboard.sk.json` (the `window.SK`
+  shape below — values from `data.py query`, computed rows baked in), then re-run
+  `dashboard.py build`. The html is regenerated in place; re-sync to Drive and the
+  live artifact updates — **no new artifact**.
+- Build a **new, separate** dashboard html only when the user explicitly asks for
+  one. Otherwise everything lands in the project's standard dashboard.
+
+`--project` is the **absolute** project dir (same rule as the sync tools). All
+labels = the **default output language**. `theme` ∈ light|paper|dark, `accent` ∈
+blue|orange — set them inside the `.sk.json`.
 
 ## The `window.SK` data model
 
@@ -153,18 +151,18 @@ anything else is neutral.
 
 ## How this fits reporting
 
-The numbers in `SK` are **computed rows** baked in from `data.py query` /
-`reports.py run` — never raw table reads, never calc in the page (the rule from
-`data-discipline.md` and `reporting.md` still holds). One query → one tab/card.
-Headings in the default output language. Confirm before writing the artifact to
-`artifacts/<name>.html`. For a **live** dashboard, that same file is synced to
-Drive and shown through the thin wrapper — see `reporting.md` → "Live
-dashboard". A data change = rebuild `SK` from fresh query results, re-paste the
-two assets (unchanged), overwrite the file, re-sync.
+The numbers in `SK` are **computed rows** from `data.py query` / `reports.py run`
+— never raw table reads, never calc in the page (the rule from
+`data-discipline.md` and `reporting.md` still holds). One query → one card/tab.
+Labels in the default output language. A data change = edit the `.sk.json` (fresh
+query results), re-run `dashboard.py build`, re-sync to Drive — the live artifact
+reflects it. The **live Cowork artifact** is the primary deliverable; see
+`reporting.md` → "Live dashboard". You never re-paste the kernel — the builder
+owns it.
 
 ## Keep it simple
 
-One collection with one dashboard view is a perfectly good report — you do not
-need the full multi-collection shell. Add collections/tabs only when the user
-has genuinely separate areas to switch between. Drop `brand`/`tagline` and the
-home collection for a bare single-dashboard artifact.
+One collection with one `home` or `dashboard` view is a perfectly good report —
+you don't need the full multi-collection shell. Add collections/tabs only when
+the project has genuinely separate areas. The sidebar identity, footer logo, and
+kernel are fixed by the builder; you only shape `collections`.

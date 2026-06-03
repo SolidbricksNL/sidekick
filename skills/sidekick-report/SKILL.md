@@ -44,33 +44,33 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
    for tables, columns, and category values. Match **exact** spellings in
    `WHERE` (e.g. `ON-PREM`, not `ONPREM`).
 4. **Pick the lightest render that answers the need** (see reporting.md):
-   a number → just `query` and answer; a keepable table → markdown in
-   `log/` or a sheet in `output/`; something to explore → a tabbed HTML
-   dashboard in `output/`.
-5. **Query each tab/section** with `data.py query` and collect the JSON.
-6. **Render — from the Sidekick UI kit.** Don't hand-roll the page. Shape the
-   query results into a `window.SK` object (collections → views, each
-   `kind: dashboard | grid | listdetail | home`) and assemble **one
-   self-contained `.html`**: paste `assets/ui.css` into `<style>`, your `SK`
-   into a `<script>`, then `assets/ui.js` into a second `<script>` — **no
-   network**. Resolve the assets by search
-   (`find ~ -ipath '*/sidekick-core/assets'`; `$CLAUDE_PLUGIN_ROOT` is unset).
-   Bake **computed** rows in; labels in the **default output language**. Write
-   to `artifacts/<name>.html` after **confirmation**. Full guide + data model +
-   skeleton: `../sidekick-core/references/ui-kit.md`.
+   a number → just `query` and answer; a keepable table → markdown in `log/` or
+   a sheet in `output/`; something to explore → the project's **standard
+   dashboard** (build/extend it; don't make a new artifact unless asked).
+5. **Query each section** with `data.py query` and collect the JSON.
+6. **Build with `dashboard.py` — never paste the kernel.** Shape the results into
+   the dashboard's small data file `artifacts/<slug>-dashboard.sk.json` (a
+   `window.SK` object: collections → views, each `kind: dashboard | grid |
+   listdetail | home`; **computed** rows baked in, labels in the **default output
+   language**). Then resolve the scripts dir
+   (`find ~ -ipath '*/sidekick-core/scripts'`) and run
+   `python3 "$SK/dashboard.py" build --project "<ABS>/projects/<slug>" --slug <slug> --title "<Project> Dashboard"`.
+   The script bakes the UI kit + logo into `artifacts/<slug>-dashboard.html` — you
+   never read or paste `ui.js`/`ui.css` (Cowork truncates the read → blank page).
+   Full guide + data model: `../sidekick-core/references/ui-kit.md`.
 7. **Save the recipe** if they'll want it again: add/update a section in
-   `brain/reports.md` (name, purpose, the exact `SELECT`(s), the render target)
-   — a **brain write → diff + approval**. Also register it machine-readably:
-   `reports.py save --name <n> --sql "…" --artifact artifacts/<n>.html
-   --tables <t1>,<t2>` (writes `.reports.json`; drives regeneration on a data
-   change via `reports.py uses --table <t>`).
-8. **For a live dashboard** (always-fresh without re-emitting an artifact):
-   sync the HTML to Drive (`reconcile_output` now covers `artifacts/`), resolve
-   its Drive file id and save it (`reports.py save --name <n> --drive-file-id
-   <id>`), then emit the **thin wrapper** once (filling in the file id + the
-   per-install `mcp__<uuid>__download_file_content` tool name). On later data
-   changes: regenerate the HTML + re-sync — no artifact update. Full steps:
-   reporting.md → "Live dashboard". Tell the user which mode it is.
+   `brain/reports.md` (name, purpose, the exact `SELECT`(s)) — a **brain write →
+   diff + approval**. Also register it: `reports.py save --name <n> --sql "…"
+   --artifact artifacts/<slug>-dashboard.html --tables <t1>,<t2>` (writes
+   `.reports.json`; `reports.py uses --table <t>` drives regeneration).
+8. **Show it as the live Cowork artifact (the deliverable).** Sync to Drive
+   (`reconcile_output` covers `artifacts/`), resolve its Drive file id and save it
+   (`reports.py save --name <slug>-dashboard --drive-file-id <id>`), then create
+   the live artifact with **`mcp__cowork__create_artifact`** = the thin wrapper
+   (file id + per-install `mcp__<uuid>__download_file_content` tool name). Present
+   **that**, not the file. Later data changes: edit the `.sk.json`, re-run
+   `dashboard.py build`, re-sync — no new artifact. Full steps: reporting.md →
+   "Live dashboard". Without Drive/sync, fall back to a one-off snapshot file.
 
 ## Gatekeepers (reused — no new one)
 
@@ -91,9 +91,10 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
   (Cowork truncates the helper past ~16 KB). Recipe-registry logic lives in
   `reports.py`, not `data.py`. Registering a recipe (`reports.py save`) mirrors
   an approved `brain/reports.md` entry — it is not a data-record write.
-- **Self-contained dashboard HTML, from the UI kit.** One file in `artifacts/`,
-  data embedded, no external CSS/JS/fetch — built from the shared **Sidekick UI
-  kit** (`../sidekick-core/references/ui-kit.md`; `assets/ui.css` + `assets/ui.js`
-  pasted in full). Works as a snapshot and as the body the live wrapper loads
-  from Drive. (The wrapper itself is the only artifact that calls a connector;
-  the dashboard HTML never does.)
+- **Dashboard built by `dashboard.py`, never hand-pasted.** The script bakes the
+  **Sidekick UI kit** (`../sidekick-core/references/ui-kit.md`) + logo into one
+  self-contained `artifacts/<slug>-dashboard.html`; you only edit the small
+  `<slug>-dashboard.sk.json`. Never read/paste `ui.js`/`ui.css` inline (Cowork
+  truncates the read → blank page). The **live Cowork artifact** that wraps the
+  Drive html is the deliverable, and the only piece that calls a connector; the
+  dashboard html itself makes no network calls.

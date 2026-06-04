@@ -1044,6 +1044,26 @@ Resolved:
   flips, recipe binding works, bad query errors loudly. Updated ui-kit.md
   ("Bind to live data" table + examples), reporting.md (store-the-query + the
   proactive trigger), core + report SKILLs, §7b.
+- **Recipe registry moved to a native MCP tool; bash-write gotchas (2026-06-04,
+  v0.18.0).** Real Cowork run of a new dashboard surfaced three frictions, all
+  the same class as the build truncation. (1) The bash `reports.py save`
+  **truncated on the mount** (`SyntaxError` on a cut list comprehension); the
+  agent fell back to hand-writing `.reports.json`. Fix: a native **`save_report`**
+  tool on the `sidekick-sync` server wraps `reports.save` (validates the name,
+  merges fields) — registry writes no longer go through bash (mirrors the
+  v0.15.0 `build_dashboard` move). `reports.py` is still imported natively (by
+  bindings + the tool); only its **bash** path was unreliable. (2) **Creating a
+  file from bash in the project mount is unreliable** — `touch` / `open(…,'w')` /
+  heredocs failed inconsistently for `.reports.json`, while the Write tool wrote
+  the same path fine. Documented in ui-kit.md's gotchas: use the Write tool for
+  the (now small) `.sk.json` and native MCP tools for state files; never
+  hand-create `.reports.json` from bash. (3) **Combining gatekeepers** — the
+  agent merged the brain-approval and the output-confirm into one "approve &
+  build" prompt; this is now **explicitly allowed** (reporting.md + report SKILL)
+  when both happen in the same turn, provided the `brain/reports.md` diff is
+  shown. What worked well in the run (per the tester): `build_dashboard` via MCP
+  (no truncation), the queries-in-`.sk.json` binding model, and the Drive-wrapper
+  html were all correct. plugin.json → 0.18.0.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

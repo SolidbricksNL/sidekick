@@ -78,8 +78,15 @@ use the MCP tool instead (or Read `dashboard.py` to hydrate it, then retry).
 >   **`.sk.json` lives in the local `dashboard/` subfolder** (reliable) and you **never read
 >   the built html back** — `build_dashboard` only writes it; the wrapper loads it
 >   from Drive; `reconcile_output` hydrates + pushes.
-> - The **Write tool** truncates large content: if a big `.sk.json` write comes
->   back short, write it via a Python heredoc.
+> - **Don't create project files from bash** — `touch`, `python3 open(…,'w')`,
+>   and heredocs into the project mount **fail inconsistently** (the same mount
+>   that truncates reads). **Use the Write tool** for the `.sk.json` (now small —
+>   it holds queries, not data — so Write rarely truncates) and **native MCP
+>   tools** for state files: `.reports.json` via **`save_report`**, the html via
+>   **`build_dashboard`**. Never hand-write `.reports.json` from bash.
+> - **Registry + build go through the `sidekick-sync` MCP tools, not bash.** The
+>   bash `reports.py`/`dashboard.py` truncate on the mount (`SyntaxError`); they
+>   are fallbacks only. `build_dashboard` + `save_report` run natively.
 > - The builder self-verifies the assembled kernel and **errors instead of baking
 >   a blank page** if anything read short.
 

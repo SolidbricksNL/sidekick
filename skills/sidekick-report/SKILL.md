@@ -65,9 +65,10 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
    sandbox mount truncates it.) Full guide: `../sidekick-core/references/ui-kit.md`.
 7. **Save the recipe** if they'll want it again: add/update a section in
    `brain/reports.md` (name, purpose, the exact `SELECT`(s)) — a **brain write →
-   diff + approval**. Also register it: `reports.py save --name <n> --sql "…"
-   --artifact artifacts/<slug>-dashboard.html --tables <t1>,<t2>` (writes
-   `.reports.json`; `reports.py uses --table <t>` drives regeneration).
+   diff + approval**. Also register it via the **`save_report` MCP tool**
+   (`{project, name, sql, artifact: "artifacts/<slug>-dashboard.html", tables}`)
+   — native (the bash `reports.py save` truncates on the mount; don't hand-write
+   `.reports.json`). It merges + validates; writes `.reports.json`.
 8. **Show it as the live Cowork artifact (the deliverable).** Sync to Drive
    (`reconcile_output` covers `artifacts/`), resolve its Drive file id and save it
    (`reports.py save --name <slug>-dashboard --drive-file-id <id>`), then create
@@ -84,6 +85,10 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
 - **Artifact** in `output/` → **confirm** before create/overwrite, default
   output language.
 - **Reading** the data → **free** (`query`/`info`).
+- **Same turn → one prompt.** When you create the recipe and build the dashboard
+  together, **show the `brain/reports.md` diff** then fold the approval +
+  build-confirm into a single "approve & build" `AskUserQuestion`. Showing the
+  diff is required; the click can be combined.
 
 ## Boundaries
 

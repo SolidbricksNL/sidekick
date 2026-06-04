@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sync  # noqa: E402  (sibling module: the shared sync engine)
 import dashboard  # noqa: E402  (sibling: the dashboard builder)
+import reports  # noqa: E402  (sibling: the report-recipe registry)
 
 _PROTOCOL = "2024-11-05"
 _TOOLS = [
@@ -83,6 +84,32 @@ _TOOLS = [
             "required": ["project"],
         },
     },
+    {
+        "name": "save_report",
+        "description": ("Register/update a named report recipe in the project's "
+                        ".reports.json (the machine-readable mirror of brain/reports.md). "
+                        "Runs NATIVELY - use this instead of the bash `reports.py save`, "
+                        "which the sandbox mount truncates, and instead of hand-writing "
+                        ".reports.json (this validates the name and MERGES fields, so you "
+                        "can set drive_file_id later without resending the sql). Only the "
+                        "fields you pass are updated. Mirror the recipe in brain/reports.md "
+                        "separately (gated, plain-language). Returns the saved entry."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": {"type": "string",
+                            "description": "ABSOLUTE path to the project dir (same as reconcile_output)"},
+                "name": {"type": "string", "description": "recipe name (slug-ish: letters, digits, _ -)"},
+                "sql": {"type": "string", "description": "a read-only SELECT (required when first creating the recipe)"},
+                "desc": {"type": "string", "description": "one-line description"},
+                "artifact": {"type": "string", "description": "dashboard path, e.g. artifacts/<n>.html"},
+                "drive_file_id": {"type": "string", "description": "Drive file id of the synced HTML (for the wrapper)"},
+                "tables": {"type": "array", "items": {"type": "string"},
+                           "description": "data tables the recipe reads (drives regeneration on a change)"},
+            },
+            "required": ["project", "name"],
+        },
+    },
 ]
 
 
@@ -128,10 +155,15 @@ def _call_tool(req_id, name, args):
             if args.get("slug"):
                 return _ok(req_id, dashboard.build(proj, args["slug"], args.get("title")))
             return _ok(req_id, dashboard.build_all(proj))
+        if name == "save_report":
+            proj = _resolve_project(args["project"])
+            return _ok(req_id, reports.save(
+                proj, args["name"], args.get("sql"), args.get("desc"),
+                args.get("artifact"), args.get("drive_file_id"), args.get("tables")))
         return _tool_error(req_id, f"unknown tool {name!r}")
     except KeyError as e:
         return _tool_error(req_id, f"missing argument {e}")
-    except RuntimeError as e:
+    except (RuntimeError, ValueError) as e:
         return _tool_error(req_id, str(e))
     except OSError as e:
         return _tool_error(req_id, f"filesystem error: {e}")

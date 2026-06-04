@@ -71,31 +71,30 @@ first; match exact category spellings — `ON-PREM`, not `ONPREM`).
 ### Also register the recipe (for live dashboards)
 
 `brain/reports.md` is the human-readable, gated source of truth. For a recipe
-that backs a **live dashboard**, also write a machine-readable copy via the
-registry helper, so the agent can regenerate it deterministically and know what
-to regenerate when data changes:
+that backs a **live dashboard**, also register a machine-readable copy, so the
+agent can regenerate it deterministically and know what to regenerate when data
+changes. **Register via the `sidekick-sync` server's `save_report` MCP tool**
+(native — the bash `reports.py save` truncates on the sandbox mount, like
+`dashboard.py`, and a hand-written `.reports.json` skips name validation +
+merge):
 
 ```
-SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"
-python3 "$SK/reports.py" save --project projects/<slug> --name <report-name> \
-    --sql "SELECT …" --desc "<one line>" \
-    --artifact artifacts/<report-name>.html --tables <table1>,<table2>
-# later, after the HTML is synced to Drive and you resolved its file id:
-python3 "$SK/reports.py" save --project projects/<slug> --name <report-name> \
-    --drive-file-id <DRIVE_FILE_ID>
+save_report { project: "<ABS>/projects/<slug>", name: "<report-name>",
+              sql: "SELECT …", desc: "<one line>",
+              artifact: "artifacts/<slug>-dashboard.html", tables: ["t1","t2"] }
+# later, after the HTML is synced to Drive and you resolved its file id — only
+# the fields you pass are updated, so the sql survives:
+save_report { project: "<ABS>/projects/<slug>", name: "<report-name>",
+              drive_file_id: "<DRIVE_FILE_ID>" }
 ```
-
-(`$CLAUDE_PLUGIN_ROOT` is unset in the shell — resolve the scripts dir by
-search; see `data-discipline.md` → Locating the helper.)
 
 This stores `projects/<slug>/.reports.json` (project root — never scanned as a
 data table) with the recipe's `sql`, its dashboard path (`artifact`), the
-`tables` it reads, and the synced HTML's `drive_file_id`. `reports.py list`
-shows them; `reports.py run --name <n>` runs the SQL (same engine as `data.py
-query`); `reports.py uses --table <t>` lists the reports a change to table `<t>`
-should regenerate. `save` **merges** (re-saving with only `--drive-file-id`
-keeps the SQL). Registering mirrors an already-approved brain recipe, so it
-needs no separate gate. Skip the registry for one-off snapshots.
+`tables` it reads, and the synced HTML's `drive_file_id`. `save_report`
+**merges** (re-saving with only `drive_file_id` keeps the SQL) and validates the
+name. (Bindings already run recipes natively at build; bash `reports.py
+list`/`run`/`uses` remain read-only fallbacks.) Registering mirrors an
+already-approved brain recipe — no separate gate. Skip it for one-off snapshots.
 
 ## Choosing the render kind
 
@@ -252,11 +251,19 @@ user to notice it's stale — refresh as part of the write.
 ## Gatekeepers (reused, nothing new)
 
 - **Recipe** (save/change in `brain/reports.md`) → diff + approval. Mirroring it
-  into `.reports.json` is part of the same approved change (no separate gate).
+  into `.reports.json` (via `save_report`) is part of the same approved change
+  (no separate gate).
 - **Dashboard** (`build_dashboard` → overwrite in `artifacts/`) → default
   output language. The **live artifact** (`mcp__cowork__create_artifact`) is
   created once; later content refreshes go to the Drive html, not the artifact.
 - **Reading** the data to build either → free (it's a `query`).
+
+**Combining the two prompts is allowed.** When the recipe and dashboard are
+created in the **same turn**, fold the brain-approval and output-confirm into
+**one** decision: *show the `brain/reports.md` diff*, then a single "approve &
+build" `AskUserQuestion`. Showing the diff is non-negotiable; the click can be
+combined. Keep them separate only if the recipe changes without a (re)build, or
+vice versa.
 
 `sidekick-report` is therefore not read-only (unlike status/find), but it
 introduces **no new gatekeeper** — it leans entirely on the brain and output

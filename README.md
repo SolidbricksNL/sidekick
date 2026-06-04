@@ -137,7 +137,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.17.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.18.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -184,5 +184,8 @@ In **0.17.0** the `.sk.json` stores **data bindings, not numbers**: each
 KPI/chart/table/grid carries a `query` or `recipe`, and `build_dashboard` runs it
 natively and bakes the **fresh** rows — so a data change just means re-running the
 build (no slug → rebuilds every dashboard), which the agent does proactively right
-after any `data.py` write. No hand-edited values, no desync.
+after any `data.py` write. No hand-edited values, no desync. In **0.18.0** the
+report-recipe registry is written through a native `save_report` MCP tool (the
+bash `reports.py` truncated on the sandbox mount), and the docs spell out that
+project files are created with the Write tool / native MCP tools, not from bash.
 Run the manual-test checklist in Cowork before wider rollout.

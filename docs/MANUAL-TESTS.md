@@ -270,8 +270,8 @@ plugin name needs to change again.
   - **Conflict** — Sidekick **asks via the picker** (keep Cowork / external /
     both) and calls `resolve_output`; nothing silently overwritten. `both`
     yields a `…​.from-external.<ext>` sibling on both sides.
-  - A manifest `projects/<slug>/.sidekick-sync.json` exists at the **project
-    root** (not inside `output/`) and is not synced.
+  - A manifest `projects/<slug>/.sidekick/sync.json` exists in the hidden
+    `.sidekick/` state folder (not inside `output/`) and is not synced.
   - On an unreachable base path, the tool reports `errors` and Sidekick
     continues — never blocks a local write or deletes data.
 - **Also (no base path):** with **Output sync: Yes** but the base path blank
@@ -283,8 +283,8 @@ plugin name needs to change again.
 - **Start:** Output sync **Yes** + base path set; **Drive connector enabled**;
   a project `<slug>` with a `data/` table (e.g. `seasonality`).
 - **Do (recipe + register):** ask for a dashboard of the table. Expect: a recipe
-  in `brain/reports.md` (diff + approval) **and** `reports.py save` →
-  `projects/<slug>/.reports.json` holds the `sql`, `artifact:
+  in `brain/reports.md` (diff + approval) **and** `save_report` →
+  `projects/<slug>/.sidekick/reports.json` holds the `sql`, `artifact:
   artifacts/<n>.html`, and `tables`. `reports.py run --name <n>` returns the
   computed rows; `reports.py uses --table seasonality` lists the report.
 - **Do (generate + sync):** Expect a **self-contained** `artifacts/<n>.html`
@@ -302,8 +302,8 @@ plugin name needs to change again.
   - The Drive HTML file keeps the **same file id** across updates.
   - The agent answering the same question in chat gives the **same** numbers
     (single source = the recipe).
-  - `.reports.json` is at the **project root** and is **not** picked up as a
-    data table by `data.py query`.
+  - `.sidekick/reports.json` is in the hidden state folder and is **not** picked
+    up as a data table by `data.py query`.
   - `reconcile_output` syncs **both** `output/` and `artifacts/`.
 - **If the Drive connector isn't enabled / no base path:** the dashboard still
   works as a plain snapshot in `artifacts/`; note it won't auto-update.

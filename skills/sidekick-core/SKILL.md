@@ -84,19 +84,19 @@ the project's **standard dashboard skeleton** — call the `build_dashboard` too
 sync is on, also sync + create the live artifact). Every project starts with an
 empty "<Project> Dashboard"; later "show me…" requests fill it, and it self-heals
 if deleted (reporting.md → Lifecycle). Scaffolding is **top-level only**; an area
-gets **no** scaffold.
+gets **no** scaffold. **Only `CLAUDE.md`+`agenda.md` go loose in the project
+root** — every other write has a folder (drafts/scratch→`log/`, approved→`output/`,
+state→`.sidekick/`); full map: `references/project-structure.md`.
 
 ### Subprojects (areas within a project)
 
-A **subproject is not a project** — it is an **area inside a parent**, reusing the
-parent's harness with **no own `CLAUDE.md`/`agenda.md`, no scaffold, never a
-nested `projects/<parent>/<sub>/`.** To set one up inside `<Y>` (after confirming
-it's an area, not a new project): seed `projects/<Y>/brain/<sub>/overview.md` (a
-**brain write — diff + approval**), make `projects/<Y>/output/<sub>/`, keep its
-agenda items in the **parent's** `agenda.md` (optional `## <sub>` heading), and
-list `brain/<sub>/overview.md` in the parent `CLAUDE.md`. The area lives inside
-the parent, so triage/check-in/status/find cover it automatically. Full steps:
-`references/project-structure.md`.
+A **subproject is not a project** — it is an **area inside a parent**: no own
+`CLAUDE.md`/`agenda.md`, no scaffold, never a nested `projects/<parent>/<sub>/`.
+It's just a `brain/<sub>/` (seed `overview.md` — a **brain write, diff +
+approval**) + an `output/<sub>/`, with agenda items under a `## <sub>` heading in
+the **parent's** `agenda.md`. So triage/check-in/status/find cover it as part of
+the parent. When unclear (new project vs area), **ask** via the picker. Full
+steps: `references/project-structure.md`.
 
 ## The three write disciplines
 
@@ -150,8 +150,8 @@ this goes wrong, all forbidden:
    A **new/separate** dashboard only on explicit request.
 5. **Live Cowork artifact is the deliverable** (`mcp__cowork__create_artifact`
    wrapping the Drive html), **not** `present_files` on the `.html`. Drive file
-   id from `.reports.json`, download tool name from the session tools.
-6. **Save the recipe** — `brain/reports.md` (diff + approval) + `.reports.json`.
+   id from `.sidekick/reports.json`, download tool name from the session tools.
+6. **Save the recipe** — `brain/reports.md` (diff + approval) + `.sidekick/reports.json`.
 
 After ANY `data.py` write in a project with a dashboard: **proactively, same
 turn**, call `build_dashboard` with **project only** (no slug → rebuilds all

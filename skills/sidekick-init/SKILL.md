@@ -101,14 +101,20 @@ Setup must roll out the structure, so create **at least one** project:
 
 1. Ask: "What's the first project you want to work in? Give it a short
    name." Derive a `kebab-case` slug from the answer.
-2. Scaffold `projects/<slug>/` exactly as the main `sidekick` skill does:
+2. Scaffold `projects/<slug>/` exactly as the main `sidekick` skill does
+   (complete layout: `../sidekick-core/references/project-structure.md`):
    - `CLAUDE.md` from `../sidekick-core/references/project-claude-template.md`,
      with the project name filled in.
    - `agenda.md` from `../sidekick-core/references/agenda-template.md`.
    - empty `brain/`, `log/`, `archive/`, `output/` directories.
-   - do **not** create `data/` yet (lazy — appears on the first table).
+   - the **empty dashboard skeleton** — call the `build_dashboard` tool
+     `{project:"<ABS>/projects/<slug>", slug, title:"<Project> Dashboard"}`; it
+     creates `dashboard/` + `artifacts/`.
+   - do **not** create `data/` yet (lazy — first table); `.sidekick/` likewise
+     appears on the first registry/sync write. Only `CLAUDE.md` + `agenda.md`
+     ever sit loose in the project root.
 3. Also create the root-level system folders if absent: `_triage/` and
-   `_archive/projects/`.
+   `_archive/projects/` (these are **workspace-level**, not inside a project).
 
 Create only a **single top-level** project (a direct child of `projects/`).
 Do **not** create nested subprojects or areas during init, and never a

@@ -29,10 +29,20 @@ def _emit(obj):
 def _paths(project, base):
     # (project root, external base root <base>/<name>, manifest path, name).
     # Per subdir: local = proj/<sub>, remote = base_root/<sub>; manifest keys
-    # are "<sub>/<relpath>".
+    # are "<sub>/<relpath>". The manifest lives in the hidden .sidekick/ folder
+    # (not loose in the root, not inside output/artifacts/ so it never syncs).
+    # Migrate a legacy root-level .sidekick-sync.json on first access.
     proj = Path(project)
     name = proj.name
-    return proj, Path(base) / name, proj / ".sidekick-sync.json", name
+    mpath = proj / ".sidekick" / "sync.json"
+    legacy = proj / ".sidekick-sync.json"
+    if legacy.exists() and not mpath.exists():
+        mpath.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            legacy.replace(mpath)
+        except OSError:
+            pass
+    return proj, Path(base) / name, mpath, name
 
 
 def _walk(root):
@@ -71,6 +81,7 @@ def _load_manifest(p):
 
 def _save_manifest(p, files):
     try:
+        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps({"version": 1, "files": files},
                                 ensure_ascii=False, indent=2), encoding="utf-8")
     except OSError as e:

@@ -137,7 +137,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.18.1** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.19.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -188,4 +188,9 @@ after any `data.py` write. No hand-edited values, no desync. In **0.18.0** the
 report-recipe registry is written through a native `save_report` MCP tool (the
 bash `reports.py` truncated on the sandbox mount), and the docs spell out that
 project files are created with the Write tool / native MCP tools, not from bash.
+**0.19.0** locks down the project layout: exactly two root files (`CLAUDE.md`,
+`agenda.md`) and eight folders (`brain/ data/ dashboard/ artifacts/ output/ log/
+archive/ .sidekick/`) — internal state moved out of the root into a hidden
+`.sidekick/` folder (auto-migrated), with a single authoritative layout map that
+tells the agent where every kind of write goes, so nothing lands loose in the root.
 Run the manual-test checklist in Cowork before wider rollout.

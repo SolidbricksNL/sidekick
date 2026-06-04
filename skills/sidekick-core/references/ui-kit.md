@@ -82,8 +82,8 @@ use the MCP tool instead (or Read `dashboard.py` to hydrate it, then retry).
 >   and heredocs into the project mount **fail inconsistently** (the same mount
 >   that truncates reads). **Use the Write tool** for the `.sk.json` (now small —
 >   it holds queries, not data — so Write rarely truncates) and **native MCP
->   tools** for state files: `.reports.json` via **`save_report`**, the html via
->   **`build_dashboard`**. Never hand-write `.reports.json` from bash.
+>   tools** for state files: `.sidekick/reports.json` via **`save_report`**, the html via
+>   **`build_dashboard`**. Never hand-write `.sidekick/reports.json` from bash.
 > - **Registry + build go through the `sidekick-sync` MCP tools, not bash.** The
 >   bash `reports.py`/`dashboard.py` truncate on the mount (`SyntaxError`); they
 >   are fallbacks only. `build_dashboard` + `save_report` run natively.
@@ -185,7 +185,7 @@ anything else is neutral.
 
 A `.sk.json` should hold **layout + bindings**, not hardcoded values. Give a
 KPI / card chart / card table / grid / list / panel a **`query`** (a read-only
-`SELECT`) or **`recipe`** (a name in `.reports.json`) and `build_dashboard`
+`SELECT`) or **`recipe`** (a name in `.sidekick/reports.json`) and `build_dashboard`
 runs it **natively at build time** and bakes the **fresh** rows in. So the
 dashboard is a live view of the data store — after a `data.py` write you just
 **rebuild**, never hand-edit numbers (no desync, one source of truth = the query).

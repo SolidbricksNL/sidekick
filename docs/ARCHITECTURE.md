@@ -84,8 +84,14 @@ the **root**. Everything lives underneath it.
 
 When a new project is created, Sidekick scaffolds the full structure:
 `CLAUDE.md`, `agenda.md`, and the `brain/`, `log/`, `archive/`, `output/`
-directories. `data/` is created lazily on the first structured data
-(the first `create` makes `data/` and its first `<table>.json`).
+directories, plus the empty **dashboard skeleton** (`dashboard/` +
+`artifacts/`, via `build_dashboard`). `data/` is created lazily on the first
+structured data (the first `create` makes `data/` and its first `<table>.json`),
+and `.sidekick/` (the hidden machine-state folder: recipe registry + sync
+manifest) on the first registry/sync write. **Only `CLAUDE.md` + `agenda.md`
+ever sit loose in the project root; every other write has a folder.** The
+complete map with what each folder holds is in
+`skills/sidekick-core/references/project-structure.md` (single source of truth).
 
 Scaffolding applies **only to top-level projects** (direct children of
 `projects/`). A **subproject** — an area *within* a project (§3.4) — is
@@ -372,7 +378,7 @@ per-project **`dashboard/<slug>-dashboard.sk.json`** (local, non-synced
 subfolder) — the `window.SK` data (collections → views, each `kind: dashboard |
 grid | listdetail | home`). The `.sk.json` stores **layout + data bindings, not
 hardcoded numbers**: each KPI/chart/table/grid/panel carries a `query` (read-only
-`SELECT`) or `recipe` (a `.reports.json` name), and `build_dashboard` resolves
+`SELECT`) or `recipe` (a `.sidekick/reports.json` name), and `build_dashboard` resolves
 them against the live data store (via `data.py`) and bakes the **fresh** rows in
 — so the dashboard is a live view, never a hand-edited snapshot (v0.17.0).
 Each active project has **one** dashboard, "<Project> Dashboard", created as an
@@ -399,8 +405,9 @@ only artifact that calls a connector.
   tool returns `changed` so a no-op rebuild is visible. Cowork's refresh re-pulls it.
 - Without Drive/sync, fall back to presenting the built `.html` as a one-off
   **snapshot** (opens anywhere, no auto-update) — the same file, shown directly.
-- The recipe is registered in `projects/<slug>/.reports.json` (project root,
-  never scanned as a table) via `scripts/reports.py` — recording its `sql`,
+- The recipe is registered in `projects/<slug>/.sidekick/reports.json` (hidden
+  state folder, never scanned as a table) via the `save_report` tool /
+  `scripts/reports.py` — recording its `sql`,
   the `artifact` path, the `tables` it reads (so a change knows what to
   regenerate, `reports.py uses`), and the synced HTML's `drive_file_id`.
 
@@ -478,8 +485,9 @@ active project** and **as a sweep at the check-in** (§11) — each reconcile
 pulls external edits in and pushes local ones out.
 
 **The reconcile rule (per file).** A small **manifest**
-`projects/<slug>/.sidekick-sync.json` (path → last-synced content hash; at the
-*project* root, **not inside `output/`**, so it is never itself synced) holds
+`projects/<slug>/.sidekick/sync.json` (path → last-synced content hash; in the
+hidden `.sidekick/` state folder, **not inside `output/`/`artifacts/`**, so it is
+never itself synced) holds
 the baseline. For every file across local ∪ external ∪ manifest:
 
 | Situation | Action |
@@ -701,7 +709,7 @@ sidekick/
 │   │   └── scripts/
 │   │       ├── data.py            ← file-based structured-data helper (+ query() function)
 │   │       ├── dashboard.py       ← builds <slug>-dashboard.html from <slug>-dashboard.sk.json + the kit
-│   │       ├── reports.py         ← report-recipe registry + CLI (.reports.json; runs via data.query)
+│   │       ├── reports.py         ← report-recipe registry + CLI (.sidekick/reports.json; runs via data.query)
 │   │       ├── sync.py            ← sync engine + CLI (output/ + artifacts/ ↔ external base path)
 │   │       └── sync_server.py     ← `sidekick-sync` MCP server (native; wraps sync.py)
 │   ├── sidekick-init/
@@ -1077,6 +1085,30 @@ Resolved:
   (`\uXXXX`) and Cowork restores the characters. Tested: backtick `primary` alias
   builds; `€`/`·` bake into the html and round-trip the wire as ASCII. So real
   symbols are safe — no need for `EUR`/`-`. plugin.json → 0.18.1.
+- **Project layout locked down + internal state into `.sidekick/` (2026-06-04,
+  v0.19.0).** Tester: bookkeeping dotfiles (`.reports.json`,
+  `.sidekick-sync.json`) sat **loose in the project root** — unclean — and the
+  full per-project structure wasn't documented in one authoritative place. Two
+  parts. (a) **`.sidekick/` state folder:** the recipe registry →
+  `.sidekick/reports.json` (`reports.py` `_path`) and the sync manifest →
+  `.sidekick/sync.json` (`sync.py` `_paths`), both **auto-migrating** the legacy
+  root file on first access (`os.replace`; a skipped manifest migration just
+  rebuilds on the next reconcile — additive, safe). `.sidekick/` is at the project
+  root and **not** in the synced set (`output/`+`artifacts/` only), so it never
+  reaches Drive — verified. (b) **Canonical layout** (the user's spec): exactly
+  **two root files** (`CLAUDE.md`, `agenda.md`) + **eight folders** — `brain/`,
+  `data/`, `dashboard/`, `artifacts/`, `output/`, `log/`, `archive/`,
+  `.sidekick/`. **Nothing else lands in the root.** Gap closed: in-progress
+  deliverable **drafts and scratch files go to `log/`**, promoted to `output/`
+  only when approved (keeps `output/` clean) — was implied, now explicit. The
+  single source of truth is a new "complete project layout" section in
+  `project-structure.md` (tree + per-kind routing); core SKILL scaffolding,
+  `write-disciplines.md`, `sidekick-init`, and §3.0 point to it. `.sidekick/` =
+  machine bookkeeping (hidden); `dashboard/` = editable dashboard definitions
+  (v0.16.0). Backups/snapshots stay in `data/`; `_triage/`/`_archive/` are
+  workspace-level, not project. Updated reporting.md/sync-discipline.md/ui-kit.md/
+  core + report + init SKILLs/project-structure.md/write-disciplines.md/§3.0/§7b/
+  §7c/§12/MANUAL-TESTS. plugin.json → 0.19.0.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

@@ -1,17 +1,67 @@
 # Project structure — projects vs subprojects (areas)
 
-Loaded on demand by the `sidekick` skill. Defines the difference between a
-**top-level project** and a **subproject / area**, and the exact steps to
-create each. Read this whenever the user talks about a "subproject",
-"sub-area", or work "under"/"within"/"part of" an existing project.
+Loaded on demand by the `sidekick` skill. Defines the **complete project
+layout** (below) and the difference between a **top-level project** and a
+**subproject / area**. Read this whenever the user talks about a "subproject",
+"sub-area", or work "under"/"within"/"part of" an existing project — or when you
+are unsure where a file belongs.
+
+## The complete project layout (every file has a home)
+
+A project is `projects/<slug>/`. **Only two files sit loose in the project
+root** — `CLAUDE.md` and `agenda.md`. Everything else lives in a dedicated
+folder. **Nothing else lands in the root, ever.** If you're about to write
+something with no obvious home, it belongs in `log/`.
+
+```
+projects/<slug>/
+├── CLAUDE.md     ← project memory, read at session start          [root file]
+├── agenda.md     ← the running agenda / to-dos                    [root file]
+├── brain/        ← distilled, durable knowledge (gated: diff + approval)
+├── data/         ← structured data store: JSON tables via data.py (lazy)
+├── dashboard/    ← dashboard definitions: <slug>-dashboard.sk.json (queries, not numbers)
+├── artifacts/    ← generated dashboard HTML (synced to Drive)
+├── output/       ← ONLY approved, final deliverables (synced) — keep clean
+├── log/          ← working area: dated activity logs + in-progress drafts (free)
+├── archive/      ← superseded originals (e.g. a distilled source file)
+└── .sidekick/    ← internal machine state: reports.json (recipe registry) +
+                    sync.json (sync manifest). Hidden; never synced; you don't
+                    hand-edit it (the save_report tool + sync engine own it).
+```
+
+Created **eagerly** at scaffold: `CLAUDE.md`, `agenda.md`, `brain/`, `log/`,
+`archive/`, `output/`, plus `dashboard/` + `artifacts/` (the empty dashboard
+skeleton). Created **lazily** on first use: `data/` (first table), `.sidekick/`
+(first registry/sync write).
+
+**Where each kind of work goes — so nothing lands in the root:**
+- **Structured / tabular data** → `data/`, only via `data.py` (never a loose JSON).
+- **Knowledge worth keeping** → `brain/` (distilled, gated).
+- **A deliverable you're still working on** (a draft doc, deck, sheet, text) →
+  `log/` — it's work-in-progress, written freely. **It moves to `output/` only
+  when the user approves it as final** (and then it syncs). That keeps `output/`
+  clean: finished work only.
+- **Scratch / intermediate files** (a temp export, a file mid-conversion) →
+  `log/`. Never the project root.
+- **An original you imported and distilled** (the source spreadsheet/email) →
+  `archive/`.
+- **A dashboard** → its definition in `dashboard/`, its built HTML in
+  `artifacts/` (built by the `build_dashboard` tool).
+- **Recipe registry / sync manifest** → `.sidekick/` (written by the
+  `save_report` tool and the sync engine — not by hand).
+
+Data **backups/snapshots** stay inside `data/` (`.snapshots/`, `.backups/`).
+The system folders `_triage/` and `_archive/` live at the **Cowork workspace
+root**, not inside a project — don't confuse `_archive/` with a project's
+`archive/`.
 
 ## The two levels
 
 Sidekick has a **flat** project structure: every project lives directly under
-`projects/<slug>/` with one `CLAUDE.md`, one `agenda.md`, and the `brain/`,
-`log/`, `archive/`, `output/` (and lazy `data/`) folders. The cross-project
-skills (triage, check-in, status, find, archive) all run over these
-**top-level** projects.
+`projects/<slug>/` with the layout above (`CLAUDE.md` + `agenda.md` in the root;
+`brain/ data/ dashboard/ artifacts/ output/ log/ archive/ .sidekick/` folders).
+The cross-project skills (triage, check-in, status, find, archive) all run over
+these **top-level** projects.
 
 A **subproject is not a second project.** It is an **area within a parent
 project's harness** — a looser separation for a strand of work that is big

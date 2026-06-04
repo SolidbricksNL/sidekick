@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Sidekick report-recipe registry. Stores named, reusable report recipes
-(name -> SELECT) in <project>/.reports.json and runs them via data.py's query
+(name -> SELECT) in <project>/.sidekick/reports.json and runs them via data.py's query
 engine (SQL over all tables in a throwaway in-memory SQLite - read-only). The
 sidekick-data MCP server calls run() so live artifacts can fetch a recipe's
 output by name. The human-readable mirror lives in brain/reports.md.
@@ -30,7 +30,18 @@ def _emit(obj):
 
 
 def _path(project):
-    return Path(project) / ".reports.json"
+    # State lives in the hidden .sidekick/ folder (not loose in the project
+    # root). Migrate a legacy root-level .reports.json on first access.
+    proj = Path(project)
+    new = proj / ".sidekick" / "reports.json"
+    legacy = proj / ".reports.json"
+    if legacy.exists() and not new.exists():
+        new.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            legacy.replace(new)
+        except OSError:
+            pass
+    return new
 
 
 def _load(project):
@@ -45,8 +56,9 @@ def _load(project):
 
 
 def _save(project, reg):
-    _path(project).write_text(json.dumps(reg, ensure_ascii=False, indent=2),
-                              encoding="utf-8")
+    p = _path(project)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(reg, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def save(project, name, sql=None, desc=None, artifact=None,

@@ -64,3 +64,11 @@ Always non-technical, tied to the user's actual content:
   free.
 - Spinning up a new table when an existing one could take a column →
   extend before you add.
+- Dropping a file **loose in the project root** → only `CLAUDE.md` + `agenda.md`
+  belong there; every other write has a folder (drafts/scratch → `log/`,
+  approved deliverables → `output/`, knowledge → `brain/`, data → `data/`,
+  dashboards → `dashboard/` + `artifacts/`, machine state → `.sidekick/`). The
+  complete map is in `project-structure.md`.
+- Leaving a **draft** in `output/` → a deliverable is worked in `log/` and only
+  **promoted to `output/` when the user approves it as final**, so `output/`
+  stays clean.

@@ -75,7 +75,7 @@ that backs a **live dashboard**, also register a machine-readable copy, so the
 agent can regenerate it deterministically and know what to regenerate when data
 changes. **Register via the `sidekick-sync` server's `save_report` MCP tool**
 (native — the bash `reports.py save` truncates on the sandbox mount, like
-`dashboard.py`, and a hand-written `.reports.json` skips name validation +
+`dashboard.py`, and a hand-written `.sidekick/reports.json` skips name validation +
 merge):
 
 ```
@@ -88,8 +88,8 @@ save_report { project: "<ABS>/projects/<slug>", name: "<report-name>",
               drive_file_id: "<DRIVE_FILE_ID>" }
 ```
 
-This stores `projects/<slug>/.reports.json` (project root — never scanned as a
-data table) with the recipe's `sql`, its dashboard path (`artifact`), the
+This stores `projects/<slug>/.sidekick/reports.json` (the hidden `.sidekick/`
+state folder — never scanned as a data table) with the recipe's `sql`, its dashboard path (`artifact`), the
 `tables` it reads, and the synced HTML's `drive_file_id`. `save_report`
 **merges** (re-saving with only `drive_file_id` keeps the SQL) and validates the
 name. (Bindings already run recipes natively at build; bash `reports.py
@@ -130,7 +130,7 @@ read (~11.4 KB) and emit a **blank page**. The bundled **`dashboard.py`** reads
    `window.SK` object (collections → views, each `kind: dashboard | grid |
    listdetail | home`). **Store the QUERY, not the numbers:** give each KPI /
    chart / table / grid / panel a `query` (a read-only `SELECT`) or `recipe`
-   (a `.reports.json` name) and alias its columns to the field names the element
+   (a `.sidekick/reports.json` name) and alias its columns to the field names the element
    renders (see `ui-kit.md` → "Bind to live data"). The SQL does the calc **and**
    the formatting; the page only renders. This makes the dashboard a live view —
    no hardcoded values to desync, one source of truth.
@@ -219,7 +219,7 @@ frames it.
   (once Drive is available); until then, present a snapshot.
 - **The live artifact is the user's** — they may delete it in Cowork. That's
   fine: the durable parts (`<slug>-dashboard.sk.json`, the html, the Drive file +
-  its id in `.reports.json`) are untouched.
+  its id in `.sidekick/reports.json`) are untouched.
 - **If a dashboard is expected and the live artifact is gone, recreate it** —
   call `mcp__cowork__create_artifact` again with the stored Drive file id (cheap,
   nothing lost). If the html/Drive file is gone too, rebuild from the `.sk.json`
@@ -251,7 +251,7 @@ user to notice it's stale — refresh as part of the write.
 ## Gatekeepers (reused, nothing new)
 
 - **Recipe** (save/change in `brain/reports.md`) → diff + approval. Mirroring it
-  into `.reports.json` (via `save_report`) is part of the same approved change
+  into `.sidekick/reports.json` (via `save_report`) is part of the same approved change
   (no separate gate).
 - **Dashboard** (`build_dashboard` → overwrite in `artifacts/`) → default
   output language. The **live artifact** (`mcp__cowork__create_artifact`) is

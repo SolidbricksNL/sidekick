@@ -65,9 +65,9 @@ Manifest keys are `<sub>/<relpath>` (e.g. `artifacts/seasonality.html`).
 
 ## How reconcile decides (per file)
 
-A manifest `projects/<slug>/.sidekick-sync.json` (path → last-synced content
-**hash**; at the **project root**, never inside `output/`, so it isn't synced)
-holds the baseline:
+A manifest `projects/<slug>/.sidekick/sync.json` (path → last-synced content
+**hash**; in the hidden `.sidekick/` state folder, never inside
+`output/`/`artifacts/`, so it isn't synced) holds the baseline:
 
 | Situation | Action |
 |---|---|

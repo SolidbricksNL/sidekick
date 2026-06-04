@@ -68,7 +68,7 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
    diff + approval**. Also register it via the **`save_report` MCP tool**
    (`{project, name, sql, artifact: "artifacts/<slug>-dashboard.html", tables}`)
    — native (the bash `reports.py save` truncates on the mount; don't hand-write
-   `.reports.json`). It merges + validates; writes `.reports.json`.
+   `.sidekick/reports.json`). It merges + validates; writes `.sidekick/reports.json`.
 8. **Show it as the live Cowork artifact (the deliverable).** Sync to Drive
    (`reconcile_output` covers `artifacts/`), resolve its Drive file id and save it
    (`reports.py save --name <slug>-dashboard --drive-file-id <id>`), then create

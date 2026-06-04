@@ -1064,6 +1064,19 @@ Resolved:
   shown. What worked well in the run (per the tester): `build_dashboard` via MCP
   (no truncation), the queries-in-`.sk.json` binding model, and the Drive-wrapper
   html were all correct. plugin.json → 0.18.0.
+- **Binding-SQL gotchas: reserved word + UTF-8 wire (2026-06-04, v0.18.1).** Two
+  more from a real dashboard run. (1) Aliasing a panel column `AS primary` is a
+  **SQLite syntax error** (`primary` is reserved) — fixed by backtick-quoting,
+  but the agent had to discover it. Documented in ui-kit.md ("backtick-quote a
+  reserved alias", with `primary` called out). (2) `€` / `·` came back mangled in
+  the build error — the `sidekick-sync` server wrote its JSON-RPC line to stdout
+  with `ensure_ascii=False` and did not pin stdio to UTF-8, so on a non-UTF-8
+  host locale **incoming SQL mis-decodes (a real query bug) and replies mangle**.
+  Fix: `main()` now `reconfigure(encoding="utf-8")`s stdin/stdout/stderr, and the
+  reply is dumped with the default `ensure_ascii=True` so the wire is pure ASCII
+  (`\uXXXX`) and Cowork restores the characters. Tested: backtick `primary` alias
+  builds; `€`/`·` bake into the html and round-trip the wire as ASCII. So real
+  symbols are safe — no need for `EUR`/`-`. plugin.json → 0.18.1.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

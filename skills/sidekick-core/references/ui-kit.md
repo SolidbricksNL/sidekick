@@ -217,6 +217,16 @@ table) makes the build **error loudly** — never a silently stale page. Element
 with no binding keep their literal values, so older hand-authored dashboards
 still build.
 
+**Two binding-SQL gotchas:**
+- **`primary` is a reserved SQL word** — a bare `… AS primary` is a syntax
+  error. **Backtick-quote** any alias that collides with a keyword:
+  `SELECT label AS \`primary\`, note AS secondary FROM …`. (`secondary`, `meta`,
+  `value`, `label` are fine unquoted; only quote the reserved ones.)
+- **Unicode is safe end-to-end.** `€`, `·`, accents etc. survive in SQL strings,
+  the `.sk.json`, and the baked html (everything is UTF-8; the MCP wire is
+  ASCII-escaped and restored). Use real symbols — no need to fall back to `EUR`
+  or `-`.
+
 ## How this fits reporting
 
 The numbers in `SK` come from `data.py query` / `reports.py run` (via bindings,

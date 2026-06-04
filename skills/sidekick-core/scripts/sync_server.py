@@ -192,6 +192,14 @@ def handle(msg):
 
 
 def main():
+    # Pin stdio to UTF-8: incoming SQL/labels may carry € · etc., and the host
+    # locale is not guaranteed UTF-8. Without this, non-ASCII in a tools/call
+    # arrives mis-decoded (a real query bug, not just a display one).
+    for _s in (sys.stdin, sys.stdout, sys.stderr):
+        try:
+            _s.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
     _log("server starting")
     for line in sys.stdin:
         line = line.strip()
@@ -207,7 +215,10 @@ def main():
         except Exception as e:  # never let one bad message kill the server
             resp = _rpc_error(msg.get("id"), -32603, f"internal error: {e}")
         if resp is not None:
-            sys.stdout.write(json.dumps(resp, ensure_ascii=False) + "\n")
+            # Default ensure_ascii=True \uXXXX-escapes non-ASCII, so the wire
+            # line is pure ASCII and survives ANY stdout encoding; Cowork's JSON
+            # parser restores the original characters.
+            sys.stdout.write(json.dumps(resp) + "\n")
             sys.stdout.flush()
 
 

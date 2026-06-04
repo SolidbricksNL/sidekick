@@ -159,6 +159,15 @@ data flows in freely.
 All commands print a JSON result and exit non-zero on error. `DIR` is the
 project path, e.g. `projects/finance`.
 
+**`info` first, then act.** Before your first `query`/`update`/`delete` on a
+table you haven't inspected **this session**, run `data.py info --project DIR` —
+it gives the exact **tables, columns, and category values**. Then use those exact
+names. Don't assume a column exists (e.g. there is often no `id` column — match
+rows on the real key columns). And `query` takes the SQL via the **`--sql "…"`
+flag**, not as a positional argument: `data.py query --project DIR --sql
+"SELECT …"`. (If a `query` errors `no such column/table`, the message now lists
+the real tables + columns — read it and retry with those.)
+
 | Need | Command | Gatekeeper |
 |---|---|---|
 | Create a table | `data.py create --project DIR --table NAME --columns "a:text,b:number"` | confirm first |

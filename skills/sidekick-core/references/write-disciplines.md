@@ -15,6 +15,35 @@ keeps Cowork from sprawling. Before writing **anything**, classify it.
 | A **structure** change (new table/column) | `data/` | **Confirm in plain language.** |
 | A **record** that fits the existing columns | `data/` | **None — insert freely** (via `scripts/data.py`). |
 
+## First: what is the user trying to do?
+
+Before classifying a single write, read the **intent** behind the message. Apart
+from the explicit `/sidekick-*` commands, almost everything is one of four:
+
+1. **Share data that will matter later** (figures, a list of records, a
+   spreadsheet) → it belongs in **`data/`** as a table (via `data.py`), not as
+   prose. Distil any insight into `brain/`; the rows go to the table.
+2. **Share knowledge** (context, a decision, how something works — not
+   record-shaped) → **`log/`** now, **`brain/`** for the durable distilled version.
+3. **Think together** — analysis, advice, sparring over the data/knowledge →
+   answer in chat and **log the working in `log/`**; only a deliverable the user
+   asks to keep becomes `output/` (drafted in `log/` first).
+4. **Work the data** — edit records, query, build/refresh a dashboard view → the
+   data layer + `sidekick-report` (dashboards in `dashboard/` + `artifacts/`).
+
+**Repeating records are data, not brain.** When the user gives you several items
+of the **same kind** with the **same attributes** — employees, clients, deals,
+risks, each with status/owner/date/… — that is a **table**, even when it arrives
+as free chat. Propose a table and put the rows in `data/`; do **not** scatter one
+brain file per item. (One person's background note = brain; *all* of them with
+recurring fields = a `people` table.)
+
+**When the intent or the right home is unclear, ASK** — via the picker — *how
+they want it kept*: a tracked **table** (data), distilled **notes** (brain), or
+just **logged** for now. Don't silently pick; the wrong choice (e.g. 20 brain
+files where a table was wanted) is expensive to unpick. One short question beats a
+structure the user has to undo later.
+
 ## Why each rule exists
 
 - **Log is free** because the entire problem is that work ends up in the

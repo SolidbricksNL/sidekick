@@ -86,21 +86,23 @@ _TOOLS = [
     },
     {
         "name": "save_report",
-        "description": ("Register/update a named report recipe in the project's "
-                        ".reports.json (the machine-readable mirror of brain/reports.md). "
-                        "Runs NATIVELY - use this instead of the bash `reports.py save`, "
-                        "which the sandbox mount truncates, and instead of hand-writing "
-                        ".reports.json (this validates the name and MERGES fields, so you "
-                        "can set drive_file_id later without resending the sql). Only the "
-                        "fields you pass are updated. Mirror the recipe in brain/reports.md "
-                        "separately (gated, plain-language). Returns the saved entry."),
+        "description": ("Register/update an entry in the project's "
+                        ".sidekick/reports.json registry (machine-readable mirror of "
+                        "brain/reports.md). An entry is EITHER a query recipe (a single "
+                        "named SELECT via `sql`) OR a dashboard registration (`artifact` + "
+                        "`drive_file_id` + `tables`, no sql) - so a report with several "
+                        "named sub-queries maps to ONE recipe per sub-query, not one entry "
+                        "with a representative sql. Runs NATIVELY - use this instead of the "
+                        "bash `reports.py save` (the mount truncates it) and instead of "
+                        "hand-writing the file; it validates the name and MERGES fields (set "
+                        "drive_file_id later without resending sql). Returns the saved entry."),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "project": {"type": "string",
                             "description": "ABSOLUTE path to the project dir (same as reconcile_output)"},
                 "name": {"type": "string", "description": "recipe name (slug-ish: letters, digits, _ -)"},
-                "sql": {"type": "string", "description": "a read-only SELECT (required when first creating the recipe)"},
+                "sql": {"type": "string", "description": "a read-only SELECT (for a query recipe; omit for a pure dashboard registration). A new entry needs at least sql OR artifact/drive_file_id."},
                 "desc": {"type": "string", "description": "one-line description"},
                 "artifact": {"type": "string", "description": "dashboard path, e.g. artifacts/<n>.html"},
                 "drive_file_id": {"type": "string", "description": "Drive file id of the synced HTML (for the wrapper)"},

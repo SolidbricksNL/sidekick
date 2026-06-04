@@ -63,10 +63,14 @@ def _save(project, reg):
 
 def save(project, name, sql=None, desc=None, artifact=None,
          drive_file_id=None, tables=None):
-    """Add/merge a recipe. Only the given fields are updated (so you can set
-    drive_file_id later, after the dashboard HTML is synced and its Drive ID is
-    resolved). SQL must be a read-only SELECT (enforced when it runs). Mirror
-    the recipe in brain/reports.md separately (gated, plain-language).
+    """Add/merge a registry entry. Only the given fields are updated (so you can
+    set drive_file_id later, after the dashboard HTML is synced). An entry is
+    EITHER a **query recipe** (a single named read-only `SELECT`) OR a
+    **dashboard registration** (`artifact` + `drive_file_id` + `tables`, no sql)
+    — so a report with several named sub-queries (by_line, by_month, …) maps to
+    **one recipe entry per sub-query**, not one entry with a single representative
+    sql; the dashboard itself is its own (sql-less) entry. Mirror the human
+    version in brain/reports.md separately (gated, plain-language).
       artifact      - relative path of the generated dashboard, e.g. artifacts/<n>.html
       drive_file_id - the Drive file id of that synced HTML (for the wrapper)
       tables        - the data tables it reads (drives regeneration on a change)"""
@@ -79,8 +83,10 @@ def save(project, name, sql=None, desc=None, artifact=None,
                      ("drive_file_id", drive_file_id), ("tables", tables)):
         if val is not None:
             entry[key] = val
-    if "sql" not in entry:
-        raise ValueError(f"report {name!r} is new - --sql is required")
+    if not entry:
+        raise ValueError(f"report {name!r} is new — give it at least a `sql` "
+                         "(a query recipe) or `artifact`/`drive_file_id` "
+                         "(a dashboard registration).")
     reg[name] = entry
     _save(project, reg)
     return {"ok": True, "action": "save", "report": name, "entry": entry}
@@ -110,7 +116,11 @@ def run(project, name):
     if name not in reg:
         raise ValueError(f"unknown report {name!r} "
                          f"(known: {', '.join(sorted(reg)) or 'none'})")
-    res = data.query(project, reg[name]["sql"])
+    sql = reg[name].get("sql")
+    if not sql:
+        raise ValueError(f"report {name!r} has no sql to run "
+                         "(it's a dashboard/artifact registration, not a query recipe)")
+    res = data.query(project, sql)
     res["report"] = name
     return res
 

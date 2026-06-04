@@ -70,31 +70,27 @@ first; match exact category spellings — `ON-PREM`, not `ONPREM`).
 
 ### Also register the recipe (for live dashboards)
 
-`brain/reports.md` is the human-readable, gated source of truth. For a recipe
-that backs a **live dashboard**, also register a machine-readable copy, so the
-agent can regenerate it deterministically and know what to regenerate when data
-changes. **Register via the `sidekick-sync` server's `save_report` MCP tool**
-(native — the bash `reports.py save` truncates on the sandbox mount, like
-`dashboard.py`, and a hand-written `.sidekick/reports.json` skips name validation +
-merge):
+`brain/reports.md` is the human-readable, gated source of truth. For a live
+dashboard, also register the machine-readable copy via the **`save_report` MCP
+tool** (native — the bash `reports.py save` truncates on the mount).
+
+An entry is **one of two kinds** (don't cram a whole dashboard into one `sql`): a
+**query recipe** (a single named `SELECT`, reusable/bindable) or a **dashboard
+registration** (`artifact` + `drive_file_id` + `tables`, no sql). A brain report
+with several sub-queries → **one recipe per sub-query**:
 
 ```
-save_report { project: "<ABS>/projects/<slug>", name: "<report-name>",
-              sql: "SELECT …", desc: "<one line>",
-              artifact: "artifacts/<slug>-dashboard.html", tables: ["t1","t2"] }
-# later, after the HTML is synced to Drive and you resolved its file id — only
-# the fields you pass are updated, so the sql survives:
-save_report { project: "<ABS>/projects/<slug>", name: "<report-name>",
-              drive_file_id: "<DRIVE_FILE_ID>" }
+save_report { project, name: "revenue-by-line", sql: "SELECT …", tables: ["deals"] }
+save_report { project, name: "<slug>-dashboard",            # no sql; merges, set id later
+              artifact: "artifacts/<slug>-dashboard.html", drive_file_id: "<id>", tables: ["deals"] }
 ```
 
-This stores `projects/<slug>/.sidekick/reports.json` (the hidden `.sidekick/`
-state folder — never scanned as a data table) with the recipe's `sql`, its dashboard path (`artifact`), the
-`tables` it reads, and the synced HTML's `drive_file_id`. `save_report`
-**merges** (re-saving with only `drive_file_id` keeps the SQL) and validates the
-name. (Bindings already run recipes natively at build; bash `reports.py
-list`/`run`/`uses` remain read-only fallbacks.) Registering mirrors an
-already-approved brain recipe — no separate gate. Skip it for one-off snapshots.
+A new entry needs **at least** `sql` **or** `artifact`/`drive_file_id`;
+`save_report` **merges** + validates the name. Stored in `.sidekick/reports.json`
+(never scanned as a table). The dashboard's *rendering* queries already live
+inline in the `.sk.json` **bindings** — the registry is for **named reuse** + the
+**`drive_file_id`** the wrapper needs. Mirrors an approved brain recipe — no
+separate gate; skip for one-off snapshots.
 
 ## Choosing the render kind
 

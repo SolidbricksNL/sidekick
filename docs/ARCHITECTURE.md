@@ -1109,6 +1109,42 @@ Resolved:
   workspace-level, not project. Updated reporting.md/sync-discipline.md/ui-kit.md/
   core + report + init SKILLs/project-structure.md/write-disciplines.md/§3.0/§7b/
   §7c/§12/MANUAL-TESTS. plugin.json → 0.19.0.
+- **Registry mirrors multi-query reports; sharper input routing (2026-06-04,
+  v0.19.1).** Two tester critiques. (1) `save_report`/`reports.save` **required a
+  `sql`** on a new entry, so a dashboard with several named sub-queries
+  (`by_line`, `by_month`, …) couldn't be mirrored — the agent jammed in one
+  "representative" sql. Fixed: an entry is now **either** a query recipe (one
+  named `SELECT`) **or** a dashboard registration (`artifact`+`drive_file_id`+
+  `tables`, **no sql**); a new entry just needs *at least one* of those. So a
+  multi-sub-query brain report maps to **one recipe per sub-query** + a sql-less
+  dashboard entry. `reports.run` errors cleanly on a sql-less entry. (The
+  rendering queries already live inline in the `.sk.json` bindings; the registry
+  is for named reuse + the `drive_file_id`.) (2) **Input routing sharpened** — the
+  agent had turned "here's what's going on with each employee" into one brain file
+  per person when it was really **repeating-record data** (a table). The decision
+  rule now opens with **"what is the user trying to do?"** (four routes: keep data
+  → `data/`; share knowledge → `log/`+`brain/`; think together → chat + `log/`;
+  work the data → data layer + `sidekick-report`), states **repeating records are
+  data, not brain**, and says **ASK when the home is unclear** (table vs brain vs
+  log) rather than guessing. write-disciplines.md + core SKILL classify rule.
+  **Skill double-invocation (a third critique) left as-is** — the command→skill
+  hop is required for Cowork typed commands and core→report is normal dispatch;
+  low cost, changing it risks more than it saves. plugin.json → 0.19.1.
+- **Self-correcting query errors + info-first ops habit (2026-06-04, v0.19.2).**
+  A real data-edit run was smooth but hit two `data.py` CLI hobbles: the agent
+  queried a non-existent `id` column (assumed a schema it hadn't checked) and
+  first passed the SQL positionally instead of via `--sql`. Tooling fix:
+  `data.py query` now **enriches a `no such column/table` error with the actual
+  tables + columns** (e.g. `… | available: deals(product, platform, arr)`), so a
+  wrong-column query self-corrects in one shot instead of a separate `info`
+  round-trip (ASCII separator so it can't mangle on a non-UTF-8 CLI stdout;
+  data.py 14962→15253 B, still under the 15808 cap). Behaviour fix:
+  data-discipline.md now leads the command table with **"`info` first, then
+  act"** — inspect tables/columns/category values before the first query/update
+  on an un-inspected table, don't assume an `id` column, pass SQL via the
+  **`--sql "…"` flag** (not positionally). (The `--sql` CLI wasn't made
+  positional-tolerant on purpose — data.py is the cap-fragile file; documented
+  syntax + enriched errors cover it.) plugin.json → 0.19.2.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

@@ -137,7 +137,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.19.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.19.2** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the

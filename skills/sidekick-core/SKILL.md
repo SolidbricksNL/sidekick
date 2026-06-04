@@ -102,15 +102,14 @@ steps: `references/project-structure.md`.
 
 Before writing anything, classify it. This is the core of Sidekick.
 
-**Classify the input's shape first.** When the user shares something, ask "what
-shape is this?" before defaulting to log + brain. **Tabular or repeating-record
-data** (a spreadsheet, CSV, exported table, list of same-field items) is
-structured **by default**: propose a **table** (structure change → confirm in
-plain language), put the **rows** in `data/` via `scripts/data.py`, distil only
-the prose *insights* into `brain/`, archive the original, log the process. Do
-**not** fold a clearly tabular input into a log file with no table — that is the
-failure mode the data layer prevents. Free-form prose and one-off facts route to
-log/brain as usual.
+**Classify the input's shape first.** **Tabular or repeating-record data** (a
+spreadsheet, CSV, or a list of same-kind items — employees, clients, deals — each
+with the same fields) is structured **by default**: propose a **table** (structure
+change → confirm), put the **rows** in `data/` via `scripts/data.py`, distil only
+prose *insights* into `brain/`, archive the original. **Never scatter one brain
+file per record where a table belongs.** Free-form prose / one-off facts →
+log/brain. **When the right home is unclear (table vs brain vs just a log note),
+ASK** rather than guess. The four intent routes: `references/write-disciplines.md`.
 
 | What you are writing | Where | What you must do |
 |---|---|---|

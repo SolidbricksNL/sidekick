@@ -274,6 +274,7 @@ def query(project, sql):
     schema = _load_schema(project)
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
+    built = {}
     for f in sorted(data_dir.glob("*.json")):
         if f.name == "_schema.json":
             continue
@@ -286,6 +287,7 @@ def query(project, sql):
         cols = _table_columns(project, table, schema)
         if not cols:
             continue
+        built[table] = cols
         collist = ",".join(f'"{c}"' for c in cols)
         conn.execute(f'CREATE TABLE "{table}" ({collist})')
         ph = ",".join("?" * len(cols))
@@ -294,7 +296,11 @@ def query(project, sql):
     try:
         out = [dict(r) for r in conn.execute(sql).fetchall()]
     except sqlite3.Error as e:
-        raise ValueError(f"query failed: {e}")
+        msg = f"query failed: {e}"
+        if "no such" in str(e).lower():  # wrong column/table -> show the real schema
+            avail = "; ".join(f"{t}({', '.join(c)})" for t, c in built.items())
+            msg += " | available: " + (avail or "no tables")
+        raise ValueError(msg)
     finally:
         conn.close()
     return {"ok": True, "action": "query", "rowcount": len(out), "rows": out}

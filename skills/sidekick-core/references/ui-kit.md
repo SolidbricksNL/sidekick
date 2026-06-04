@@ -34,10 +34,10 @@ Each active project has **one** dashboard, named "<Project> Dashboard". Its
 source of truth is a tiny JSON file you edit — never the big html:
 
 ```
-projects/<slug>/<slug>-dashboard.sk.json            <- the window.SK data (you edit this)
-                                                       at the PROJECT ROOT (local,
-                                                       reliable read — NOT in the
-                                                       Drive-synced artifacts/)
+projects/<slug>/dashboard/<slug>-dashboard.sk.json  <- the window.SK data (you edit this)
+                                                       in the local dashboard/ subfolder
+                                                       (reliable read — NOT the project
+                                                       root, NOT the Drive-synced artifacts/)
 projects/<slug>/artifacts/<slug>-dashboard.html     <- built output (synced to Drive)
 ```
 
@@ -47,7 +47,7 @@ slug: "<slug>", title: "<Project> Dashboard"}`. It runs **natively** (real
 filesystem), so it reads the full UI-kit chunks + logo and bakes the html
 reliably — **the bash `dashboard.py` is truncated by the sandbox mount** (it came
 back 98/161 lines → `SyntaxError`), so don't depend on it. The tool reads the
-project's `<slug>-dashboard.sk.json` (project ROOT) and writes
+project's `<slug>-dashboard.sk.json` (local `dashboard/` subfolder) and writes
 `artifacts/<slug>-dashboard.html`.
 
 - First call with no `.sk.json` writes an **empty skeleton** (branded shell + one
@@ -75,7 +75,7 @@ use the MCP tool instead (or Read `dashboard.py` to hydrate it, then retry).
 >   tool also gets full content; bash does not.
 > - **`artifacts/` is Drive-synced** → files there can be **cloud-only
 >   placeholders** (`stat()` ok, `open()` fails until hydrated). So the editable
->   **`.sk.json` lives at the project ROOT** (local, reliable) and you **never read
+>   **`.sk.json` lives in the local `dashboard/` subfolder** (reliable) and you **never read
 >   the built html back** — `build_dashboard` only writes it; the wrapper loads it
 >   from Drive; `reconcile_output` hydrates + pushes.
 > - The **Write tool** truncates large content: if a big `.sk.json` write comes

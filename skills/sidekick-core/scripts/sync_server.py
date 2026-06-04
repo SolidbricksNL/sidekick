@@ -60,8 +60,8 @@ _TOOLS = [
     {
         "name": "build_dashboard",
         "description": ("Build a project's dashboard HTML from its "
-                        "<slug>-dashboard.sk.json (which lives at the project "
-                        "ROOT). Runs NATIVELY so it reads the full UI kit + logo "
+                        "<slug>-dashboard.sk.json (in the project's local "
+                        "dashboard/ subfolder). Runs NATIVELY so it reads the full UI kit + logo "
                         "from disk - prefer this over the bash dashboard.py, which "
                         "the sandbox mount can truncate. Writes "
                         "artifacts/<slug>-dashboard.html and returns JSON "

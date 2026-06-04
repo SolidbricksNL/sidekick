@@ -140,8 +140,8 @@ this goes wrong, all forbidden:
    `sqlite3` CLI, ad-hoc `python`, or hardcoded rows.
 3. **Build via the `build_dashboard` MCP tool, never paste the kernel.** Each
    project has **one** dashboard; you edit its small `<slug>-dashboard.sk.json`
-   (the `window.SK` data, at the **project root**, not the Drive-synced
-   `artifacts/`) then call the `sidekick-sync` tool **`build_dashboard`** — it
+   (the `window.SK` data, in the local **`dashboard/`** subfolder, not
+   Drive-synced `artifacts/`) then call the `sidekick-sync` tool **`build_dashboard`** — it
    runs natively and bakes the kit + logo. Never paste `ui.js`/`ui.css` inline
    (the sandbox mount truncates the read; bash `dashboard.py` is fallback only),
    never Chart.js/D3/a CDN.

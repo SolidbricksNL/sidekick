@@ -4,17 +4,19 @@
 The agent NEVER reads or pastes the ~11 KB UI kernel — this script reads
 assets/ui.css + ui.js + solidbricks.png from disk (full, native, no context
 truncation) and bakes the complete page. The only thing the agent edits per
-dashboard is the tiny  artifacts/<slug>-dashboard.sk.json  data file.
+dashboard is the tiny  dashboard/<slug>-dashboard.sk.json  data file.
 
 Why a script: pasting the kernel inline made Cowork's agent-read truncate it
 (~11.4 KB), producing blank dashboards. A native read sidesteps that entirely.
 
 Layout (one dashboard per project; new one only on explicit request):
-  <project>/<slug>-dashboard.sk.json   <- source of truth (agent edits) — at the
-                                          PROJECT ROOT, NOT in artifacts/. artifacts/
-                                          is Drive-synced and its files can be
+  <project>/dashboard/<slug>-dashboard.sk.json   <- source of truth (agent edits).
+                                          In a LOCAL, NON-synced subfolder: not the
+                                          project root (untidy, sits next to agenda/
+                                          etc.) and NOT artifacts/, which is
+                                          Drive-synced and whose files can be
                                           cloud-only placeholders (stat ok, open
-                                          fails); the root is local, so reads here
+                                          fails); dashboard/ is local, so reads here
                                           are reliable.
   <project>/artifacts/<slug>-dashboard.html   <- built output (synced to Drive).
                                           dashboard.py only WRITES it; never read it
@@ -97,7 +99,7 @@ def _assemble(data):
         '<div id="root" class="app"></div>\n'
         "<script>window.SB_LOGO=" + json.dumps(logo) + ";</script>\n"
         "<!-- DATA: this dashboard's only editable part is the matching\n"
-        "     artifacts/<slug>-dashboard.sk.json — edit that and re-run dashboard.py build. -->\n"
+        "     dashboard/<slug>-dashboard.sk.json — edit that and re-run dashboard.py build. -->\n"
         "<script>window.SK=" + sk + ";</script>\n"
         "<script>\n" + js + "\n</script>\n</body></html>\n"
     )
@@ -110,10 +112,11 @@ def _esc(s):
 
 def _paths(project, slug):
     proj = Path(project)
-    # data at the project ROOT (local, reliable read — not the Drive-synced
-    # artifacts/, whose files can be cloud-only placeholders); html in artifacts/.
+    # editable source in a LOCAL, non-synced subfolder (dashboard/) — reliable
+    # read. NOT the project root (untidy) and NOT the Drive-synced artifacts/,
+    # whose files can be cloud-only placeholders (open fails). html in artifacts/.
     return (proj / "artifacts",
-            proj / (slug + "-dashboard.sk.json"),
+            proj / "dashboard" / (slug + "-dashboard.sk.json"),
             proj / "artifacts" / (slug + "-dashboard.html"))
 
 
@@ -127,8 +130,19 @@ def build(project, slug, title=None):
         raise RuntimeError("project must be an ABSOLUTE path (got: %s)" % project)
     art, data_path, html_path = _paths(project, slug)
     art.mkdir(parents=True, exist_ok=True)
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    # Migrate a legacy root-level sk.json (pre-v0.16.0) into dashboard/ so an
+    # existing dashboard keeps its content after the move.
+    legacy = Path(project) / (slug + "-dashboard.sk.json")
+    if legacy.exists() and not data_path.exists():
+        # utf-8-sig tolerates a BOM (e.g. a sk.json written by a Windows editor).
+        data_path.write_text(legacy.read_text(encoding="utf-8-sig"), encoding="utf-8")
+        try:
+            legacy.unlink()
+        except OSError:
+            pass
     if data_path.exists():
-        data = json.loads(data_path.read_text(encoding="utf-8"))
+        data = json.loads(data_path.read_text(encoding="utf-8-sig"))
         if title:
             data["workspace"] = title
     else:

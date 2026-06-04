@@ -137,7 +137,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.14.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.16.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -174,5 +174,10 @@ Cowork truncate the read and emit a blank page) — it edits a tiny per-project
 `<slug>-dashboard.sk.json` and the script bakes the UI kit + the real Solidbricks
 logo into the html. Each active project gets **one** "<Project> Dashboard"
 (created empty at scaffold; "add X" edits it in place); the **live Cowork
-artifact** wrapping the Drive-synced html is the primary deliverable. Run the
-manual-test checklist in Cowork before wider rollout.
+artifact** wrapping the Drive-synced html is the primary deliverable. The dashboard
+build then moved **into the native `sidekick-sync` MCP server** (`build_dashboard`
+tool, 0.15.0) after the sandbox mount was found to truncate a bash-run of the build
+script — the server reads the full UI kit natively (confirmed working in Cowork).
+The editable `<slug>-dashboard.sk.json` now lives in a tidy, local, non-synced
+`dashboard/` subfolder (0.16.0; auto-migrated from the old project-root location).
+Run the manual-test checklist in Cowork before wider rollout.

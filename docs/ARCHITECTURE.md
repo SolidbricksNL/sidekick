@@ -368,7 +368,8 @@ The kit ships as assets — `assets/ui.css` + `ui.js` + `solidbricks.png` — th
 build script, **`scripts/dashboard.py`**, reads from disk and bakes into the
 page. The agent **never reads or pastes the kernel** (an inline paste made Cowork
 truncate *the read* at ~11 KB → blank pages, v0.14.0); it only edits a small
-per-project **`artifacts/<slug>-dashboard.sk.json`** — the `window.SK` data
+per-project **`dashboard/<slug>-dashboard.sk.json`** (local, non-synced
+subfolder) — the `window.SK` data
 (collections → views, each `kind: dashboard | grid | listdetail | home`), built
 from query results. Each active project has **one** dashboard, "<Project>
 Dashboard", created as an empty skeleton at scaffold time; adding content edits
@@ -1006,6 +1007,17 @@ Resolved:
   calls `build_dashboard` → `reconcile_output` → live artifact. The bash
   `dashboard.py` stays as a fallback. This removes the build's dependence on
   bash-reading plugin files entirely.
+- **Dashboard source moved root → `dashboard/` subfolder (2026-06-04, v0.16.0).**
+  v0.14.3 had moved the editable `<slug>-dashboard.sk.json` out of the
+  Drive-synced `artifacts/` (cloud-only placeholders) to the **project root** —
+  reliable, but it sat loose next to `agenda/` etc. (user: untidy). It now lives
+  in a dedicated **local, non-synced `dashboard/` subfolder**
+  (`projects/<slug>/dashboard/<slug>-dashboard.sk.json`): still a reliable local
+  read (only `output/`+`artifacts/` sync, §7c), just tidier. `artifacts/` was
+  rejected again — it would reintroduce the v0.14.3 placeholder bug. `dashboard.py`
+  `_paths()` points there; `build()` **auto-migrates** a legacy root sk.json into
+  `dashboard/` on first run, so existing dashboards keep their content. Only the
+  built html stays in `artifacts/` (synced, write-only).
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

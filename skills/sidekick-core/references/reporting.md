@@ -126,8 +126,9 @@ read (~11.4 KB) and emit a **blank page**. The bundled **`dashboard.py`** reads
 
 1. **Query** each section with `data.py query` (or `reports.py run`); collect JSON.
 2. **Shape** the results into the dashboard's small data file
-   `<slug>-dashboard.sk.json` — **at the project root** (not `artifacts/`, which is
-   Drive-synced and may serve cloud-only placeholders). A `window.SK` object
+   `<slug>-dashboard.sk.json` — in the project's local **`dashboard/`** subfolder
+   (not the project root, and not `artifacts/`, which is Drive-synced and may
+   serve cloud-only placeholders). A `window.SK` object
    (collections → views, each `kind: dashboard | grid | listdetail | home`). Bake
    **computed** rows in; the calc rule stays in the recipe, never in the page.
 3. **Build via the `build_dashboard` MCP tool** (the `sidekick-sync` server):

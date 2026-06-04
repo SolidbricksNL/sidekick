@@ -49,9 +49,10 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
    dashboard** (build/extend it; don't make a new artifact unless asked).
 5. **Query each section** with `data.py query` and collect the JSON.
 6. **Build via the `build_dashboard` MCP tool — never paste the kernel.** Shape
-   the results into the dashboard's small data file `<slug>-dashboard.sk.json` at
-   the **project root** (not `artifacts/`, which is Drive-synced and may serve
-   cloud-only placeholders) — a `window.SK` object: collections → views, each
+   the results into the dashboard's small data file `<slug>-dashboard.sk.json` in
+   the project's local **`dashboard/`** subfolder (not the project root, and not
+   `artifacts/`, which is Drive-synced and may serve cloud-only placeholders) — a
+   `window.SK` object: collections → views, each
    `kind: dashboard | grid | listdetail | home`; **computed** rows baked in,
    labels in the **default output language**. Then call the `sidekick-sync`
    server's **`build_dashboard`** tool `{project: "<ABS>/projects/<slug>", slug,

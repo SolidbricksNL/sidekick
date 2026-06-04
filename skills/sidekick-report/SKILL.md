@@ -53,13 +53,16 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
    the project's local **`dashboard/`** subfolder (not the project root, and not
    `artifacts/`, which is Drive-synced and may serve cloud-only placeholders) — a
    `window.SK` object: collections → views, each
-   `kind: dashboard | grid | listdetail | home`; **computed** rows baked in,
-   labels in the **default output language**. Then call the `sidekick-sync`
-   server's **`build_dashboard`** tool `{project: "<ABS>/projects/<slug>", slug,
-   title: "<Project> Dashboard"}`. It runs **natively** and bakes the UI kit +
-   logo into `artifacts/<slug>-dashboard.html` — you never read/paste
-   `ui.js`/`ui.css`. (The bash `dashboard.py` is a fallback only — the sandbox
-   mount truncates it.) Full guide: `../sidekick-core/references/ui-kit.md`.
+   `kind: dashboard | grid | listdetail | home`. **Store QUERIES, not numbers:**
+   bind each KPI/chart/table/grid/panel to a `query` (read-only `SELECT`) or
+   `recipe`, columns aliased to the rendered field names (`ui-kit.md` → "Bind to
+   live data"); labels in the **default output language**. Then call the
+   `sidekick-sync` server's **`build_dashboard`** tool `{project:
+   "<ABS>/projects/<slug>", slug, title: "<Project> Dashboard"}`. It runs
+   **natively**, resolves the bindings against the live data store, and bakes the
+   UI kit + logo + fresh rows into `artifacts/<slug>-dashboard.html` — you never
+   read/paste `ui.js`/`ui.css`. (The bash `dashboard.py` is a fallback only — the
+   sandbox mount truncates it.) Full guide: `../sidekick-core/references/ui-kit.md`.
 7. **Save the recipe** if they'll want it again: add/update a section in
    `brain/reports.md` (name, purpose, the exact `SELECT`(s)) — a **brain write →
    diff + approval**. Also register it: `reports.py save --name <n> --sql "…"
@@ -70,9 +73,10 @@ Full protocol incl. the wrapper: `../sidekick-core/references/reporting.md`.
    (`reports.py save --name <slug>-dashboard --drive-file-id <id>`), then create
    the live artifact with **`mcp__cowork__create_artifact`** = the thin wrapper
    (file id + per-install `mcp__<uuid>__download_file_content` tool name). Present
-   **that**, not the file. Later data changes: edit the `.sk.json`, re-run
-   `build_dashboard`, re-sync — no new artifact. Full steps: reporting.md →
-   "Live dashboard". Without Drive/sync, fall back to a one-off snapshot file.
+   **that**, not the file. Later data changes: just re-run `build_dashboard`
+   (project only → rebuilds all dashboards, bindings re-run) + re-sync — no
+   editing, no new artifact. Full steps: reporting.md → "Live dashboard". Without
+   Drive/sync, fall back to a one-off snapshot file.
 
 ## Gatekeepers (reused — no new one)
 

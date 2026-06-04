@@ -59,25 +59,28 @@ _TOOLS = [
     },
     {
         "name": "build_dashboard",
-        "description": ("Build a project's dashboard HTML from its "
-                        "<slug>-dashboard.sk.json (in the project's local "
-                        "dashboard/ subfolder). Runs NATIVELY so it reads the full UI kit + logo "
-                        "from disk - prefer this over the bash dashboard.py, which "
-                        "the sandbox mount can truncate. Writes "
-                        "artifacts/<slug>-dashboard.html and returns JSON "
-                        "(data, html, collections). Then call reconcile_output to "
-                        "push it to Drive."),
+        "description": ("(Re)build a project's dashboard HTML from its "
+                        "dashboard/<slug>-dashboard.sk.json. Runs NATIVELY so it reads the "
+                        "full UI kit + logo AND resolves the sk.json's `query`/`recipe` "
+                        "bindings against the live data store (via data.py) - so the html "
+                        "always shows CURRENT numbers, no hand-editing. Prefer this over the "
+                        "bash dashboard.py (the sandbox mount truncates it). OMIT `slug` to "
+                        "rebuild EVERY dashboard in the project - do this after any data.py "
+                        "write so all dashboards refresh in one call. Returns JSON with "
+                        "`changed` (did the html actually move). Then call reconcile_output "
+                        "to push to Drive."),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "project": {"type": "string",
                             "description": "ABSOLUTE path to the project dir (same as reconcile_output)"},
-                "slug": {"type": "string", "description": "project slug, e.g. finance"},
+                "slug": {"type": "string", "description": "project slug, e.g. finance. "
+                         "OMIT to rebuild every dashboard in the project."},
                 "title": {"type": "string",
                           "description": "optional dashboard title, e.g. 'Finance Dashboard' "
                                          "(only needed for a fresh skeleton)"},
             },
-            "required": ["project", "slug"],
+            "required": ["project"],
         },
     },
 ]
@@ -122,7 +125,9 @@ def _call_tool(req_id, name, args):
             return _ok(req_id, sync.resolve(proj, args["base"], args["file"], args["keep"]))
         if name == "build_dashboard":
             proj = _resolve_project(args["project"])
-            return _ok(req_id, dashboard.build(proj, args["slug"], args.get("title")))
+            if args.get("slug"):
+                return _ok(req_id, dashboard.build(proj, args["slug"], args.get("title")))
+            return _ok(req_id, dashboard.build_all(proj))
         return _tool_error(req_id, f"unknown tool {name!r}")
     except KeyError as e:
         return _tool_error(req_id, f"missing argument {e}")

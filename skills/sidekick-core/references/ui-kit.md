@@ -174,16 +174,51 @@ anything else is neutral.
              items:[ {primary:"Steel invoice", secondary:"is 6% over rate.", meta:"Watch · finance"} ] } ] }
 ```
 
+## Bind to live data — store the query, NOT the numbers
+
+A `.sk.json` should hold **layout + bindings**, not hardcoded values. Give a
+KPI / card chart / card table / grid / list / panel a **`query`** (a read-only
+`SELECT`) or **`recipe`** (a name in `.reports.json`) and `build_dashboard`
+runs it **natively at build time** and bakes the **fresh** rows in. So the
+dashboard is a live view of the data store — after a `data.py` write you just
+**rebuild**, never hand-edit numbers (no desync, one source of truth = the query).
+
+**Alias your SELECT columns to the field names the element renders:**
+
+| Element | Binding | Result shape (column aliases) |
+|---|---|---|
+| KPI | `query`/`recipe` | one row → its columns merge into the KPI (`value`, `delta`, `sub`, `tone`) |
+| card `chart` | `chart.query` | rows → `chart.data`; alias `label`, `value`(, `color`) |
+| card `table` | `table.query` | rows → `table.rows`; alias the declared `cols[].key` |
+| `grid` view | `query` (+ `totals_query`) | rows → `rows`; `totals_query`'s first row → `totals` |
+| `listdetail` | `query` | rows → `items` (alias item fields) |
+| home `panel` | `panel.query` | rows → `items` (alias `primary`/`secondary`/`meta`) |
+
+```js
+// KPI: SQL computes AND formats; the page only renders.
+{ label:"Committed", query:"SELECT '€ '||printf('%.1fM', SUM(amount)/1e6) AS value, '95%' AS delta FROM deals" }
+// grid bound to a query, with a totals row:
+{ id:"ledger", kind:"grid", title:"Ledger",
+  columns:[{key:"date",label:"Date"},{key:"debit",label:"Debit",num:true}],
+  query:"SELECT date, debit FROM ledger ORDER BY date",
+  totals_query:"SELECT '€ '||SUM(debit) AS debit FROM ledger" }
+```
+
+The SQL does the calc **and** the display formatting (the rule "calc in the
+recipe, never in the page" still holds). A binding that fails (bad SQL, missing
+table) makes the build **error loudly** — never a silently stale page. Elements
+with no binding keep their literal values, so older hand-authored dashboards
+still build.
+
 ## How this fits reporting
 
-The numbers in `SK` are **computed rows** from `data.py query` / `reports.py run`
-— never raw table reads, never calc in the page (the rule from
+The numbers in `SK` come from `data.py query` / `reports.py run` (via bindings,
+above) — never raw table reads, never calc in the page (the rule from
 `data-discipline.md` and `reporting.md` still holds). One query → one card/tab.
-Labels in the default output language. A data change = edit the `.sk.json` (fresh
-query results), re-run `dashboard.py build`, re-sync to Drive — the live artifact
-reflects it. The **live Cowork artifact** is the primary deliverable; see
-`reporting.md` → "Live dashboard". You never re-paste the kernel — the builder
-owns it.
+Labels in the default output language. **A data change = re-run `build_dashboard`
+(it re-runs the bindings) + re-sync** — no editing values. The **live Cowork
+artifact** is the primary deliverable; see `reporting.md` → "Live dashboard".
+You never re-paste the kernel — the builder owns it.
 
 ## Keep it simple
 

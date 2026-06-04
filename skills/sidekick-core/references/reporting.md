@@ -125,18 +125,25 @@ read (~11.4 KB) and emit a **blank page**. The bundled **`dashboard.py`** reads
 `window.SK` data model: **`ui-kit.md`** (read it). In short:
 
 1. **Query** each section with `data.py query` (or `reports.py run`); collect JSON.
-2. **Shape** the results into the dashboard's small data file
-   `<slug>-dashboard.sk.json` — in the project's local **`dashboard/`** subfolder
-   (not the project root, and not `artifacts/`, which is Drive-synced and may
-   serve cloud-only placeholders). A `window.SK` object
-   (collections → views, each `kind: dashboard | grid | listdetail | home`). Bake
-   **computed** rows in; the calc rule stays in the recipe, never in the page.
+2. **Shape** the dashboard's small data file `<slug>-dashboard.sk.json` — in the
+   project's local **`dashboard/`** subfolder (not the project root, and not
+   `artifacts/`, which is Drive-synced and may serve cloud-only placeholders). A
+   `window.SK` object (collections → views, each `kind: dashboard | grid |
+   listdetail | home`). **Store the QUERY, not the numbers:** give each KPI /
+   chart / table / grid / panel a `query` (a read-only `SELECT`) or `recipe`
+   (a `.reports.json` name) and alias its columns to the field names the element
+   renders (see `ui-kit.md` → "Bind to live data"). The SQL does the calc **and**
+   the formatting; the page only renders. This makes the dashboard a live view —
+   no hardcoded values to desync, one source of truth.
 3. **Build via the `build_dashboard` MCP tool** (the `sidekick-sync` server):
    `{project: "<ABS>/projects/<slug>", slug: "<slug>", title: "<Project> Dashboard"}`.
-   It runs **natively** (reliable FS) and writes `artifacts/<slug>-dashboard.html`
-   (a branded **skeleton** if there is no `.sk.json` yet). **Do not** lean on the
-   bash `dashboard.py` — the sandbox mount truncates it (98/161 lines →
-   `SyntaxError`); it's a fallback only.
+   It runs **natively** (reliable FS): resolves the `query`/`recipe` bindings
+   against the live data store and bakes the FRESH rows into
+   `artifacts/<slug>-dashboard.html` (a branded **skeleton** if there is no
+   `.sk.json` yet). It returns `changed` (did the html move). **Omit `slug` to
+   rebuild every dashboard in the project** — do that after a data change. A bad
+   binding errors loudly (no silent stale). **Do not** lean on the bash
+   `dashboard.py` — the sandbox mount truncates it; it's a fallback only.
 4. **Show it as the live Cowork artifact** (next section) — that is the deliverable.
 
 **One per project; edit in place.** "Add X to the dashboard" → edit the
@@ -221,20 +228,22 @@ frames it.
   gone, `build_dashboard` makes a fresh skeleton. **Never error on a missing
   dashboard — (re)build and (re)create it.**
 
-### Keeping it live (the trigger)
+### Keeping it live (the trigger) — PROACTIVE, same turn
 
-When data or a rule changes — **through the chat, so you are in the loop** — edit
-the data and rebuild in the same turn, **no new artifact**:
+The `.sk.json` stores **queries, not numbers**, so a data change needs **no
+editing** — just rebuild. **After any `data.py insert/update/delete` in a project
+with a dashboard, in the same turn:**
 
-1. Edit the dashboard's `<slug>-dashboard.sk.json` (fresh `data.py query` rows).
-   (`reports.py uses --table <changed-table>` finds which dashboards a table
-   change touches.)
-2. Re-run `build_dashboard`, then `reconcile_output`. The Drive file is
-   overwritten **in place** (same id) — **no `mcp__cowork__create_artifact`, no
-   approval.** The live artifact shows the new version on Cowork's next refresh.
+1. Call **`build_dashboard` with `project` only (no `slug`)** — rebuilds **every**
+   dashboard, re-running each binding against the new data (check the returned
+   `any_changed`).
+2. Call `reconcile_output` — the Drive file(s) are overwritten **in place** (same
+   id), **no `mcp__cowork__create_artifact`, no approval**; the live artifact
+   updates on Cowork's next refresh.
 
-So: editing a salary → update the record → edit the `.sk.json` → `dashboard.py
-build` → re-sync → the live artifact reflects the new totals, untouched.
+So: edit a salary → `data.py update` → `build_dashboard {project}` →
+`reconcile_output` → every dashboard reflects the new totals. Don't wait for the
+user to notice it's stale — refresh as part of the write.
 
 > Needs the Drive connector + Output sync on (base path). Without them: build the
 > html and fall back to presenting it as a one-off snapshot file — tell the user

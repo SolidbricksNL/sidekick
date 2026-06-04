@@ -369,11 +369,15 @@ build script, **`scripts/dashboard.py`**, reads from disk and bakes into the
 page. The agent **never reads or pastes the kernel** (an inline paste made Cowork
 truncate *the read* at ~11 KB → blank pages, v0.14.0); it only edits a small
 per-project **`dashboard/<slug>-dashboard.sk.json`** (local, non-synced
-subfolder) — the `window.SK` data
-(collections → views, each `kind: dashboard | grid | listdetail | home`), built
-from query results. Each active project has **one** dashboard, "<Project>
-Dashboard", created as an empty skeleton at scaffold time; adding content edits
-the `.sk.json` and rebuilds in place. The kit is self-contained (no network), so
+subfolder) — the `window.SK` data (collections → views, each `kind: dashboard |
+grid | listdetail | home`). The `.sk.json` stores **layout + data bindings, not
+hardcoded numbers**: each KPI/chart/table/grid/panel carries a `query` (read-only
+`SELECT`) or `recipe` (a `.reports.json` name), and `build_dashboard` resolves
+them against the live data store (via `data.py`) and bakes the **fresh** rows in
+— so the dashboard is a live view, never a hand-edited snapshot (v0.17.0).
+Each active project has **one** dashboard, "<Project> Dashboard", created as an
+empty skeleton at scaffold time; adding content edits the `.sk.json` and rebuilds
+in place. The kit is self-contained (no network), so
 the built file is both the snapshot and the body the live artifact loads. Full
 guide + data model: `references/ui-kit.md`. The user can restyle freely.
 
@@ -388,10 +392,11 @@ only artifact that calls a connector.
 
 - The built `artifacts/<slug>-dashboard.html` is **synced to Drive** (the sync
   covers `artifacts/` as well as `output/`, §7c).
-- On a data/rule change the agent **edits the `.sk.json`, re-runs
-  `dashboard.py build`, and re-syncs**, overwriting the **same Drive file in
-  place** (stable file id) — **no new artifact, no approval**. Cowork's refresh
-  re-pulls it.
+- On a data change the agent **proactively re-runs `build_dashboard` (project
+  only → rebuilds every dashboard, re-running its bindings) and re-syncs**, in
+  the same turn as the `data.py` write — overwriting the **same Drive file in
+  place** (stable file id) — **no editing, no new artifact, no approval**. The
+  tool returns `changed` so a no-op rebuild is visible. Cowork's refresh re-pulls it.
 - Without Drive/sync, fall back to presenting the built `.html` as a one-off
   **snapshot** (opens anywhere, no auto-update) — the same file, shown directly.
 - The recipe is registered in `projects/<slug>/.reports.json` (project root,
@@ -1018,6 +1023,27 @@ Resolved:
   `_paths()` points there; `build()` **auto-migrates** a legacy root sk.json into
   `dashboard/` on first run, so existing dashboards keep their content. Only the
   built html stays in `artifacts/` (synced, write-only).
+- **Dashboards bind to LIVE data; proactive refresh (2026-06-04, v0.17.0).**
+  Real-run bug: after a `data.py update` the dashboard didn't refresh, and the
+  `.sk.json` held **hardcoded values** — so the agent hand-edited KPIs/totals
+  (error-prone, three copies of every number, instant desync). Fix per the bug
+  report (A–D): the `.sk.json` now stores **bindings, not numbers** — each
+  KPI/chart/table/grid/panel carries a `query` (read-only `SELECT`) or `recipe`
+  (a `.reports.json` name), columns aliased to the rendered field names.
+  `dashboard.py` `_resolve_bindings()` runs each query NATIVELY (via `data.py` /
+  `reports.py`, inside the `sidekick-sync` server) and bakes the FRESH rows in;
+  the **renderer (`ui.js`) is untouched** — it still just renders the resolved
+  `window.SK`. A bad binding raises (loud, never a silent stale page). `build()`
+  returns **`changed`** (html moved vs prior); new **`build_all()`** +
+  `build_dashboard` with **no `slug`** rebuilds every dashboard in one call. The
+  rule: after ANY `data.py insert/update/delete` in a project with a dashboard,
+  proactively call `build_dashboard {project}` + `reconcile_output` in the same
+  turn. Elements with no binding keep their literal values, so older
+  hand-authored dashboards still build. Smoke-tested: kpi/table/grid + totals
+  bindings bake live values, data change → rebuild bakes new totals + `changed`
+  flips, recipe binding works, bad query errors loudly. Updated ui-kit.md
+  ("Bind to live data" table + examples), reporting.md (store-the-query + the
+  proactive trigger), core + report SKILLs, §7b.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

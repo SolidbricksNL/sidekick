@@ -137,7 +137,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.16.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.17.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the
@@ -180,4 +180,9 @@ tool, 0.15.0) after the sandbox mount was found to truncate a bash-run of the bu
 script — the server reads the full UI kit natively (confirmed working in Cowork).
 The editable `<slug>-dashboard.sk.json` now lives in a tidy, local, non-synced
 `dashboard/` subfolder (0.16.0; auto-migrated from the old project-root location).
+In **0.17.0** the `.sk.json` stores **data bindings, not numbers**: each
+KPI/chart/table/grid carries a `query` or `recipe`, and `build_dashboard` runs it
+natively and bakes the **fresh** rows — so a data change just means re-running the
+build (no slug → rebuilds every dashboard), which the agent does proactively right
+after any `data.py` write. No hand-edited values, no desync.
 Run the manual-test checklist in Cowork before wider rollout.

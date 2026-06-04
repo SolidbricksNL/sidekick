@@ -6,6 +6,16 @@ assets/ui.css + ui.js + solidbricks.png from disk (full, native, no context
 truncation) and bakes the complete page. The only thing the agent edits per
 dashboard is the tiny  dashboard/<slug>-dashboard.sk.json  data file.
 
+The .sk.json holds LAYOUT + DATA BINDINGS, not hardcoded numbers: an element
+may carry a `query` (a read-only SELECT) or `recipe` (a name in .reports.json)
+instead of literal values. At build time `_resolve_bindings` runs each query
+NATIVELY via data.py and bakes the FRESH rows into the html — so the dashboard
+is a live view of the data store, never a stale snapshot the agent hand-edits.
+Alias your SELECT columns to the field names the renderer reads (label/value/
+color for a chart; the grid/table column keys; value/delta/sub/tone for a KPI;
+primary/secondary/meta for a panel item). Elements with no binding keep their
+literal values (older hand-authored dashboards still build unchanged).
+
 Why a script: pasting the kernel inline made Cowork's agent-read truncate it
 (~11.4 KB), producing blank dashboards. A native read sidesteps that entirely.
 
@@ -120,12 +130,83 @@ def _paths(project, slug):
             proj / "artifacts" / (slug + "-dashboard.html"))
 
 
+def _unbind(el):
+    el.pop("query", None)
+    el.pop("recipe", None)
+
+
+def _resolve_bindings(project, sk):
+    """Replace `query`/`recipe` bindings in the SK object with LIVE data, in
+    place. Each bound element aliases its SELECT columns to the field names the
+    renderer reads. This makes the dashboard a live view of the data store
+    (single source of truth = the query), not a hand-edited snapshot. Raises
+    RuntimeError (naming the failing query) so a bad binding is LOUD, never a
+    silently stale page."""
+    # data.py / reports.py are siblings; import lazily so a binding-free build
+    # never depends on them.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import data as data_mod
+    try:
+        import reports as reports_mod
+    except Exception:
+        reports_mod = None
+
+    def rows_for(el):
+        try:
+            if el.get("recipe"):
+                if reports_mod is None:
+                    raise RuntimeError("a `recipe` binding needs reports.py")
+                return reports_mod.run(project, el["recipe"]).get("rows", [])
+            return data_mod.query(project, el["query"]).get("rows", [])
+        except Exception as e:
+            ref = el.get("recipe") and ("recipe " + el["recipe"]) or el.get("query")
+            raise RuntimeError("dashboard binding failed (%s): %s" % (ref, e))
+
+    def bound(el):
+        return isinstance(el, dict) and ("query" in el or "recipe" in el)
+
+    def resolve(node):
+        if not isinstance(node, dict):
+            return
+        for kpi in node.get("kpis", []) or []:          # KPI strip / home kpis
+            if bound(kpi):
+                r = rows_for(kpi)
+                if r:
+                    kpi.update(r[0])                    # first row → kpi fields
+                _unbind(kpi)
+        for card in node.get("cards", []) or []:        # dashboard cards
+            ch, tb = card.get("chart"), card.get("table")
+            if bound(ch):
+                ch["data"] = rows_for(ch); _unbind(ch)
+            if bound(tb):
+                tb["rows"] = rows_for(tb); _unbind(tb)
+        for panel in node.get("panels", []) or []:      # home panels
+            if bound(panel):
+                panel["items"] = rows_for(panel); _unbind(panel)
+        if node.get("kind") == "grid" and bound(node):  # grid view
+            node["rows"] = rows_for(node); _unbind(node)
+        if node.get("kind") == "listdetail" and bound(node):
+            node["items"] = rows_for(node); _unbind(node)
+        if node.get("totals_query"):                    # grid totals row
+            tr = data_mod.query(project, node["totals_query"]).get("rows", [])
+            node.pop("totals_query")
+            if tr:
+                node["totals"] = tr[0]
+
+    for col in sk.get("collections", []) or []:
+        resolve(col)                                    # collection home (kpis/panels)
+        for view in col.get("views", []) or []:
+            resolve(view)
+
+
 def build(project, slug, title=None):
-    """Build (or skeleton) a project's dashboard. Returns a result dict; raises
-    RuntimeError on bad input or a truncated asset — so both the CLI and the
-    `sidekick-sync` MCP server (which runs NATIVELY, with reliable filesystem
-    access) handle it the same way. Building via the MCP server sidesteps the
-    sandbox bash mount that truncates large script-reads of plugin files."""
+    """Build (or skeleton) a project's dashboard. Resolves any `query`/`recipe`
+    bindings against the live data store before baking. Returns a result dict
+    (incl. `changed`: did the html actually move vs the prior build); raises
+    RuntimeError on bad input, a truncated asset, or a failing binding — so both
+    the CLI and the `sidekick-sync` MCP server (which runs NATIVELY, with
+    reliable filesystem access) handle it the same way. Building via the MCP
+    server sidesteps the sandbox bash mount that truncates script-reads."""
     if not Path(project).is_absolute():
         raise RuntimeError("project must be an ABSOLUTE path (got: %s)" % project)
     art, data_path, html_path = _paths(project, slug)
@@ -148,14 +229,45 @@ def build(project, slug, title=None):
     else:
         data = _skeleton(title or (slug.replace("-", " ").title() + " Dashboard"))
         data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    html_path.write_text(_assemble(data), encoding="utf-8")
+    _resolve_bindings(project, data)   # pull live query/recipe results into the SK
+    new_html = _assemble(data)
+    try:
+        prev = html_path.read_text(encoding="utf-8") if html_path.exists() else None
+    except OSError:
+        prev = None                    # placeholder/unhydrated — can't compare
+    changed = new_html != prev
+    html_path.write_text(new_html, encoding="utf-8")
     return {"data": str(data_path), "html": str(html_path),
-            "collections": len(data.get("collections", []))}
+            "collections": len(data.get("collections", [])), "changed": changed}
+
+
+def _dashboard_slugs(project):
+    """Every dashboard slug in a project — the dashboard/ subfolder plus any
+    legacy root-level sk.json (build() migrates the latter)."""
+    proj, suffix, slugs = Path(project), "-dashboard.sk.json", set()
+    for f in (proj / "dashboard").glob("*" + suffix):
+        slugs.add(f.name[:-len(suffix)])
+    for f in proj.glob("*" + suffix):
+        slugs.add(f.name[:-len(suffix)])
+    return sorted(slugs)
+
+
+def build_all(project):
+    """Rebuild EVERY dashboard in a project (used after a data change, so the
+    one tool call refreshes all affected dashboards). Each keeps its own title.
+    Returns per-dashboard results + whether any html actually changed."""
+    if not Path(project).is_absolute():
+        raise RuntimeError("project must be an ABSOLUTE path (got: %s)" % project)
+    built = [build(project, slug) for slug in _dashboard_slugs(project)]
+    return {"ok": True, "count": len(built), "built": built,
+            "any_changed": any(b.get("changed") for b in built)}
 
 
 def cmd_build(a):
     try:
-        print(json.dumps(build(a.project, a.slug, a.title)))
+        out = build(a.project, a.slug, a.title) if a.slug \
+            else build_all(a.project)
+        print(json.dumps(out))
     except RuntimeError as e:
         sys.exit("ERROR: " + str(e))
 
@@ -171,7 +283,8 @@ def main():
     for name in ("build", "path"):
         s = sub.add_parser(name)
         s.add_argument("--project", required=True)
-        s.add_argument("--slug", required=True)
+        # build with no --slug rebuilds every dashboard in the project.
+        s.add_argument("--slug", required=(name == "path"), default=None)
         if name == "build":
             s.add_argument("--title", default=None)
     a = p.parse_args()

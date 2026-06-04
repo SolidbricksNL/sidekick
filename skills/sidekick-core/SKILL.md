@@ -140,8 +140,9 @@ this goes wrong, all forbidden:
    `sqlite3` CLI, ad-hoc `python`, or hardcoded rows.
 3. **Build via the `build_dashboard` MCP tool, never paste the kernel.** Each
    project has **one** dashboard; you edit its small `<slug>-dashboard.sk.json`
-   (the `window.SK` data, in the local **`dashboard/`** subfolder, not
-   Drive-synced `artifacts/`) then call the `sidekick-sync` tool **`build_dashboard`** — it
+   (in the local **`dashboard/`** subfolder, not Drive-synced `artifacts/`; it
+   stores **queries not values** — a `query`/`recipe` per element) then call the
+   `sidekick-sync` tool **`build_dashboard`** — it
    runs natively and bakes the kit + logo. Never paste `ui.js`/`ui.css` inline
    (the sandbox mount truncates the read; bash `dashboard.py` is fallback only),
    never Chart.js/D3/a CDN.
@@ -152,10 +153,12 @@ this goes wrong, all forbidden:
    id from `.reports.json`, download tool name from the session tools.
 6. **Save the recipe** — `brain/reports.md` (diff + approval) + `.reports.json`.
 
-After a data change: edit the dashboard's `.sk.json`, call `build_dashboard`,
-`reconcile_output` (overwrites the Drive file in place, no new artifact, no
-approval). Protocol: `references/reporting.md` + `references/ui-kit.md`. (A bare
-number / one-off answer needs no dashboard — just `data.py query` and say it.)
+After ANY `data.py` write in a project with a dashboard: **proactively, same
+turn**, call `build_dashboard` with **project only** (no slug → rebuilds all
+dashboards; bindings re-run, no editing) + `reconcile_output` — don't wait for
+the user to notice it's stale. Protocol: `references/reporting.md` +
+`references/ui-kit.md`. (A bare number / one-off answer needs no dashboard —
+just `data.py query` and say it.)
 
 ### Discipline 1 — Log freely (`log/`)
 

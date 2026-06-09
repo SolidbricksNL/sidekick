@@ -48,6 +48,7 @@ const EXPECTED_TREE = [
   'skills/sidekick-core/scripts/dashboard.py',
   'skills/sidekick-init/SKILL.md',
   'skills/sidekick-init/references/settings-template.md',
+  'skills/sidekick-init/references/workspace-claude-template.md',
   'skills/sidekick-triage/SKILL.md',
   'skills/sidekick-triage/references/triage-template.md',
   'skills/sidekick-checkin/SKILL.md',

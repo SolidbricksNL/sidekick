@@ -51,9 +51,16 @@ skeleton). Created **lazily** on first use: `data/` (first table), `.sidekick/`
   `save_report` tool and the sync engine — not by hand).
 
 Data **backups/snapshots** stay inside `data/` (`.snapshots/`, `.backups/`).
-The system folders `_triage/` and `_archive/` live at the **Cowork workspace
-root**, not inside a project — don't confuse `_archive/` with a project's
-`archive/`.
+
+**The workspace root** (the Cowork project folder, one level above `projects/`)
+holds exactly two loose files — `CLAUDE.md` (the always-on contract Cowork
+auto-loads every session; the rules that keep work out of the root) and
+`sidekick.settings.md` — plus the folders `projects/`, `_triage/`, `_archive/`.
+**Nothing else belongs loose in the workspace root, ever** — a stray document,
+script, or note there is the failure this layout exists to prevent; route it
+into a `projects/<slug>/` folder (when unsure which project, ask). The system
+folders `_triage/` and `_archive/` are workspace-level, not inside a project —
+don't confuse `_archive/` with a project's `archive/`.
 
 ## The two levels
 

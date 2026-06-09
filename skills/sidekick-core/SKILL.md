@@ -34,7 +34,10 @@ replace gatekeeper confirmations — it is *how* you ask them. Full guidance:
 
 ## Session-start protocol
 
-1. **Read settings** (above).
+1. **Read settings** (above). If the workspace-root `CLAUDE.md` is **missing**
+   (a workspace set up before this layer), offer to create it from
+   `../sidekick-init/references/workspace-claude-template.md` — the always-on
+   contract Cowork auto-loads to keep work out of the root. One-tap; don't nag.
 2. **Determine the project** (see "Project detection").
 3. **Read the project's `CLAUDE.md` and the brain files it points to**,
    plus `agenda.md`, so you have context without the user re-explaining.
@@ -224,26 +227,22 @@ change (new table, new column). Never present SQL or jargon as the question.
 
 ## The data store, in brief
 
-Structured data lives in **plain JSON files** under `projects/<slug>/data/`. A
-shared spreadsheet/CSV/table is the trigger — propose a table rather than logging
-the rows. **All access goes through `scripts/data.py`** — never the `sqlite3`
-CLI, ad-hoc `python`, or a raw read/edit of the JSON. Resolve the scripts dir
-first (`$CLAUDE_PLUGIN_ROOT` is unset in the shell):
-`SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
-then `python3 "$SK/data.py" <cmd> --project projects/<slug> …`. **To answer any
-question about stored data, run `data.py query`** — never read/`grep` the JSON,
-even "just to look". Before filtering a category/text column, check its exact
-values with `data.py info` or `SELECT DISTINCT` (real spelling, e.g. `ON-PREM`
-not `ONPREM`). Extend existing tables before adding new ones. Reading and fitting
-records in is free; structure changes need confirmation. Full protocol:
-`references/data-discipline.md`.
+Structured data lives in **plain JSON files** under `projects/<slug>/data/`; a
+shared spreadsheet/CSV/table is the trigger to propose a table. **All access
+goes through `scripts/data.py`** — never the `sqlite3` CLI, ad-hoc `python`, or
+a raw read/edit. Resolve the dir first (`$CLAUDE_PLUGIN_ROOT` is unset in the
+shell): `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
+then `python3 "$SK/data.py" <cmd> --project projects/<slug> …`. **Answer any
+question about stored data with `data.py query`** (never read/`grep` the JSON);
+check a category column's exact values (`data.py info`) before filtering. Extend
+existing tables before adding new. Full protocol: `references/data-discipline.md`.
 
 ## What to keep out of the chat
 
-Write-ups/analyses/drafts → `log/` (free, summary in chat); durable facts →
-`brain/` (diff + approval); structured records → `data/` via `scripts/data.py`;
-deliverables → `output/` (confirm). The chat is the steering wheel; the disk is
-the workbench.
+The chat is the steering wheel; the disk is the workbench. Write-ups → `log/`
+(free, summary in chat); facts → `brain/` (diff + approval); records → `data/`
+via `scripts/data.py`; deliverables → `output/` (confirm). **Nothing loose in
+the workspace root** — every write lands in a `projects/<slug>/` folder.
 
 ## Related skills
 

@@ -83,12 +83,19 @@ list. Accept a free-text answer where it makes sense (role, "other").
 After the questions, **summarize all answers** and ask for confirmation
 before writing anything.
 
-## Writing `sidekick.settings.md`
+## Writing `sidekick.settings.md` and the workspace `CLAUDE.md`
 
-On confirmation, write `sidekick.settings.md` to the Cowork root using
-the structure in `references/settings-template.md`. Fill in every field
-from the answers. Do not invent values; for "Other" use the user's
-specified text.
+On confirmation, write **two** files to the Cowork root:
+
+1. `sidekick.settings.md`, using the structure in
+   `references/settings-template.md`. Fill in every field from the answers. Do
+   not invent values; for "Other" use the user's specified text.
+2. `CLAUDE.md`, copied verbatim from `references/workspace-claude-template.md`
+   (no placeholders to fill). This is the **always-on workspace contract**:
+   Cowork auto-loads it into every session, so it is what keeps later chats
+   structured even when the `sidekick-core` skill doesn't self-trigger — without
+   it, work leaks into the root. If a `CLAUDE.md` already exists in the root,
+   show its content and ask before overwriting.
 
 **Important:** init does **not** turn any connector on. It only records
 what the user wants. Actually enabling a connector (email, chat, storage,
@@ -128,8 +135,9 @@ nested projects (see `../sidekick-core/references/project-structure.md`).
 After everything is written, give the user a short, non-technical
 wrap-up:
 
-1. **What was created** — settings file, the first project, and the
-   system folders.
+1. **What was created** — the settings file, the workspace `CLAUDE.md`
+   (the standing rules that keep every future chat structured), the first
+   project, and the system folders.
 2. **How to schedule the triage.** Explain that the `sidekick-triage`
    skill is meant to run as a **scheduled task in Cowork**, and that they
    set the frequency themselves there (e.g. daily or twice a week). Point

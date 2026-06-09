@@ -59,6 +59,7 @@ the **root**. Everything lives underneath it.
 
 ```
 <cowork-root>/                     ← the Cowork project folder = root
+├── CLAUDE.md                      ← always-on workspace contract (auto-loaded every session)
 ├── sidekick.settings.md           ← role + languages + connections (from init)
 ├── _triage/                       ← output of the scheduled scan (input for check-in)
 │   └── YYYYMMDD-triage.md
@@ -79,6 +80,29 @@ the **root**. Everything lives underneath it.
     └── projects/
         └── <archived-project>/    ← full project folder, moved here
 ```
+
+The two loose files in the **workspace root** are `CLAUDE.md` and
+`sidekick.settings.md`; the only folders are `projects/`, `_triage/`,
+`_archive/`. **Nothing else belongs loose in the root** — every document,
+script, note, or data file lives under a `projects/<slug>/` folder.
+
+### 3.0a The workspace `CLAUDE.md` (enforcement anchor)
+
+Sidekick's disciplines are only enforced if the model actually receives them.
+A skill (even `sidekick-core`, labelled "always-on") fires by **model
+invocation** — nothing guarantees it loads in a given chat — and **Cowork does
+not fire plugin hooks** (no SessionStart/PreToolUse; the harness ignores
+plugin-scoped `hooks.json`). So neither a skill nor a hook is a reliable
+always-on layer. The one mechanism Cowork honours is a **`CLAUDE.md` in the
+workspace root**: Cowork auto-loads it into the system prompt at the start of
+every session and re-injects it after compaction. Therefore the hard rules
+(invoke `sidekick-core`; read `sidekick.settings.md`; **never write loose to the
+root**; route every write into `projects/<slug>/{log,brain,output,data}`) live
+**in that file**, not only in a skill. `sidekick-init` writes it at setup (from
+`skills/sidekick-init/references/workspace-claude-template.md`); `sidekick-core`
+self-heals it on session start if it is missing (existing workspaces created
+before this layer). Keep it small — it is loaded every session and is subject to
+the same ~15808 B install/read truncation cliff as the skills.
 
 ### 3.0 Project scaffold
 
@@ -714,7 +738,9 @@ sidekick/
 │   │       └── sync_server.py     ← `sidekick-sync` MCP server (native; wraps sync.py)
 │   ├── sidekick-init/
 │   │   ├── SKILL.md
-│   │   └── references/settings-template.md
+│   │   └── references/
+│   │       ├── settings-template.md
+│   │       └── workspace-claude-template.md  ← root CLAUDE.md (workspace enforcement anchor)
 │   ├── sidekick-triage/
 │   │   ├── SKILL.md
 │   │   └── references/triage-template.md
@@ -1145,6 +1171,28 @@ Resolved:
   **`--sql "…"` flag** (not positionally). (The `--sql` CLI wasn't made
   positional-tolerant on purpose — data.py is the cap-fragile file; documented
   syntax + enriched errors cover it.) plugin.json → 0.19.2.
+- **Workspace `CLAUDE.md` = the always-on enforcement anchor (2026-06-09,
+  v0.20.0).** Cowork testing surfaced the core gap: a fresh workspace started
+  clean (chat 1 ran `sidekick-init`, built a proper `projects/<slug>/`), but
+  later chats wrote loose files straight to the workspace root (`*.md` prompts,
+  `*.py` scripts) — the structure was never enforced. Root cause: the entire
+  discipline rested on `sidekick-core` being "always-on," but a skill fires only
+  by **model invocation** (no guarantee it loads), and **Cowork does not fire
+  plugin hooks** — open issues confirm SessionStart/PreToolUse and plugin-scoped
+  `hooks.json` are ignored in Cowork (`--setting-sources user` excludes plugin
+  scope). So the original "SessionStart/PreToolUse hook" idea is a non-starter on
+  this platform. The one always-on layer Cowork *does* honour is a **`CLAUDE.md`
+  in the workspace root**, auto-loaded into the system prompt every session and
+  re-injected after compaction. Fix: the hard rules now live in that file —
+  `sidekick-init` writes it from the new
+  `skills/sidekick-init/references/workspace-claude-template.md`, and
+  `sidekick-core`'s session-start protocol **self-heals** it (offers to create it
+  if missing) so workspaces made before this layer get covered without a re-init.
+  Kept small (well under the 15808 B cliff) since it loads every session. §3.0a
+  documents the rationale. Caveats: the plugin change reaches a workspace only on
+  **reinstall**, and an already-broken workspace heals only once a chat invokes
+  `sidekick-core` (or the root `CLAUDE.md` is dropped in by hand). plugin.json →
+  0.20.0.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

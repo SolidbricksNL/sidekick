@@ -1,9 +1,12 @@
 ---
 name: sidekick-checkin
-description: User-initiated cross-project review. Use when the user runs /sidekick-checkin or asks for a check-in, a review of where things stand, "what needs my attention", or to go through the triage findings. Walks every non-archived project, reads each agenda.md, cross-references the latest triage findings in _triage/ and — if connected — the calendar, and proposes concrete actions per project. All proposed changes follow the normal gatekeeper rules: brain changes need a diff + approval; output and database-structure changes need confirmation.
+description: User-initiated cross-project review. Use when the user runs /sidekick-checkin or asks for a check-in, a review of where things stand, "what needs my attention", or to go through the triage findings. Walks every non-archived project, reads each agenda.md, cross-references the latest triage findings in _triage/ and — if connected — the calendar, and proposes concrete actions per project. All proposed changes follow the normal gatekeeper rules: brain changes need a diff + approval; output and database-structure changes need confirmation. Cowork Sidekick workspaces only — without sidekick.settings.md and outside Cowork, reply that this is not a Sidekick workspace and stop.
 ---
 
 # Sidekick — Check-in
+
+> **Gate:** no `sidekick.settings.md` and no cowork MCP tools (Claude Code /
+> code repo / plain chat)? Say this isn't a Sidekick workspace and stop.
 
 You run the user's cross-project check-in. You bring together what each
 project's agenda says, what the triage found, and what the calendar

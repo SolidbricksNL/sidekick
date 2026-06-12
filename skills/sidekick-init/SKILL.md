@@ -1,9 +1,12 @@
 ---
 name: sidekick-init
-description: One-time (or re-run) setup for Sidekick. Use when the user runs /sidekick-init, when sidekick.settings.md is missing, or when the user asks to set up, configure, or re-configure their Sidekick workspace, role, languages, or connections. Walks the user through a short multiple-choice questionnaire (role, chat language, default output language, email/messages/storage/calendar connections, and — when storage is connected — optional output sync to that storage), writes sidekick.settings.md to the Cowork root, scaffolds at least one initial project, and then explains how to schedule the triage and which connectors may need enabling.
+description: One-time (or re-run) setup for Sidekick. Use when the user runs /sidekick-init, when sidekick.settings.md is missing, or when the user asks to set up, configure, or re-configure their Sidekick workspace, role, languages, or connections. Walks the user through a short multiple-choice questionnaire (role, chat language, default output language, email/messages/storage/calendar connections, and — when storage is connected — optional output sync to that storage), writes sidekick.settings.md to the Cowork root, scaffolds at least one initial project, and then explains how to schedule the triage and which connectors may need enabling. Cowork only — outside Cowork (no cowork MCP tools, e.g. Claude Code or a code repo), reply that Sidekick workspaces are set up in Cowork, and stop.
 ---
 
 # Sidekick — Init
+
+> **Gate:** not in Cowork (no cowork MCP tools)? Say Sidekick workspaces are
+> set up in Cowork, and stop.
 
 You set up the Sidekick workspace. Be friendly, brief, and
 non-technical. Ask the questions one at a time as multiple choice so the

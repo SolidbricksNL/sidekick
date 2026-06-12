@@ -1,9 +1,12 @@
 ---
 name: sidekick-archive
-description: Archive a finished or dormant project. Use when the user runs /sidekick-archive or asks to archive, close out, retire, or shelve a project. Moves the entire project folder from projects/<slug>/ to _archive/projects/<slug>/. Nothing is deleted — archiving is a move, fully reversible. Archived projects no longer participate in project detection, triage, or check-in, but remain consultable. Always confirms which project before moving, and never deletes.
+description: Archive a finished or dormant project. Use when the user runs /sidekick-archive or asks to archive, close out, retire, or shelve a project. Moves the entire project folder from projects/<slug>/ to _archive/projects/<slug>/. Nothing is deleted — archiving is a move, fully reversible. Archived projects no longer participate in project detection, triage, or check-in, but remain consultable. Always confirms which project before moving, and never deletes. Cowork Sidekick workspaces only — without sidekick.settings.md and outside Cowork, reply that this is not a Sidekick workspace and stop.
 ---
 
 # Sidekick — Archive
+
+> **Gate:** no `sidekick.settings.md` and no cowork MCP tools (Claude Code /
+> code repo / plain chat)? Say this isn't a Sidekick workspace and stop.
 
 You archive a project by **moving** its folder. You never delete
 anything. Archiving is reversible: it's a relocation, not a removal.

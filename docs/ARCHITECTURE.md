@@ -27,6 +27,44 @@ enforcing three strictly separated **write disciplines**.
 
 ---
 
+## 1b. Surface gate — Sidekick is Cowork-only
+
+The plugin is installed user-level, so **every** Claude surface (Cowork,
+Claude Code, desktop chat) loads its skill descriptions and the
+`sidekick-sync` MCP server. Only Cowork is Sidekick's home; without a
+gate the model invoked `sidekick-core` in Claude Code repos and plain
+chats and tried to follow workspace rules there (or nagged about
+`/sidekick-init`).
+
+Install scoping cannot solve this — Cowork runs with `--setting-sources
+user`, so the plugin must stay enabled in user settings, and desktop
+chat has no plugin scoping at all. The gate (v0.22.0) therefore lives in
+the skills themselves:
+
+- **Discriminator:** `sidekick.settings.md` in the workspace root =
+  active Sidekick workspace. Absent **but** Cowork MCP tools
+  (`mcp__cowork__*`) available = uninitialized Cowork workspace → offer
+  `/sidekick-init`. Absent **and** no Cowork tools = foreign surface
+  (Claude Code, a code repo, a plain chat).
+- **`sidekick-core`** (the only model-invoked skill): its description
+  forbids invocation outside a Sidekick workspace, and its "Read
+  settings first" step branches — on a foreign surface it stands down
+  silently: no Sidekick rules, no `/sidekick-init` offer, no
+  `projects/`, as if the plugin weren't installed.
+- **Typed skills** (`/sidekick-init`, `-triage`, `-checkin`,
+  `-archive`, `-status`, `-find`, `-report`): on a foreign surface they
+  say this is not a Sidekick workspace and stop. `/sidekick-guide` is
+  the exception — pure conversation, it may explain the plugin
+  anywhere, but notes that Sidekick itself only operates in Cowork.
+- **Residual cost, accepted:** the skill descriptions and the MCP
+  server still load on every surface; the gate stops *behavior*, not
+  *loading*. A user can additionally hard-disable the plugin per code
+  repo via `.claude/settings.json` →
+  `"enabledPlugins": {"sidekick@<marketplace>": false}` (project
+  settings don't affect Cowork).
+
+---
+
 ## 2. The central principle: three write disciplines
 
 This is the heart of the plugin. Everything Sidekick writes falls into

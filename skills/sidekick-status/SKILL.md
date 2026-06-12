@@ -1,9 +1,12 @@
 ---
 name: sidekick-status
-description: Read-only cross-project status overview for Sidekick. Use when the user runs /sidekick-status or asks "where do things stand", "what's going on across my projects", "give me an overview", or "status". Walks every non-archived project and reports, in prose, the open agenda items, the number of undistilled logs, the last check-in date, the data/ tables with row counts, and how recently each project was active; notes upcoming calendar items if connected. Writes nothing and proposes nothing — it is the read-only sibling of /sidekick-checkin. Does NOT act, distill, or change any file.
+description: Read-only cross-project status overview for Sidekick. Use when the user runs /sidekick-status or asks "where do things stand", "what's going on across my projects", "give me an overview", or "status". Walks every non-archived project and reports, in prose, the open agenda items, the number of undistilled logs, the last check-in date, the data/ tables with row counts, and how recently each project was active; notes upcoming calendar items if connected. Writes nothing and proposes nothing — it is the read-only sibling of /sidekick-checkin. Does NOT act, distill, or change any file. Cowork Sidekick workspaces only — without sidekick.settings.md and outside Cowork, reply that this is not a Sidekick workspace and stop.
 ---
 
 # Sidekick — Status
+
+> **Gate:** no `sidekick.settings.md` and no cowork MCP tools (Claude Code /
+> code repo / plain chat)? Say this isn't a Sidekick workspace and stop.
 
 You give the user a fast, **read-only** picture of where everything stands.
 You change nothing, propose nothing, and ask nothing through a picker — this

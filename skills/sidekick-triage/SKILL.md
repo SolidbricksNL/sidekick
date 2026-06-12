@@ -1,9 +1,12 @@
 ---
 name: sidekick-triage
-description: Scheduled scan of connected email, chat, and calendar, bundled into one skill. Use when the user runs /sidekick-triage or when this skill runs as a scheduled Cowork task. Reviews recent messages, emails, and calendar items, and notes a per-project count of undistilled logs as a heads-up (the check-in does the actual log distilling), writing a timestamped findings file to _triage/YYYYMMDD-HHMM-triage.md at the Cowork root (one per run, so it can run several times a day). It NEVER writes to any project brain or log and never takes action on the user's behalf — its output is purely input for the user-initiated /sidekick-checkin. The human stays the gatekeeper.
+description: Scheduled scan of connected email, chat, and calendar, bundled into one skill. Use when the user runs /sidekick-triage or when this skill runs as a scheduled Cowork task. Reviews recent messages, emails, and calendar items, and notes a per-project count of undistilled logs as a heads-up (the check-in does the actual log distilling), writing a timestamped findings file to _triage/YYYYMMDD-HHMM-triage.md at the Cowork root (one per run, so it can run several times a day). It NEVER writes to any project brain or log and never takes action on the user's behalf — its output is purely input for the user-initiated /sidekick-checkin. The human stays the gatekeeper. Cowork Sidekick workspaces only — without sidekick.settings.md and outside Cowork, reply that this is not a Sidekick workspace and stop.
 ---
 
 # Sidekick — Triage
+
+> **Gate:** no `sidekick.settings.md` and no cowork MCP tools (Claude Code /
+> code repo / plain chat)? Say this isn't a Sidekick workspace and stop.
 
 You scan the user's connected sources and write a findings file. You do
 the heavy lifting (scanning and proposing); the user decides later via

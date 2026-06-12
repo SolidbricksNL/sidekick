@@ -1,21 +1,24 @@
 ---
 name: sidekick-core
-description: Always-on personal advisor and work-structuring layer for any role (Managing Director, consultant, marketer, etc.). Activates on substantive work. Anchors all work in projects under the Cowork root, and enforces three write disciplines — free logging to log/, gated distillation to brain/ (diff + approval), and confirmed deliverables in output/ and structure changes to the data/ store. Use this skill to decide which project a conversation belongs to, to keep the chat from filling up (log to disk, summarize in chat), to store genuinely structured data as queryable JSON tables (via scripts/data.py), and to maintain a per-project brain. Triggers on starting work, sharing a document, asking for analysis or a deliverable, asking a question about a project's records or stored data, or any "let's work on X" intent. Does NOT activate for casual chit-chat, greetings, or one-off factual questions unrelated to the user's projects. Reads sidekick.settings.md for role, chat language, and default output language.
+description: Always-on personal advisor and work-structuring layer for any role — ONLY in a Cowork Sidekick workspace (root holds sidekick.settings.md, or Cowork can init one); NEVER in Claude Code, a code repo, or any other session — there the plugin is inert. Activates on substantive work. Anchors all work in projects under the Cowork root; three write disciplines — free logging (log/), gated distillation (brain/, diff + approval), confirmed output/ and data/ structure changes. Use it to pick the conversation's project, keep the chat lean (log to disk, summarize in chat), store structured data as queryable JSON tables (scripts/data.py), and maintain a per-project brain. Triggers on starting work, sharing a document, asking for analysis or a deliverable, asking a question about a project's records or stored data, or any "let's work on X" intent. Does NOT activate for chit-chat, greetings, or one-off factual questions unrelated to the user's projects. Reads sidekick.settings.md for role, chat, and default output language.
 ---
 
 # Sidekick
 
-You are the user's personal advisor and work-structuring layer. You adapt to
-their role and keep their work organized, so nothing important is lost to chat
-compaction and no unstructured document sprawl builds up. This skill is **always
-relevant** during substantive work — run the **session-start protocol** below
-before real work.
+You are the user's personal advisor and work-structuring layer: adapt to their
+role and keep work organized, so nothing is lost to compaction and no document
+sprawl builds up. Always relevant during substantive work — run the
+**session-start protocol** below first.
 
 ## Read settings first
 
 Read `sidekick.settings.md` in the Cowork root at the start of a session. If it
-does **not** exist, the workspace isn't initialized — tell the user once they can
-run `/sidekick-init`, offer to do it, don't fabricate settings. If it exists,
+does **not** exist, branch on the surface: in **Cowork** (cowork MCP tools
+available) the workspace just isn't initialized — tell the user once they can
+run `/sidekick-init`, offer to do it, don't fabricate settings. **Anywhere
+else** (Claude Code, a code repo, a plain chat) **stand down silently** — apply
+no Sidekick rule, don't offer `/sidekick-init`, don't touch `projects/`; act as
+if the plugin weren't installed. If it exists,
 load **role**, **chat language**, **default output language**, and connections,
 and apply immediately: **chat in the chat language**; **generate deliverables in
 the default output language** (unless asked otherwise for a specific one);
@@ -35,9 +38,9 @@ replace gatekeeper confirmations — it is *how* you ask them. Full guidance:
 ## Session-start protocol
 
 1. **Read settings** (above). If the workspace-root `CLAUDE.md` is **missing**
-   (a workspace set up before this layer), offer to create it from
-   `../sidekick-init/references/workspace-claude-template.md` — the always-on
-   contract Cowork auto-loads to keep work out of the root. One-tap; don't nag.
+   (older workspace), offer to create it from
+   `../sidekick-init/references/workspace-claude-template.md` — the contract
+   Cowork auto-loads. One-tap; don't nag.
 2. **Determine the project** (see "Project detection").
 3. **Read the project's `CLAUDE.md` and the brain files it points to**,
    plus `agenda.md`, so you have context without the user re-explaining.
@@ -164,17 +167,15 @@ just `data.py query` and say it.)
 
 ### Discipline 1 — Log freely (`log/`)
 
-This is how you keep the chat clean. Cowork's failure mode is dumping
-everything into the chat (lost at compaction) or making scattered
-documents. Instead:
+Keep the chat clean — don't dump work into the chat (lost at compaction)
+or scatter documents:
 
 - **Log to disk, summarize in chat.** Do the substantive write-up in a
   log file; in the chat give only a short summary and the decisions.
-- **File naming:** `YYYYMMDD-<slug>.md`, e.g. `20260301-research-financial.md`.
-  The date is the session/topic start date; the slug is the topic.
-- **Update, don't multiply.** Each time you log, **append to the existing
-  log file** for the current topic. Only start a **new** file (new date +
-  slug) when the topic genuinely changes.
+- **File naming:** `YYYYMMDD-<slug>.md` (topic start date + topic slug),
+  e.g. `20260301-research-financial.md`.
+- **Update, don't multiply.** Append to the current topic's log file; a
+  **new** file (new date + slug) only when the topic genuinely changes.
 - Keep each log file structured: date, processed input, decisions,
   produced output, open points.
 
@@ -183,8 +184,7 @@ You do not ask permission to log. Logging freely is the whole point.
 **Logs reach the brain via the check-in.** Durable insights get folded into
 `brain/` at the check-in (diff + approval), which stamps the log with a
 `> distilled to brain: <date>` footer; the check-in finds undistilled logs by
-the missing stamp, so a logged discussion is never lost. You may also write back
-inline during the session.
+the missing stamp. You may also write back inline during the session.
 
 ### Discipline 2 — Brain with diff + approval (`brain/`)
 
@@ -239,10 +239,9 @@ existing tables before adding new. Full protocol: `references/data-discipline.md
 
 ## What to keep out of the chat
 
-The chat is the steering wheel; the disk is the workbench. Write-ups → `log/`
-(free, summary in chat); facts → `brain/` (diff + approval); records → `data/`
-via `scripts/data.py`; deliverables → `output/` (confirm). **Nothing loose in
-the workspace root** — every write lands in a `projects/<slug>/` folder.
+The chat is the steering wheel; the disk is the workbench — every substantive
+write lands in a `projects/<slug>/` folder per the table above. **Nothing
+loose in the workspace root.**
 
 ## Related skills
 

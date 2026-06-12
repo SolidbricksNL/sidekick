@@ -1,9 +1,12 @@
 ---
 name: sidekick-report
-description: Surface a project's structured data/ store as reusable reports and interactive dashboards. Use when the user runs /sidekick-report or asks to see, present, visualize, chart, summarize, or build a dashboard/report over stored table data — "show me X as a dashboard", "give me the monthly breakdown again", "make a report of the contacts", "chart revenue by line". Sources data only via scripts/data.py query (never a raw JSON read). Saves the reusable report as a recipe in brain/reports.md (diff + approval) and renders a tabbed HTML dashboard into the project's artifacts/ folder (confirmation). Default is a self-contained snapshot (refresh = regenerate); optionally a live dashboard — the HTML is synced to Drive and a thin wrapper artifact loads it, so only the Drive file is overwritten on a data change (no per-refresh approval). The always-on sidekick-core skill routes clear "present/visualize the data" intents here.
+description: Surface a project's structured data/ store as reusable reports and interactive dashboards. Use when the user runs /sidekick-report or asks to see, present, visualize, chart, summarize, or build a dashboard/report over stored table data — "show me X as a dashboard", "give me the monthly breakdown again", "make a report of the contacts", "chart revenue by line". Sources data only via scripts/data.py query (never a raw JSON read). Saves the reusable report as a recipe in brain/reports.md (diff + approval) and renders a tabbed HTML dashboard into the project's artifacts/ folder (confirmation). Default is a self-contained snapshot (refresh = regenerate); optionally a live dashboard — the HTML is synced to Drive and a thin wrapper artifact loads it, so a data change just overwrites the Drive file. The always-on sidekick-core skill routes clear "present/visualize the data" intents here. Cowork Sidekick workspaces only — without sidekick.settings.md and outside Cowork, say this is not a Sidekick workspace and stop.
 ---
 
 # Sidekick — Report (present & reuse the data store)
+
+> **Gate:** no `sidekick.settings.md` and no cowork MCP tools (Claude Code /
+> code repo / plain chat)? Say this isn't a Sidekick workspace and stop.
 
 You turn a project's `data/` store into things a human can read and re-run:
 **saved reports** (reusable queries) and **rendered artifacts** (tabbed HTML

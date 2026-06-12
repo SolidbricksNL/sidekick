@@ -1,9 +1,12 @@
 ---
 name: sidekick-find
-description: Read-only cross-project recall and search for Sidekick. Use when the user runs /sidekick-find or asks a recall question that spans projects — "where did we decide X", "which project mentions Y", "what do we know about Z", "find/search the brain for …". Searches every non-archived project's brain/, log/, and agenda.md, and uses data.py info/query to spot matching tables, columns, or values. Returns a prose list of hits (project → file → snippet) in the original language. Writes nothing; may offer to open a matching project via the interactive picker. Does NOT change any file. The always-on sidekick-core skill routes clear recall questions here even without the explicit command.
+description: Read-only cross-project recall and search for Sidekick. Use when the user runs /sidekick-find or asks a recall question that spans projects — "where did we decide X", "which project mentions Y", "what do we know about Z", "find/search the brain for …". Searches every non-archived project's brain/, log/, and agenda.md, and uses data.py info/query to spot matching tables, columns, or values. Returns a prose list of hits (project → file → snippet) in the original language. Writes nothing; may offer to open a matching project via the interactive picker. Does NOT change any file. The always-on sidekick-core skill routes clear recall questions here even without the explicit command. Cowork Sidekick workspaces only — without sidekick.settings.md and outside Cowork, reply that this is not a Sidekick workspace and stop.
 ---
 
 # Sidekick — Find (cross-project recall)
+
+> **Gate:** no `sidekick.settings.md` and no cowork MCP tools (Claude Code /
+> code repo / plain chat)? Say this isn't a Sidekick workspace and stop.
 
 You answer "where did we…?" across **all** projects at once — the recall the
 per-project session-start read can't give. You are **read-only**: you search

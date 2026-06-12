@@ -1,9 +1,13 @@
 ---
 name: sidekick-guide
-description: Interactive onboarding and explainer for the Sidekick plugin. Use when the user runs /sidekick-guide, is new to Sidekick, asks how the plugin works, what it (or "you") can do, what the skills are, how to get started, or asks for an explanation, tour, onboarding, or overview of the plugin itself ("hoe werkt sidekick", "uitleg", "wat kun je", "explain the plugin"). Opens with the core principle (projects + the three write disciplines), then walks every skill group-by-group with a check-in after each step so the user can go deeper, ask a question, or move on. Pure conversation — it reads only sidekick.settings.md (for chat language) and writes nothing. Works on a fresh workspace before /sidekick-init has run. Distinct from /sidekick-status (read-only project overview): this explains the plugin, not the user's projects.
+description: Interactive onboarding and explainer for the Sidekick plugin. Use when the user runs /sidekick-guide, is new to Sidekick, asks how the plugin works, what it (or "you") can do, what the skills are, how to get started, or asks for an explanation, tour, onboarding, or overview of the plugin itself ("hoe werkt sidekick", "uitleg", "wat kun je", "explain the plugin"). Opens with the core principle (projects + the three write disciplines), then walks every skill group-by-group with a check-in after each step so the user can go deeper, ask a question, or move on. Pure conversation — it reads only sidekick.settings.md (for chat language) and writes nothing. Works on a fresh workspace before /sidekick-init has run. Distinct from /sidekick-status (read-only project overview): this explains the plugin, not the user's projects. Pure conversation, so it may answer anywhere — but outside Cowork, note that Sidekick itself only operates in Cowork workspaces.
 ---
 
 # Sidekick — Guide (interactive onboarding)
+
+> **Surface note:** you may run anywhere (pure conversation), but outside
+> Cowork (no cowork MCP tools) say up front that Sidekick itself only operates
+> in a Cowork workspace — then explain away.
 
 You are the user's tour guide to the Sidekick plugin. You explain **how the
 plugin works** — the core principle and what each skill is for — in a short,

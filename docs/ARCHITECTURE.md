@@ -702,6 +702,50 @@ hands off to the normal flow. Read-only, so no backup or gatekeeper needed.
 
 ---
 
+## 11c. The onboarding/guide layer (`sidekick-guide`)
+
+`sidekick-guide` (`/sidekick-guide`) is the plugin's **self-explainer**: an
+interactive onboarding tour that teaches the principle and every skill. It is
+the one skill aimed at a user who doesn't yet know Sidekick, so it is
+deliberately the least demanding of all of them.
+
+- **Pure conversation.** No Bash, no subagents, no `data.py`, no writes. The
+  only file it reads is `sidekick.settings.md` (for the chat language). It
+  never scans messages or touches project data, so it carries no gatekeeper.
+- **No setup precondition.** Unlike status/find, it does **not** require an
+  initialized workspace — onboarding is exactly the moment before
+  `/sidekick-init` has run. On a fresh workspace it still runs and the recap
+  points at `/sidekick-init`.
+- **Flow.** It opens with the **core principle** (projects + the three write
+  disciplines), then offers a picker: full guided tour, jump to one skill,
+  just the principle, or skip. The tour walks the skills **group by group**
+  (basis → setup → present → overview → stay-on-top → housekeeping → guide),
+  and after each group runs a **check-in** picker — *clear and continue / tell
+  me more / I have a question / stop* — so every skill and the principle
+  "passes in review." It closes with a recap and a next-step nudge. Every
+  choice point uses the interactive picker, per the plugin-wide interaction
+  style.
+
+### Register as the single source of truth
+
+All content the guide renders — the principle text and a structured entry per
+skill (`slug`, `group`, `title`, `command`, `blurb`, `when`, `triggers`) —
+lives in `skills/sidekick-guide/references/skill-register.md`. The `SKILL.md`
+only orchestrates the flow; it renders the register verbatim and is forbidden
+from inventing or embellishing blurbs (anti-hallucination). Splitting content
+out of `SKILL.md` also keeps both files comfortably under the ~15808 B
+install-truncation cap.
+
+**Adding a future skill = adding one register entry.** No edit to the guide's
+`SKILL.md` is ever needed for a new skill. To keep this honest,
+`validate-structure.mjs` **Check 8** parses the register's `slug:` lines and
+fails CI if any `skills/*` folder has no entry (or if an entry names a
+non-existent skill). So the onboarding can never silently drift behind the
+skill set — the same guarantee the sibling `solidcortex` plugin gets from its
+`info-cortex` drift test, here implemented zero-dependency.
+
+---
+
 ## 12. Plugin structure (Cowork plugin)
 
 Sidekick is built for **Claude Cowork only**. The structure follows the
@@ -748,7 +792,10 @@ sidekick/
 │   ├── sidekick-archive/SKILL.md
 │   ├── sidekick-status/SKILL.md   ← read-only cross-project overview
 │   ├── sidekick-find/SKILL.md     ← read-only cross-project recall/search
-│   └── sidekick-report/SKILL.md   ← saved reports + dashboards over data/ (via data.py)
+│   ├── sidekick-report/SKILL.md   ← saved reports + dashboards over data/ (via data.py)
+│   └── sidekick-guide/            ← interactive onboarding/explainer (pure conversation)
+│       ├── SKILL.md               ← tour flow only (orchestration)
+│       └── references/skill-register.md  ← principle + per-skill register (single source of truth; Check 8 enforces coverage)
 ├── commands/                      ← flat files Cowork turns into typed /<name>
 │   ├── sidekick-init.md           ← /sidekick-init → "Invoke the sidekick-init skill"
 │   ├── sidekick-triage.md
@@ -756,7 +803,8 @@ sidekick/
 │   ├── sidekick-archive.md
 │   ├── sidekick-status.md
 │   ├── sidekick-find.md
-│   └── sidekick-report.md
+│   ├── sidekick-report.md
+│   └── sidekick-guide.md
 ├── docs/
 │   └── ARCHITECTURE.md            ← this document
 └── README.md

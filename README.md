@@ -60,6 +60,7 @@ changes are confirmed.
 | `sidekick-status` | `/sidekick-status` | Read-only cross-project overview — where everything stands. |
 | `sidekick-find` | `/sidekick-find` | Read-only cross-project recall — search brains, logs, agendas, data. |
 | `sidekick-report` | `/sidekick-report` | Saved reports + tabbed HTML dashboards over a project's `data/` store (via `data.py query`). |
+| `sidekick-guide` | `/sidekick-guide` | Interactive onboarding — a guided tour of the principle and every skill. Pure conversation; runs before setup. |
 
 ## Install in Cowork
 
@@ -70,12 +71,14 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
    GitHub repo `boezelaere/sidekick` as a marketplace, then install the
    **`sidekick`** plugin from it. (Adding a plugin repo directly fails — Cowork
    adds *marketplaces*, which then list installable plugins.)
-2. **Run `/sidekick-init`** (or just ask, e.g. *"set up my Sidekick
+2. **New to Sidekick? Run `/sidekick-guide`** for an interactive tour of the
+   principle and every skill (pure conversation — it runs before any setup).
+3. **Run `/sidekick-init`** (or just ask, e.g. *"set up my Sidekick
    workspace"*) — a short multiple-choice setup for your role, chat language,
    default output language, and which connections you want. It writes
    `sidekick.settings.md` and scaffolds your first project. It does **not**
    turn any connector on.
-3. **Enable connectors** you said yes to (email / messages / storage /
+4. **Enable connectors** you said yes to (email / messages / storage /
    calendar) in **Cowork's connector settings** — the plugin only records
    intent; you enable the actual connections. If you turned on **output sync**,
    set **Output sync base path** to a mounted/synced Drive/OneDrive folder
@@ -86,14 +89,15 @@ which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
    No base path ⇒ sync stays idle; files are never routed through the chat.
    (The server needs **Python on the host PATH**; if its tools don't appear,
    set an absolute interpreter in `plugin.json`.)
-4. **Schedule triage (optional):** attach `sidekick-triage` to a Cowork
+5. **Schedule triage (optional):** attach `sidekick-triage` to a Cowork
    **scheduled task** and pick a frequency (e.g. daily). It writes findings
    to `_triage/`; the plugin does not set the frequency.
-5. **Just start working** — the always-on `sidekick` skill picks the right
+6. **Just start working** — the always-on `sidekick` skill picks the right
    project and keeps everything structured. Run `/sidekick-checkin` to
    review across projects, `/sidekick-status` for a read-only overview,
    `/sidekick-find` to recall across projects, `/sidekick-report` to turn a
-   project's data into a dashboard, `/sidekick-archive` to retire one.
+   project's data into a dashboard, `/sidekick-archive` to retire one, and
+   `/sidekick-guide` anytime for a refresher on what each skill does.
 
 ## For contributors
 
@@ -137,7 +141,7 @@ in Dutch, documents in English, for example.
 
 ## Status
 
-**0.19.2** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
+**0.21.0** — Claude Cowork plugin (id `sidekick`; commands are `/sidekick-*`).
 Installed from the private GitHub repo; hardened and documented across the
 `plan/` units. Cowork command support follows the working SolidCortex pattern:
 flat `commands/<name>.md` files give the typed `/sidekick-init` etc. (the

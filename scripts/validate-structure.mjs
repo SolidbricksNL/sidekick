@@ -24,7 +24,7 @@ function info(msg) { console.log(`      ${msg}`); }
 // Note: the always-on main skill folder is `sidekick-core`, NOT `sidekick`. The
 // plugin itself is named `sidekick`, so a skill folder named `sidekick` would
 // collide (`sidekick:sidekick`) and break Cowork command resolution.
-const SKILLS = ['sidekick-core', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find', 'sidekick-report'];
+const SKILLS = ['sidekick-core', 'sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find', 'sidekick-report', 'sidekick-guide'];
 
 const EXPECTED_TREE = [
   '.claude-plugin/plugin.json',
@@ -56,6 +56,8 @@ const EXPECTED_TREE = [
   'skills/sidekick-status/SKILL.md',
   'skills/sidekick-find/SKILL.md',
   'skills/sidekick-report/SKILL.md',
+  'skills/sidekick-guide/SKILL.md',
+  'skills/sidekick-guide/references/skill-register.md',
   'commands/sidekick-init.md',
   'commands/sidekick-triage.md',
   'commands/sidekick-checkin.md',
@@ -63,6 +65,7 @@ const EXPECTED_TREE = [
   'commands/sidekick-status.md',
   'commands/sidekick-find.md',
   'commands/sidekick-report.md',
+  'commands/sidekick-guide.md',
   'docs/ARCHITECTURE.md',
   'README.md',
 ];
@@ -74,7 +77,7 @@ const EXPECTED_TREE = [
 // named `sidekick-core` (a skill named `sidekick` would collide with the plugin
 // → `sidekick:sidekick` → broken resolution). The main skill is model-invoked
 // (no command file).
-const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find', 'sidekick-report'];
+const EXPLICIT_SKILLS = ['sidekick-init', 'sidekick-triage', 'sidekick-checkin', 'sidekick-archive', 'sidekick-status', 'sidekick-find', 'sidekick-report', 'sidekick-guide'];
 
 // --- Check 1: expected tree exists -----------------------------------------
 console.log('\n# Check 1 — expected tree (ARCHITECTURE §12)');
@@ -286,6 +289,29 @@ for (const f of walkFiles(join(ROOT, 'skills'))) {
   else if (n > TRUNC_WARN) warn(`${rel(f)} is ${n} B — within ${TRUNC_CAP - TRUNC_WARN} B of the ${TRUNC_CAP} truncation cap`);
 }
 pass(`checked ${capChecked} runtime files against the ${TRUNC_CAP} B truncation cap`);
+
+// --- Check 8: sidekick-guide register covers every skill -------------------
+// The onboarding skill (sidekick-guide) explains every other skill from a
+// single register at skills/sidekick-guide/references/skill-register.md. This
+// check guarantees the guide can never silently fall behind: a new skill
+// folder with no register entry FAILS here, and a stray register entry that
+// names a non-existent skill FAILS too. Mirrors the solidcortex info-cortex
+// drift test, but zero-dependency (regex over the `slug:` lines).
+console.log('\n# Check 8 — sidekick-guide register covers every skill');
+const registerPath = join(ROOT, 'skills/sidekick-guide/references/skill-register.md');
+if (!existsSync(registerPath)) {
+  fail('skills/sidekick-guide/references/skill-register.md missing — the guide has no source of truth');
+} else {
+  const regText = readFileSync(registerPath, 'utf8');
+  const registered = new Set([...regText.matchAll(/^\s*-\s*slug:\s*(sidekick-[a-z]+)/gm)].map((m) => m[1]));
+  for (const skill of SKILLS) {
+    if (registered.has(skill)) pass(`${skill} has a guide register entry`);
+    else fail(`${skill} has NO entry in the guide register — add one to skill-register.md`);
+  }
+  for (const slug of registered) {
+    if (!SKILLS.includes(slug)) fail(`guide register lists "${slug}" but skills/${slug}/ is not a known skill`);
+  }
+}
 
 // --- Summary ----------------------------------------------------------------
 console.log(`\n${'-'.repeat(60)}`);

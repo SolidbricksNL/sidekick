@@ -38,7 +38,7 @@ chats and tried to follow workspace rules there (or nagged about
 
 Install scoping cannot solve this — Cowork runs with `--setting-sources
 user`, so the plugin must stay enabled in user settings, and desktop
-chat has no plugin scoping at all. The gate (v0.22.0) therefore lives in
+chat has no plugin scoping at all. The gate (v1.0.0) therefore lives in
 the skills themselves:
 
 - **Discriminator:** `sidekick.settings.md` in the workspace root =

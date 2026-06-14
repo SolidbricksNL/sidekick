@@ -1,0 +1,22 @@
+{
+  "systems": [
+    {"name": "skills", "description": "Markdown SKILL.md modules invoked by the model or a typed command."},
+    {"name": "commands", "description": "Flat command files that register the typed /sidekick-* commands."},
+    {"name": "mcp-server", "description": "Native sidekick-sync MCP server (sync_server.py) for file sync and dashboard builds."},
+    {"name": "python-helpers", "description": "Stdlib Python helpers: data.py, dashboard.py, reports.py, sync.py."},
+    {"name": "ui-kit", "description": "Dependency-free CSS/JS/logo assets baked into self-contained dashboard HTML."},
+    {"name": "validation", "description": "validate-structure.mjs validator, CI workflow, and pre-commit hook."},
+    {"name": "plugin-manifest", "description": "The .claude-plugin manifest plus the self-marketplace catalog."}
+  ],
+  "domains": [
+    {"name": "write-disciplines", "description": "Log/brain/output/data gatekeeper rules — the core principle."},
+    {"name": "project-model", "description": "Projects, subprojects/areas, detection, scaffolding, and archiving."},
+    {"name": "structured-data", "description": "JSON-table data store accessed only through data.py."},
+    {"name": "reporting", "description": "Saved report recipes and live dashboards over a project's data."},
+    {"name": "triage-checkin", "description": "Scheduled inbound scan and the user-driven check-in action loop."},
+    {"name": "onboarding", "description": "Guided tour plus the multiple-choice init setup."},
+    {"name": "output-sync", "description": "Two-way output/ and artifacts/ sync to external storage."},
+    {"name": "surface-gate", "description": "Keeps the plugin inert outside a real Cowork workspace."},
+    {"name": "dev-tooling", "description": "Plugin packaging, structural validation, CI, and distribution."}
+  ]
+}

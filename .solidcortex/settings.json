@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "language": {
+    "secondary": null
+  },
+  "worktrees": "yes",
+  "developers": [
+    {
+      "name": "wboelaars"
+    }
+  ]
+}

@@ -1,0 +1,1435 @@
+{
+  "flows": {
+    "main": {
+      "edges": [],
+      "nodes": [
+        {
+          "flowId": "main",
+          "nodeId": "packaging",
+          "slug": "packaging",
+          "status": "current",
+          "subflowId": "packaging",
+          "summary": "Plugin manifest, self-marketplace catalog, the structure validator, CI workflow, and pre-commit hook that guard the install-truncation cap and distribute the plugin.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "root",
+          "slug": "root",
+          "status": "current",
+          "summary": "Sidekick root — a role-adaptive personal-advisor plugin for Claude Cowork that anchors all work in projects and enforces three write disciplines, delivered as nine Markdown skills plus a native sidekick-sync MCP server.",
+          "type": "root"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-archive",
+          "slug": "sidekick-archive",
+          "status": "current",
+          "subflowId": "sidekick-archive",
+          "summary": "/sidekick-archive — moves an entire project folder to _archive/projects/ (never deletes), removing it from detection, triage, and check-in.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-checkin",
+          "slug": "sidekick-checkin",
+          "status": "current",
+          "subflowId": "sidekick-checkin",
+          "summary": "/sidekick-checkin — user-initiated cross-project action loop that distills logs to brain, proposes actions, and reconciles output sync.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-core",
+          "slug": "sidekick-core",
+          "status": "current",
+          "subflowId": "sidekick-core",
+          "summary": "Always-on backbone skill — project detection and the three write disciplines that route every write, plus the surface gate that keeps the plugin inert outside Cowork.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-find",
+          "slug": "sidekick-find",
+          "status": "current",
+          "subflowId": "sidekick-find",
+          "summary": "/sidekick-find — read-only cross-project recall that searches brains, logs, agendas, and data for where something was decided or mentioned.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-guide",
+          "slug": "sidekick-guide",
+          "status": "current",
+          "subflowId": "sidekick-guide",
+          "summary": "/sidekick-guide — interactive onboarding tour of the core principle and every skill; pure conversation, runs before setup.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-init",
+          "slug": "sidekick-init",
+          "status": "current",
+          "subflowId": "sidekick-init",
+          "summary": "/sidekick-init — multiple-choice setup that writes sidekick.settings.md, the workspace CLAUDE.md anchor, and scaffolds the first project.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-report",
+          "slug": "sidekick-report",
+          "status": "current",
+          "subflowId": "sidekick-report",
+          "summary": "/sidekick-report — saved report recipes plus self-contained HTML dashboards over a project data store, rendered with the shared UI kit.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-status",
+          "slug": "sidekick-status",
+          "status": "current",
+          "subflowId": "sidekick-status",
+          "summary": "/sidekick-status — read-only cross-project overview of agenda items, undistilled logs, data tables, and staleness.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-sync",
+          "slug": "sidekick-sync",
+          "status": "current",
+          "subflowId": "sidekick-sync",
+          "summary": "Native sidekick-sync MCP server publishing two-way output and artifact sync, native dashboard builds, and report-registry tools to the host.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "main",
+          "nodeId": "sidekick-triage",
+          "slug": "sidekick-triage",
+          "status": "current",
+          "subflowId": "sidekick-triage",
+          "summary": "/sidekick-triage — scheduled read-only scan of email, chat, and calendar that writes findings to _triage/ as input for the check-in.",
+          "type": "subflow"
+        }
+      ]
+    },
+    "packaging": {
+      "edges": [
+        {
+          "label": "runs validator in CI",
+          "source": "packaging/ci-workflow",
+          "target": "packaging/structure-validator",
+          "via": "starts"
+        },
+        {
+          "label": "installs plugin via manifest",
+          "source": "packaging/marketplace-catalog",
+          "target": "packaging/plugin-manifest",
+          "via": "starts"
+        },
+        {
+          "label": "runs validator before commit",
+          "source": "packaging/precommit-hook",
+          "target": "packaging/structure-validator",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "packaging",
+          "mainCodeFile": ".github/workflows/validate.yml",
+          "nodeId": "ci-workflow",
+          "parent": "main/packaging",
+          "slug": "ci-workflow",
+          "status": "current",
+          "summary": "GitHub Actions workflow that checks out the repo on an external runner and runs the structure validator on every push and pull request, failing the build on any FAIL.",
+          "type": "integration"
+        },
+        {
+          "entry": true,
+          "flowId": "packaging",
+          "mainCodeFile": ".claude-plugin/marketplace.json",
+          "nodeId": "marketplace-catalog",
+          "parent": "main/packaging",
+          "slug": "marketplace-catalog",
+          "status": "current",
+          "summary": "Self-marketplace catalog listing the single sidekick plugin with source \"./\" so Cowork can add the repo as a marketplace and install the plugin from it.",
+          "type": "process"
+        },
+        {
+          "flowId": "packaging",
+          "mainCodeFile": ".claude-plugin/plugin.json",
+          "nodeId": "plugin-manifest",
+          "parent": "main/packaging",
+          "slug": "plugin-manifest",
+          "status": "current",
+          "summary": "Plugin manifest declaring the plugin name, release metadata, and the sidekick-sync MCP server registration; a string repository field is what makes Cowork accept the typed commands.",
+          "type": "process"
+        },
+        {
+          "flowId": "packaging",
+          "mainCodeFile": "scripts/hooks/pre-commit",
+          "nodeId": "precommit-hook",
+          "parent": "main/packaging",
+          "slug": "precommit-hook",
+          "status": "current",
+          "summary": "Local pre-commit hook that runs the structure validator and blocks the commit when it fails, guarding the install-truncation cap before code ever leaves the clone.",
+          "type": "process"
+        },
+        {
+          "flowId": "packaging",
+          "mainCodeFile": "scripts/validate-structure.mjs",
+          "nodeId": "structure-validator",
+          "parent": "main/packaging",
+          "slug": "structure-validator",
+          "status": "current",
+          "summary": "Zero-dependency Node validator that checks the expected tree, both manifests, skill frontmatter, reference paths, the ~15808-byte install-truncation cap (Check 7), and guide-register coverage (Check 8), exiting non-zero on any FAIL.",
+          "type": "process"
+        }
+      ]
+    },
+    "project-detection": {
+      "edges": [
+        {
+          "label": "on no match or doubt",
+          "source": "project-detection/detect-active-project",
+          "target": "project-detection/project-picker",
+          "via": "starts"
+        },
+        {
+          "label": "clear specialized intent",
+          "source": "project-detection/detect-active-project",
+          "target": "project-detection/route-to-skill",
+          "via": "starts"
+        },
+        {
+          "label": "explicit new-project intent",
+          "source": "project-detection/detect-active-project",
+          "target": "project-detection/scaffold-new-project",
+          "via": "starts"
+        },
+        {
+          "label": "explicit area-within-parent intent",
+          "source": "project-detection/detect-active-project",
+          "target": "project-detection/setup-subproject-area",
+          "via": "starts"
+        },
+        {
+          "label": "user picks New project",
+          "source": "project-detection/project-picker",
+          "target": "project-detection/scaffold-new-project",
+          "via": "starts"
+        },
+        {
+          "label": "user picks area inside parent",
+          "source": "project-detection/project-picker",
+          "target": "project-detection/setup-subproject-area",
+          "via": "starts"
+        },
+        {
+          "label": "build empty dashboard skeleton",
+          "source": "project-detection/scaffold-new-project",
+          "target": "sidekick-sync/build-dashboard",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "entry": true,
+          "flowId": "project-detection",
+          "mainCodeFile": "skills/sidekick-core/SKILL.md",
+          "nodeId": "detect-active-project",
+          "parent": "sidekick-core/project-detection",
+          "slug": "detect-active-project",
+          "status": "current",
+          "summary": "Every session, list projects/, read each project's agenda and brain index, match chat intent, and pick the explicit-match path or the doubt path.",
+          "type": "process"
+        },
+        {
+          "flowId": "project-detection",
+          "mainCodeFile": "skills/sidekick-core/SKILL.md",
+          "nodeId": "project-picker",
+          "parent": "sidekick-core/project-detection",
+          "slug": "project-picker",
+          "status": "current",
+          "summary": "On doubt, present the tappable multiple-choice picker — best-guess 1-3 existing projects plus New project and a free-text escape — and do nothing structural until the user chooses.",
+          "type": "process"
+        },
+        {
+          "flowId": "project-detection",
+          "mainCodeFile": "skills/sidekick-core/SKILL.md",
+          "nodeId": "route-to-skill",
+          "parent": "sidekick-core/project-detection",
+          "slug": "route-to-skill",
+          "status": "current",
+          "summary": "Once the active project is known, route a clear specialized intent (triage, check-in, status, find, report, archive) to the matching typed skill instead of handling it inline.",
+          "type": "process"
+        },
+        {
+          "flowId": "project-detection",
+          "mainCodeFile": "skills/sidekick-core/references/project-claude-template.md",
+          "nodeId": "scaffold-new-project",
+          "parent": "sidekick-core/project-detection",
+          "slug": "scaffold-new-project",
+          "status": "current",
+          "summary": "Create a top-level project under projects/<slug>/ — seed CLAUDE.md and agenda.md from templates, make brain/log/archive/output, and build the empty dashboard skeleton.",
+          "type": "process"
+        },
+        {
+          "flowId": "project-detection",
+          "mainCodeFile": "skills/sidekick-core/references/project-structure.md",
+          "nodeId": "setup-subproject-area",
+          "parent": "sidekick-core/project-detection",
+          "slug": "setup-subproject-area",
+          "status": "current",
+          "summary": "Set up an area within a parent project — brain/<sub>/ (seed overview.md via brain diff+approval) and output/<sub>/, agenda items under the parent's agenda, never a nested or scaffolded project.",
+          "type": "process"
+        }
+      ]
+    },
+    "session-startup": {
+      "edges": [
+        {
+          "label": "if output sync on",
+          "source": "session-startup/load-project-context",
+          "target": "session-startup/reconcile-output-sync",
+          "via": "calls"
+        },
+        {
+          "label": "role applied, pick project",
+          "source": "session-startup/read-settings",
+          "target": "session-startup/load-project-context",
+          "via": "starts"
+        },
+        {
+          "label": "settings read, check anchor",
+          "source": "session-startup/read-settings",
+          "target": "session-startup/self-heal-workspace-claude",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "session-startup",
+          "mainCodeFile": "skills/sidekick-core/SKILL.md",
+          "nodeId": "load-project-context",
+          "parent": "sidekick-core/session-startup",
+          "slug": "load-project-context",
+          "status": "current",
+          "summary": "Determine the active project and read its CLAUDE.md, the brain files it points to, and agenda.md so work begins with full context.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "session-startup",
+          "mainCodeFile": "skills/sidekick-core/SKILL.md",
+          "nodeId": "read-settings",
+          "parent": "sidekick-core/session-startup",
+          "slug": "read-settings",
+          "status": "current",
+          "summary": "Read sidekick.settings.md at session start, load role plus chat and output languages, and apply role adaptation immediately.",
+          "type": "process"
+        },
+        {
+          "flowId": "session-startup",
+          "mainCodeFile": "skills/sidekick-core/references/sync-discipline.md",
+          "nodeId": "reconcile-output-sync",
+          "parent": "sidekick-core/session-startup",
+          "slug": "reconcile-output-sync",
+          "status": "current",
+          "summary": "When output sync is enabled, call the sidekick-sync MCP reconcile_output tool with the absolute project path to two-way sync output and artifacts with external storage before work begins.",
+          "type": "integration"
+        },
+        {
+          "flowId": "session-startup",
+          "mainCodeFile": "skills/sidekick-init/references/workspace-claude-template.md",
+          "nodeId": "self-heal-workspace-claude",
+          "parent": "sidekick-core/session-startup",
+          "slug": "self-heal-workspace-claude",
+          "status": "current",
+          "summary": "When the workspace-root CLAUDE.md enforcement anchor is missing, offer to recreate it from the init template so Cowork auto-loads the standing rules.",
+          "type": "process"
+        }
+      ]
+    },
+    "sidekick-archive": {
+      "edges": [
+        {
+          "label": "confirmed, no overwrite",
+          "source": "sidekick-archive/confirm-and-collision",
+          "target": "sidekick-archive/move-folder",
+          "via": "starts"
+        },
+        {
+          "label": "slug confirmed",
+          "source": "sidekick-archive/select-project",
+          "target": "sidekick-archive/confirm-and-collision",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "sidekick-archive",
+          "mainCodeFile": "skills/sidekick-archive/SKILL.md",
+          "nodeId": "confirm-and-collision",
+          "parent": "main/sidekick-archive",
+          "slug": "confirm-and-collision",
+          "status": "current",
+          "summary": "State plainly what will move and wait for a clear yes, then check _archive/projects/<slug>/ for a collision and append a date suffix (slug-archived-YYYYMMDD) rather than overwrite.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-archive",
+          "mainCodeFile": "skills/sidekick-archive/SKILL.md",
+          "nodeId": "move-folder",
+          "parent": "main/sidekick-archive",
+          "slug": "move-folder",
+          "status": "current",
+          "summary": "Move the whole projects/<slug>/ folder into _archive/projects/ via the archive primitive — true rename, else copy then verify then remove source (never delete before verified) — then confirm it has left detection, triage, and check-in.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "sidekick-archive",
+          "mainCodeFile": "skills/sidekick-archive/SKILL.md",
+          "nodeId": "select-project",
+          "parent": "main/sidekick-archive",
+          "slug": "select-project",
+          "status": "current",
+          "summary": "Identify the project to archive — match a named slug or list non-archived projects with a one-line agenda status and ask which, confirming the exact slug before anything moves.",
+          "type": "process"
+        }
+      ]
+    },
+    "sidekick-checkin": {
+      "edges": [
+        {
+          "label": "back up data before walking",
+          "source": "sidekick-checkin/checkin-entry",
+          "target": "sidekick-checkin/data-backup",
+          "via": "starts"
+        },
+        {
+          "label": "proceed to per-project walk",
+          "source": "sidekick-checkin/data-backup",
+          "target": "sidekick-checkin/per-project-walk",
+          "via": "starts"
+        },
+        {
+          "label": "sweep output sync after approvals",
+          "source": "sidekick-checkin/distill-log-to-brain",
+          "target": "sidekick-checkin/reconcile-output-sync",
+          "via": "calls"
+        },
+        {
+          "label": "distill an approved undistilled log",
+          "source": "sidekick-checkin/per-project-walk",
+          "target": "sidekick-checkin/distill-log-to-brain",
+          "via": "starts"
+        },
+        {
+          "label": "reconcile output sync for this project",
+          "source": "sidekick-checkin/per-project-walk",
+          "target": "sidekick-checkin/reconcile-output-sync",
+          "via": "calls"
+        },
+        {
+          "label": "close out the check-in",
+          "source": "sidekick-checkin/reconcile-output-sync",
+          "target": "sidekick-checkin/checkin-close",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "sidekick-checkin",
+          "mainCodeFile": "skills/sidekick-checkin/SKILL.md",
+          "nodeId": "checkin-close",
+          "parent": "main/sidekick-checkin",
+          "slug": "checkin-close",
+          "status": "current",
+          "summary": "Closing wrap-up in the chat language — per project what was decided and what's still open plus cross-project flags, log the processed check-in to log/YYYYMMDD-checkin.md, and leave each touched agenda.md clean.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "sidekick-checkin",
+          "mainCodeFile": "skills/sidekick-checkin/SKILL.md",
+          "nodeId": "checkin-entry",
+          "slug": "checkin-entry",
+          "status": "current",
+          "summary": "Entry point for the user-initiated check-in — reads settings, lists non-archived projects, gathers the latest _triage/ findings and (if connected) upcoming calendar items.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-checkin",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "data-backup",
+          "parent": "main/sidekick-checkin",
+          "slug": "data-backup",
+          "status": "current",
+          "summary": "Hard-rule timestamped backup of each project's data/ via data.py backup (into data/.backups/) before the check-in processes anything in that project.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-checkin",
+          "mainCodeFile": "skills/sidekick-checkin/SKILL.md",
+          "nodeId": "distill-log-to-brain",
+          "parent": "main/sidekick-checkin",
+          "slug": "distill-log-to-brain",
+          "status": "current",
+          "summary": "On approval, distill an undistilled log's durable insights into brain/ (diff + approval) and append the \"> distilled to brain: <date>\" stamp to that log file so it is not re-detected.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-checkin",
+          "mainCodeFile": "skills/sidekick-checkin/SKILL.md",
+          "nodeId": "per-project-walk",
+          "parent": "main/sidekick-checkin",
+          "slug": "per-project-walk",
+          "status": "current",
+          "summary": "Per non-archived project, read agenda.md and brain index, cross-reference triage and calendar, scan log/ for undistilled logs, and propose concrete gated actions through the interactive picker.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-checkin",
+          "mainCodeFile": "skills/sidekick-core/scripts/sync_server.py",
+          "nodeId": "reconcile-output-sync",
+          "parent": "main/sidekick-checkin",
+          "slug": "reconcile-output-sync",
+          "status": "current",
+          "summary": "Both-way output/artifacts sync sweep via the bundled sidekick-sync MCP server (reconcile_output) against the external storage base path, resolving each reported conflict through the picker and resolve_output.",
+          "type": "integration"
+        }
+      ]
+    },
+    "sidekick-core": {
+      "edges": [],
+      "nodes": [
+        {
+          "flowId": "sidekick-core",
+          "nodeId": "project-detection",
+          "parent": "main/sidekick-core",
+          "slug": "project-detection",
+          "status": "current",
+          "subflowId": "project-detection",
+          "summary": "Picking or creating the active project every session — detection, the tappable picker, top-level scaffolding, subprojects/areas, and routing to the specialized skills.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "sidekick-core",
+          "nodeId": "session-startup",
+          "parent": "main/sidekick-core",
+          "slug": "session-startup",
+          "status": "current",
+          "subflowId": "session-startup",
+          "summary": "The session-start protocol — read settings, self-heal the workspace CLAUDE.md anchor, load project context, and reconcile output before work begins.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "sidekick-core",
+          "nodeId": "structured-data",
+          "parent": "main/sidekick-core",
+          "slug": "structured-data",
+          "status": "current",
+          "subflowId": "structured-data",
+          "summary": "The structured-data discipline mediated by data.py — locating the helper, designing/extending tables, querying over throwaway SQLite, and the snapshot/backup safety net.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "sidekick-core",
+          "nodeId": "surface-gate",
+          "parent": "main/sidekick-core",
+          "slug": "surface-gate",
+          "status": "current",
+          "subflowId": "surface-gate",
+          "summary": "The Cowork-only surface gate — the discriminator that decides active workspace vs uninitialized Cowork vs foreign surface, and how each skill stands down outside a real Sidekick workspace.",
+          "type": "subflow"
+        },
+        {
+          "flowId": "sidekick-core",
+          "nodeId": "write-disciplines",
+          "parent": "main/sidekick-core",
+          "slug": "write-disciplines",
+          "status": "current",
+          "subflowId": "write-disciplines",
+          "summary": "The intent-routing classifier and the four write disciplines as rules — free log, gated brain (diff + approval), confirmed output, and confirmed data-structure changes.",
+          "type": "subflow"
+        }
+      ]
+    },
+    "sidekick-find": {
+      "edges": [
+        {
+          "label": "hand off to open project",
+          "source": "sidekick-find/open-project-picker",
+          "target": "session-startup/read-settings",
+          "via": "starts"
+        },
+        {
+          "label": "feed data hits",
+          "source": "sidekick-find/probe-data-tables",
+          "target": "sidekick-find/report-hits",
+          "via": "starts"
+        },
+        {
+          "label": "probe structured data",
+          "source": "sidekick-find/recall-query-intake",
+          "target": "sidekick-find/probe-data-tables",
+          "via": "starts"
+        },
+        {
+          "label": "search brain/log/agenda",
+          "source": "sidekick-find/recall-query-intake",
+          "target": "sidekick-find/search-markdown",
+          "via": "starts"
+        },
+        {
+          "label": "offer to open a hit",
+          "source": "sidekick-find/report-hits",
+          "target": "sidekick-find/open-project-picker",
+          "via": "starts"
+        },
+        {
+          "label": "feed markdown hits",
+          "source": "sidekick-find/search-markdown",
+          "target": "sidekick-find/report-hits",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "sidekick-find",
+          "mainCodeFile": "skills/sidekick-find/SKILL.md",
+          "nodeId": "open-project-picker",
+          "parent": "main/sidekick-find",
+          "slug": "open-project-picker",
+          "status": "current",
+          "summary": "Only if the user wants to act on a hit, offer through the interactive picker to open that project and hand off to the normal sidekick-core flow — the sole follow-up, writing nothing itself.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-find",
+          "mainCodeFile": "skills/sidekick-find/SKILL.md",
+          "nodeId": "probe-data-tables",
+          "parent": "main/sidekick-find",
+          "slug": "probe-data-tables",
+          "status": "current",
+          "summary": "Resolve the data.py helper, run read-only info/query against each project's data/ to spot tables, columns, or values matching the query, and pull relevant rows — never touching raw JSON directly.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "sidekick-find",
+          "mainCodeFile": "skills/sidekick-find/SKILL.md",
+          "nodeId": "recall-query-intake",
+          "slug": "recall-query-intake",
+          "status": "current",
+          "summary": "Receive the /sidekick-find query (or a recall question routed by sidekick-core), read chat language from settings, ask one clarifier if vague, and list non-archived projects to search.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-find",
+          "mainCodeFile": "skills/sidekick-find/SKILL.md",
+          "nodeId": "report-hits",
+          "parent": "main/sidekick-find",
+          "slug": "report-hits",
+          "status": "current",
+          "summary": "Rank and group markdown and data hits into a short prose list (project to file to one-line snippet) with snippets in their original language, leading with the most relevant or stating plainly when nothing matched.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-find",
+          "mainCodeFile": "skills/sidekick-find/SKILL.md",
+          "nodeId": "search-markdown",
+          "parent": "main/sidekick-find",
+          "slug": "search-markdown",
+          "status": "current",
+          "summary": "Text-search every non-archived project's brain/, log/, and agenda.md for the query terms and obvious variants, treating subproject/area subfolders as part of the parent project.",
+          "type": "process"
+        }
+      ]
+    },
+    "sidekick-guide": {
+      "edges": [
+        {
+          "label": "full tour or jump-to-skill",
+          "source": "sidekick-guide/entry-picker",
+          "target": "sidekick-guide/guided-tour",
+          "via": "starts"
+        },
+        {
+          "label": "just-the-principle or exit",
+          "source": "sidekick-guide/entry-picker",
+          "target": "sidekick-guide/recap-next-step",
+          "via": "starts"
+        },
+        {
+          "label": "tour done or stopped",
+          "source": "sidekick-guide/guided-tour",
+          "target": "sidekick-guide/recap-next-step",
+          "via": "starts"
+        },
+        {
+          "label": "offer how-to-explore choices",
+          "source": "sidekick-guide/open-principle",
+          "target": "sidekick-guide/entry-picker",
+          "via": "starts"
+        },
+        {
+          "label": "nudge to first-time setup",
+          "source": "sidekick-guide/recap-next-step",
+          "target": "sidekick-init/surface-gate-check",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "sidekick-guide",
+          "mainCodeFile": "skills/sidekick-guide/SKILL.md",
+          "nodeId": "entry-picker",
+          "parent": "main/sidekick-guide",
+          "slug": "entry-picker",
+          "status": "current",
+          "summary": "Multiple-choice entry point — full guided tour, jump to one skill, just the principle, or exit — routing the user into the rest of the flow.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-guide",
+          "mainCodeFile": "skills/sidekick-guide/references/skill-register.md",
+          "nodeId": "guided-tour",
+          "parent": "main/sidekick-guide",
+          "slug": "guided-tour",
+          "status": "current",
+          "summary": "Walk the register's skill groups (or one jumped-to skill) with a per-group check-in picker — continue, tell more, free-text question answered only from the register, or stop.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "sidekick-guide",
+          "mainCodeFile": "skills/sidekick-guide/SKILL.md",
+          "nodeId": "open-principle",
+          "parent": "main/sidekick-guide",
+          "slug": "open-principle",
+          "status": "current",
+          "summary": "Read sidekick.settings.md for the chat language and render the register's core-principle opener (projects + the three write disciplines).",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-guide",
+          "mainCodeFile": "skills/sidekick-guide/SKILL.md",
+          "nodeId": "recap-next-step",
+          "parent": "main/sidekick-guide",
+          "slug": "recap-next-step",
+          "status": "current",
+          "summary": "Close with a one-line principle-and-groups recap and a next-step picker — start /sidekick-init on a fresh workspace, begin a project, ask another skill question, or end.",
+          "type": "process"
+        }
+      ]
+    },
+    "sidekick-init": {
+      "edges": [
+        {
+          "label": "confirmed → persist",
+          "source": "sidekick-init/run-questionnaire",
+          "target": "sidekick-init/write-settings",
+          "via": "starts"
+        },
+        {
+          "label": "surface ok → ask",
+          "source": "sidekick-init/surface-gate-check",
+          "target": "sidekick-init/run-questionnaire",
+          "via": "starts"
+        },
+        {
+          "label": "then write anchor",
+          "source": "sidekick-init/write-settings",
+          "target": "sidekick-init/write-workspace-claude",
+          "via": "starts"
+        },
+        {
+          "label": "then scaffold project",
+          "source": "sidekick-init/write-workspace-claude",
+          "target": "sidekick-init/scaffold-first-project",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "entry": true,
+          "flowId": "sidekick-init",
+          "mainCodeFile": "skills/sidekick-init/SKILL.md",
+          "nodeId": "run-questionnaire",
+          "parent": "main/sidekick-init",
+          "slug": "run-questionnaire",
+          "status": "current",
+          "summary": "Multiple-choice setup questionnaire that collects role, chat and output languages, email/messages/storage/calendar connections, and optional output-sync base path, then summarizes for confirmation.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-init",
+          "mainCodeFile": "skills/sidekick-init/SKILL.md",
+          "nodeId": "scaffold-first-project",
+          "parent": "main/sidekick-init",
+          "slug": "scaffold-first-project",
+          "status": "current",
+          "summary": "Scaffolds the first project under projects/<slug>/ with its CLAUDE.md, agenda.md, core folders, and empty dashboard skeleton, plus the workspace-level _triage/ and _archive/ folders.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-init",
+          "mainCodeFile": "skills/sidekick-init/SKILL.md",
+          "nodeId": "surface-gate-check",
+          "parent": "main/sidekick-init",
+          "slug": "surface-gate-check",
+          "status": "current",
+          "summary": "Precondition that refuses init outside a real Cowork surface and detects whether the workspace is already set up before the questionnaire runs.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-init",
+          "mainCodeFile": "skills/sidekick-init/references/settings-template.md",
+          "nodeId": "write-settings",
+          "parent": "main/sidekick-init",
+          "slug": "write-settings",
+          "status": "current",
+          "summary": "Writes sidekick.settings.md to the Cowork root from the questionnaire answers using the settings template, recording role, languages, and connection intent.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-init",
+          "mainCodeFile": "skills/sidekick-init/references/workspace-claude-template.md",
+          "nodeId": "write-workspace-claude",
+          "parent": "main/sidekick-init",
+          "slug": "write-workspace-claude",
+          "status": "current",
+          "summary": "Writes the workspace-root CLAUDE.md enforcement anchor verbatim from the template — the always-on contract Cowork auto-loads to keep every future session structured.",
+          "type": "process"
+        }
+      ]
+    },
+    "sidekick-report": {
+      "edges": [
+        {
+          "label": "show as live artifact",
+          "source": "sidekick-report/build-dashboard",
+          "target": "sidekick-report/live-artifact-wrapper",
+          "via": "calls"
+        },
+        {
+          "label": "bake fresh rows",
+          "source": "sidekick-report/query-data-store",
+          "target": "sidekick-report/build-dashboard",
+          "via": "starts"
+        },
+        {
+          "label": "persist as a recipe",
+          "source": "sidekick-report/query-data-store",
+          "target": "sidekick-report/save-report-recipe",
+          "via": "starts"
+        },
+        {
+          "label": "source the rows",
+          "source": "sidekick-report/report-entry",
+          "target": "sidekick-report/query-data-store",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "sidekick-report",
+          "mainCodeFile": "skills/sidekick-core/scripts/dashboard.py",
+          "nodeId": "build-dashboard",
+          "parent": "main/sidekick-report",
+          "slug": "build-dashboard",
+          "status": "current",
+          "summary": "Shapes the tiny per-project dashboard/<slug>-dashboard.sk.json (window.SK layout with query/recipe bindings, not numbers) and calls build_dashboard, which resolves the bindings natively and bakes the shared UI kit plus fresh rows into a self-contained artifacts/<slug>-dashboard.html.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-report",
+          "nodeId": "live-artifact-wrapper",
+          "parent": "main/sidekick-report",
+          "slug": "live-artifact-wrapper",
+          "status": "current",
+          "summary": "Wraps the Drive-synced dashboard HTML in the primary deliverable — a thin live Cowork artifact created once via mcp__cowork__create_artifact that pulls the HTML from the Google Drive connector (download_file_content, base64 to iframe srcdoc); later data changes overwrite the Drive file in place, no new artifact.",
+          "type": "integration"
+        },
+        {
+          "flowId": "sidekick-report",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "query-data-store",
+          "parent": "main/sidekick-report",
+          "slug": "query-data-store",
+          "status": "current",
+          "summary": "Sources every report number through data.py info/query (read-only SELECTs against the project's JSON-table store) — the single-access-path rule, never a raw JSON read; returns the JSON the recipe and dashboard consume.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "sidekick-report",
+          "mainCodeFile": "skills/sidekick-report/SKILL.md",
+          "nodeId": "report-entry",
+          "slug": "report-entry",
+          "status": "current",
+          "summary": "The /sidekick-report skill activates, checks the surface gate, reads settings, resolves the target project and its data/ store, loads any saved recipes, and picks the lightest render that answers the ask.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-report",
+          "mainCodeFile": "skills/sidekick-core/scripts/reports.py",
+          "nodeId": "save-report-recipe",
+          "parent": "main/sidekick-report",
+          "slug": "save-report-recipe",
+          "status": "current",
+          "summary": "Saves a recurring ask as a reusable recipe — a named, plain-language report plus its exact SELECT(s) — into brain/reports.md (a brain write, diff + approval) and mirrors the machine copy into .sidekick/reports.json via the save_report tool / reports.py.",
+          "type": "process"
+        }
+      ]
+    },
+    "sidekick-status": {
+      "edges": [
+        {
+          "label": "near-term calendar (if connected)",
+          "source": "sidekick-status/status-entry",
+          "target": "sidekick-status/fetch-calendar",
+          "via": "calls"
+        },
+        {
+          "label": "walk each non-archived project",
+          "source": "sidekick-status/status-entry",
+          "target": "sidekick-status/gather-per-project",
+          "via": "starts"
+        },
+        {
+          "label": "count data/ table rows",
+          "source": "sidekick-status/status-entry",
+          "target": "sidekick-status/read-data-tables",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "sidekick-status",
+          "mainCodeFile": "skills/sidekick-status/SKILL.md",
+          "nodeId": "fetch-calendar",
+          "parent": "main/sidekick-status",
+          "slug": "fetch-calendar",
+          "status": "current",
+          "summary": "When a calendar is connected, fetches near-term upcoming items (next 7–14 days) from the external calendar to surface deadline clusters — read-only.",
+          "type": "integration"
+        },
+        {
+          "flowId": "sidekick-status",
+          "mainCodeFile": "skills/sidekick-status/SKILL.md",
+          "nodeId": "gather-per-project",
+          "parent": "main/sidekick-status",
+          "slug": "gather-per-project",
+          "status": "current",
+          "summary": "Per-project read loop — collects open agenda items and waiting-on, counts undistilled logs, reads the last check-in date, and flags staleness, all without writing.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-status",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "read-data-tables",
+          "parent": "main/sidekick-status",
+          "slug": "read-data-tables",
+          "status": "current",
+          "summary": "Resolves the data.py helper via find and runs data.py info per project to report each data/ table with its row count — own-backend read, no writes.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "sidekick-status",
+          "mainCodeFile": "skills/sidekick-status/SKILL.md",
+          "nodeId": "status-entry",
+          "parent": "main/sidekick-status",
+          "slug": "status-entry",
+          "status": "current",
+          "summary": "The /sidekick-status command surface — gates the workspace, reads settings, orchestrates the read-only per-project gather, and prints the short prose overview to chat.",
+          "type": "screen"
+        }
+      ]
+    },
+    "sidekick-sync": {
+      "edges": [
+        {
+          "label": "build_dashboard tool",
+          "source": "sidekick-sync/mcp-server",
+          "target": "sidekick-sync/build-dashboard",
+          "via": "starts"
+        },
+        {
+          "label": "reconcile_output tool",
+          "source": "sidekick-sync/mcp-server",
+          "target": "sidekick-sync/reconcile-output",
+          "via": "calls"
+        },
+        {
+          "label": "resolve_output tool",
+          "source": "sidekick-sync/mcp-server",
+          "target": "sidekick-sync/resolve-output",
+          "via": "calls"
+        },
+        {
+          "label": "save_report tool",
+          "source": "sidekick-sync/mcp-server",
+          "target": "sidekick-sync/save-report",
+          "via": "starts"
+        },
+        {
+          "label": "on conflict, defer to user choice",
+          "source": "sidekick-sync/reconcile-output",
+          "target": "sidekick-sync/resolve-output",
+          "via": "calls"
+        },
+        {
+          "label": "runs sync.reconcile",
+          "source": "sidekick-sync/reconcile-output",
+          "target": "sidekick-sync/sync-engine",
+          "via": "starts"
+        },
+        {
+          "label": "runs sync.resolve",
+          "source": "sidekick-sync/resolve-output",
+          "target": "sidekick-sync/sync-engine",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "sidekick-sync",
+          "mainCodeFile": "skills/sidekick-core/scripts/dashboard.py",
+          "nodeId": "build-dashboard",
+          "parent": "main/sidekick-sync",
+          "slug": "build-dashboard",
+          "status": "current",
+          "summary": "The build_dashboard tool — natively bakes a project's dashboard HTML from its sk.json bindings, resolving each query/recipe against the live data store and reading the full UI kit, with no-slug rebuilding every dashboard at once.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "sidekick-sync",
+          "mainCodeFile": "skills/sidekick-core/scripts/sync_server.py",
+          "nodeId": "mcp-server",
+          "parent": "main/sidekick-sync",
+          "slug": "mcp-server",
+          "status": "current",
+          "summary": "The sidekick-sync MCP server process — a stdlib JSON-RPC-over-stdio loop that declares the four sync/dashboard/report tools and dispatches each tools/call to the native engine.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-sync",
+          "mainCodeFile": "skills/sidekick-core/scripts/sync_server.py",
+          "nodeId": "reconcile-output",
+          "parent": "main/sidekick-sync",
+          "slug": "reconcile-output",
+          "status": "current",
+          "summary": "The reconcile_output tool — two-way reconciles a project's output/ and artifacts/ against the external storage base path, crossing the host/Drive boundary the sandboxed shell cannot reach.",
+          "type": "integration"
+        },
+        {
+          "flowId": "sidekick-sync",
+          "mainCodeFile": "skills/sidekick-core/scripts/sync_server.py",
+          "nodeId": "resolve-output",
+          "parent": "main/sidekick-sync",
+          "slug": "resolve-output",
+          "status": "current",
+          "summary": "The resolve_output tool — settles one output-sync conflict the user chose (keep local, external, or both), copying the surviving file across the host/Drive boundary and updating the manifest.",
+          "type": "integration"
+        },
+        {
+          "flowId": "sidekick-sync",
+          "mainCodeFile": "skills/sidekick-core/scripts/reports.py",
+          "nodeId": "save-report",
+          "parent": "main/sidekick-sync",
+          "slug": "save-report",
+          "status": "current",
+          "summary": "The save_report tool — registers or merges an entry in the project's .sidekick/reports.json recipe registry, validating the name and writing either a query recipe (named SELECT) or a sql-less dashboard registration.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-sync",
+          "mainCodeFile": "skills/sidekick-core/scripts/sync.py",
+          "nodeId": "sync-engine",
+          "parent": "main/sidekick-sync",
+          "slug": "sync-engine",
+          "status": "current",
+          "summary": "The shared sync engine in sync.py — binary-safe file copies plus the per-file manifest reconcile rule (push/pull/in-sync/conflict via a sha256 baseline) that backs both reconcile_output and resolve_output.",
+          "type": "process"
+        }
+      ]
+    },
+    "sidekick-triage": {
+      "edges": [
+        {
+          "label": "count undistilled logs",
+          "source": "sidekick-triage/compute-scan-window",
+          "target": "sidekick-triage/count-undistilled-logs",
+          "via": "starts"
+        },
+        {
+          "label": "scan calendar since window",
+          "source": "sidekick-triage/compute-scan-window",
+          "target": "sidekick-triage/scan-calendar",
+          "via": "calls"
+        },
+        {
+          "label": "scan chat since window",
+          "source": "sidekick-triage/compute-scan-window",
+          "target": "sidekick-triage/scan-chat",
+          "via": "calls"
+        },
+        {
+          "label": "scan email since window",
+          "source": "sidekick-triage/compute-scan-window",
+          "target": "sidekick-triage/scan-email",
+          "via": "calls"
+        },
+        {
+          "label": "contribute per-project log counts",
+          "source": "sidekick-triage/count-undistilled-logs",
+          "target": "sidekick-triage/write-findings-file",
+          "via": "starts"
+        },
+        {
+          "label": "contribute calendar findings",
+          "source": "sidekick-triage/scan-calendar",
+          "target": "sidekick-triage/write-findings-file",
+          "via": "starts"
+        },
+        {
+          "label": "contribute chat findings",
+          "source": "sidekick-triage/scan-chat",
+          "target": "sidekick-triage/write-findings-file",
+          "via": "starts"
+        },
+        {
+          "label": "contribute email findings",
+          "source": "sidekick-triage/scan-email",
+          "target": "sidekick-triage/write-findings-file",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "entry": true,
+          "flowId": "sidekick-triage",
+          "mainCodeFile": "skills/sidekick-triage/SKILL.md",
+          "nodeId": "compute-scan-window",
+          "slug": "compute-scan-window",
+          "status": "current",
+          "summary": "Determine the scan window by reading the run timestamp of the most recent _triage/*-triage.md file, defaulting to the last 7 days when no prior triage file exists.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-triage",
+          "mainCodeFile": "skills/sidekick-triage/SKILL.md",
+          "nodeId": "count-undistilled-logs",
+          "parent": "main/sidekick-triage",
+          "slug": "count-undistilled-logs",
+          "status": "current",
+          "summary": "Read each non-archived project's log/ folder and count the log files lacking the distilled-to-brain stamp, producing a one-line per-project heads-up count without listing individual logs.",
+          "type": "process"
+        },
+        {
+          "flowId": "sidekick-triage",
+          "mainCodeFile": "skills/sidekick-triage/SKILL.md",
+          "nodeId": "scan-calendar",
+          "parent": "main/sidekick-triage",
+          "slug": "scan-calendar",
+          "status": "current",
+          "summary": "Read-only scan of the connected calendar source for upcoming near-term items and anything newly added or changed, treating all content as untrusted data.",
+          "type": "integration"
+        },
+        {
+          "flowId": "sidekick-triage",
+          "mainCodeFile": "skills/sidekick-triage/SKILL.md",
+          "nodeId": "scan-chat",
+          "parent": "main/sidekick-triage",
+          "slug": "scan-chat",
+          "status": "current",
+          "summary": "Read-only scan of the connected chat/messages source for recent mentions, direct messages, and threads the user is part of, treating all content as untrusted data.",
+          "type": "integration"
+        },
+        {
+          "flowId": "sidekick-triage",
+          "mainCodeFile": "skills/sidekick-triage/SKILL.md",
+          "nodeId": "scan-email",
+          "parent": "main/sidekick-triage",
+          "slug": "scan-email",
+          "status": "current",
+          "summary": "Read-only scan of the connected email source for new or recently received messages of plausible relevance, treating all content as untrusted data.",
+          "type": "integration"
+        },
+        {
+          "flowId": "sidekick-triage",
+          "mainCodeFile": "skills/sidekick-triage/references/triage-template.md",
+          "nodeId": "write-findings-file",
+          "parent": "main/sidekick-triage",
+          "slug": "write-findings-file",
+          "status": "current",
+          "summary": "Write the timestamped _triage/YYYYMMDD-HHMM-triage.md findings file from the template, grouping suggestions by project with an unassigned group last, never writing to any project brain or log.",
+          "type": "process"
+        }
+      ]
+    },
+    "structured-data": {
+      "edges": [
+        {
+          "label": "shape approved, data flows in",
+          "source": "structured-data/design-table",
+          "target": "structured-data/record-write",
+          "via": "starts"
+        },
+        {
+          "label": "addcol snapshots first",
+          "source": "structured-data/design-table",
+          "target": "structured-data/snapshot-backup",
+          "via": "starts"
+        },
+        {
+          "label": "extend before add",
+          "source": "structured-data/info-discover",
+          "target": "structured-data/design-table",
+          "via": "starts"
+        },
+        {
+          "label": "discover then read",
+          "source": "structured-data/info-discover",
+          "target": "structured-data/query-data",
+          "via": "starts"
+        },
+        {
+          "label": "confirm columns before insert",
+          "source": "structured-data/info-discover",
+          "target": "structured-data/record-write",
+          "via": "starts"
+        },
+        {
+          "label": "re-check schema on no-such-column error",
+          "source": "structured-data/query-data",
+          "target": "structured-data/info-discover",
+          "via": "starts"
+        },
+        {
+          "label": "each write snapshots first",
+          "source": "structured-data/record-write",
+          "target": "structured-data/snapshot-backup",
+          "via": "starts"
+        },
+        {
+          "label": "recover then re-inspect",
+          "source": "structured-data/snapshot-backup",
+          "target": "structured-data/info-discover",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "structured-data",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "design-table",
+          "parent": "sidekick-core/structured-data",
+          "slug": "design-table",
+          "status": "current",
+          "summary": "The gated structure change — create a new table or addcol an existing one, confirmed in plain language and recorded in brain/data-model.md.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "structured-data",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "info-discover",
+          "parent": "sidekick-core/structured-data",
+          "slug": "info-discover",
+          "status": "current",
+          "summary": "Inspect a project's data store first — list tables, columns, and the distinct values of low-cardinality columns before any query or write.",
+          "type": "process"
+        },
+        {
+          "flowId": "structured-data",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "query-data",
+          "parent": "sidekick-core/structured-data",
+          "slug": "query-data",
+          "status": "current",
+          "summary": "Run a read-only SELECT over a throwaway in-memory SQLite copy of the JSON tables — the only sanctioned way to count, filter, and total data.",
+          "type": "process"
+        },
+        {
+          "flowId": "structured-data",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "record-write",
+          "parent": "sidekick-core/structured-data",
+          "slug": "record-write",
+          "status": "current",
+          "summary": "Free record-level writes that fit existing columns — batch insert, plus update/delete on instruction (delete refuses an empty match).",
+          "type": "process"
+        },
+        {
+          "flowId": "structured-data",
+          "mainCodeFile": "skills/sidekick-core/scripts/data.py",
+          "nodeId": "snapshot-backup",
+          "parent": "sidekick-core/structured-data",
+          "slug": "snapshot-backup",
+          "status": "current",
+          "summary": "The safety net — a best-effort per-write snapshot ring (last 20) before every mutation, plus dated check-in backups of all table files.",
+          "type": "process"
+        }
+      ]
+    },
+    "surface-gate": {
+      "edges": [
+        {
+          "label": "foreign surface — sidekick-core stands down",
+          "source": "surface-gate/discriminator",
+          "target": "surface-gate/core-stand-down",
+          "via": "starts"
+        },
+        {
+          "label": "guide runs anywhere with a Cowork-only note",
+          "source": "surface-gate/discriminator",
+          "target": "surface-gate/guide-anywhere-exception",
+          "via": "starts"
+        },
+        {
+          "label": "foreign surface — typed skill refuses",
+          "source": "surface-gate/discriminator",
+          "target": "surface-gate/typed-skill-refusal",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "surface-gate",
+          "mainCodeFile": "skills/sidekick-core/SKILL.md",
+          "nodeId": "core-stand-down",
+          "parent": "sidekick-core/surface-gate",
+          "slug": "core-stand-down",
+          "status": "current",
+          "summary": "On a foreign surface sidekick-core stands down silently — its description forbids invocation and its Read-settings-first step applies no Sidekick rule, makes no init offer, and touches no projects.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "surface-gate",
+          "mainCodeFile": "skills/sidekick-core/SKILL.md",
+          "nodeId": "discriminator",
+          "parent": "sidekick-core/surface-gate",
+          "slug": "discriminator",
+          "status": "current",
+          "summary": "The three-way surface classification — sidekick.settings.md present means active workspace, absent with cowork MCP tools means uninitialized Cowork, absent with no cowork tools means foreign surface.",
+          "type": "process"
+        },
+        {
+          "flowId": "surface-gate",
+          "mainCodeFile": "skills/sidekick-guide/SKILL.md",
+          "nodeId": "guide-anywhere-exception",
+          "parent": "sidekick-core/surface-gate",
+          "slug": "guide-anywhere-exception",
+          "status": "current",
+          "summary": "sidekick-guide is the gate exception — pure conversation that may explain the plugin anywhere, but outside Cowork it notes up front that Sidekick itself only operates in a Cowork workspace.",
+          "type": "process"
+        },
+        {
+          "flowId": "surface-gate",
+          "mainCodeFile": "skills/sidekick-status/SKILL.md",
+          "nodeId": "typed-skill-refusal",
+          "parent": "sidekick-core/surface-gate",
+          "slug": "typed-skill-refusal",
+          "status": "current",
+          "summary": "The seven typed skills (init, triage, checkin, archive, status, find, report) refuse in one line on a foreign surface via a Gate blockquote after the H1, saying this is not a Sidekick workspace and stopping.",
+          "type": "process"
+        }
+      ]
+    },
+    "write-disciplines": {
+      "edges": [
+        {
+          "label": "durable fact or decision",
+          "source": "write-disciplines/intent-classifier",
+          "target": "write-disciplines/brain-write",
+          "via": "starts"
+        },
+        {
+          "label": "process / draft / notes",
+          "source": "write-disciplines/intent-classifier",
+          "target": "write-disciplines/log-write",
+          "via": "starts"
+        },
+        {
+          "label": "finished deliverable",
+          "source": "write-disciplines/intent-classifier",
+          "target": "write-disciplines/output-write",
+          "via": "starts"
+        },
+        {
+          "label": "repeating records / tabular",
+          "source": "write-disciplines/intent-classifier",
+          "target": "write-disciplines/structured-data-handoff",
+          "via": "starts"
+        },
+        {
+          "label": "hand off table create / column change",
+          "source": "write-disciplines/structured-data-handoff",
+          "target": "structured-data/design-table",
+          "via": "starts"
+        }
+      ],
+      "nodes": [
+        {
+          "flowId": "write-disciplines",
+          "mainCodeFile": "skills/sidekick-core/references/brain-protocol.md",
+          "nodeId": "brain-write",
+          "parent": "sidekick-core/write-disciplines",
+          "slug": "brain-write",
+          "status": "current",
+          "summary": "The gated brain/ write — distil to essence, show a before/after diff, and write the durable fact only after explicit approval, amending existing lines.",
+          "type": "process"
+        },
+        {
+          "entry": true,
+          "flowId": "write-disciplines",
+          "mainCodeFile": "skills/sidekick-core/references/write-disciplines.md",
+          "nodeId": "intent-classifier",
+          "slug": "intent-classifier",
+          "status": "current",
+          "summary": "The \"what is the user trying to do?\" router that classifies every write — log, brain, output, or structured data — and asks via the picker when the home is unclear.",
+          "type": "process"
+        },
+        {
+          "flowId": "write-disciplines",
+          "mainCodeFile": "skills/sidekick-core/references/write-disciplines.md",
+          "nodeId": "log-write",
+          "parent": "sidekick-core/write-disciplines",
+          "slug": "log-write",
+          "status": "current",
+          "summary": "The free log/ write — process, drafts, and session notes land on disk with no gatekeeper, summarized in chat rather than the reverse.",
+          "type": "process"
+        },
+        {
+          "flowId": "write-disciplines",
+          "mainCodeFile": "skills/sidekick-core/references/write-disciplines.md",
+          "nodeId": "output-write",
+          "parent": "sidekick-core/write-disciplines",
+          "slug": "output-write",
+          "status": "current",
+          "summary": "The confirmed output/ write — a finished deliverable is drafted in log/, then promoted to output/ only on a yes, with create / edit / delete each confirmed in plain language.",
+          "type": "process"
+        },
+        {
+          "flowId": "write-disciplines",
+          "mainCodeFile": "skills/sidekick-core/references/write-disciplines.md",
+          "nodeId": "structured-data-handoff",
+          "parent": "sidekick-core/write-disciplines",
+          "slug": "structured-data-handoff",
+          "status": "current",
+          "summary": "The classifier branch that recognizes tabular or repeating-record input as a table and hands off to the structured-data subflow, distilling only the prose insight to brain/.",
+          "type": "process"
+        }
+      ]
+    }
+  },
+  "schemaVersion": 1
+}

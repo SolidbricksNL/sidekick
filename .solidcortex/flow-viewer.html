@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!--
+  SolidCortex flow viewer (deliverable 24 — React Flow port).
+
+  This file is the STATIC SHELL emitted by the viewer-materializer. As of
+  v0.14.0 the shell no longer inlines the brain payload or the React
+  bundle — both live in sibling files next to the materialized HTML:
+
+    - `./flow-viewer-data.js`   (window.__SOLIDCORTEX_GRAPH__ sidecar,
+                                  produced by `emit-viewer-data`)
+    - `./flow-viewer-bundle.js` (compiled React Flow viewer-app bundle)
+    - `./flow-viewer-bundle.css`(viewer styles)
+
+  The materializer copies this file verbatim to `<brainRoot>/flow-viewer.html`.
+-->
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SolidCortex — Flow Viewer</title>
+<link rel="stylesheet" href="./flow-viewer-bundle.css">
+</head>
+<body>
+<div id="root">
+  <noscript>This viewer requires JavaScript.</noscript>
+</div>
+<script src="./flow-viewer-data.js"></script>
+<script src="./flow-viewer-bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!--
+  SolidCortex plan viewer (deliverable 33).
+
+  This file is the STATIC SHELL emitted by the plan-viewer-materializer.
+  As of v0.14.0 the shell no longer inlines the plan payload or the React
+  bundle — both live in sibling files next to the materialized HTML:
+
+    - `./plan-viewer-data.js`   (window.__SOLIDCORTEX_PLAN__ sidecar,
+                                  produced by `emit-viewer-data`)
+    - `./plan-viewer-bundle.js` (compiled plan viewer-app bundle)
+    - `./plan-viewer-bundle.css`(plan viewer styles)
+
+  The materializer copies this file verbatim to `<brainRoot>/plan-viewer.html`.
+-->
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SolidCortex — Plan Viewer</title>
+<link rel="stylesheet" href="./plan-viewer-bundle.css">
+</head>
+<body>
+<div id="root">
+  <noscript>This viewer requires JavaScript.</noscript>
+</div>
+<script src="./plan-viewer-data.js"></script>
+<script src="./plan-viewer-bundle.js"></script>
+</body>
+</html>

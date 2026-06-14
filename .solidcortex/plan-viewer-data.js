@@ -1,0 +1,1 @@
+window.__SOLIDCORTEX_PLAN__ = {"schemaVersion":1,"repoName":"Sidekick-plugin","generatedAt":"2026-06-14T14:27:31.394Z","features":[],"bugs":[],"skipped":[],"techPlans":{},"techPlanBodies":{},"source":"github","doneWindow":{"days":30},"cards":[]};

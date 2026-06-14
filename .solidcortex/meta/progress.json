@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "bootstrap": {
+    "completedPasses": [
+      "discover",
+      "glossary-seed",
+      "top-level-decomposition",
+      "per-subflow-expansion",
+      "per-node-documentation",
+      "cross-link",
+      "validate-and-compile"
+    ],
+    "errors": [],
+    "currentPass": "commit-back",
+    "startedAt": 1781438069000,
+    "lastUpdatedAt": 1781447192840,
+    "tokenSnapshots": {
+      "per-subflow-expansion": {
+        "startedAt": 1781438604807,
+        "endedAt": 1781439262718,
+        "durationMs": 657911
+      },
+      "per-node-documentation": {
+        "startedAt": 1781439431366,
+        "endedAt": 1781440714605,
+        "durationMs": 1283239
+      },
+      "cross-link": {
+        "startedAt": 1781440762653,
+        "endedAt": 1781440977127,
+        "durationMs": 214474
+      }
+    }
+  },
+  "watcher": {
+    "consecutiveErrors": 0,
+    "lastProcessedSha": "220126f8a916c8cc7e9b3608c2c68c1e8ad94466"
+  },
+  "brain": {
+    "modelVersion": 2
+  }
+}

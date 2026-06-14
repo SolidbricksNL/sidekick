@@ -1,0 +1,15 @@
+---
+kind: 'derived'
+flowId: 'main'
+nodeId: 'sidekick-guide'
+type: 'subflow'
+slug: 'sidekick-guide'
+status: 'current'
+summary: '/sidekick-guide — interactive onboarding tour of the core principle and every skill; pure conversation, runs before setup.'
+systems: [skills, commands]
+domains: [onboarding]
+subflowId: 'sidekick-guide'
+generatedFromSha: '220126f8a916c8cc7e9b3608c2c68c1e8ad94466'
+generatedAt: '2026-06-14T11:55:56Z'
+generator: 'solidcortex@0.17.0'
+---

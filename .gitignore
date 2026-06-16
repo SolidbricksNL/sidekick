@@ -55,3 +55,6 @@ node_modules/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Per-machine developer identity (solidcortex) — never commit.
+.solidcortex/local/

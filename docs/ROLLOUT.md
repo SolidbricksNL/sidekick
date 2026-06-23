@@ -1,6 +1,6 @@
 # Sidekick — internal rollout note
 
-_Internal. The repo is private (`boezelaere/sidekick`)._
+_Internal. The repo is public (`SolidbricksNL/sidekick`)._
 
 ## What Sidekick is
 
@@ -49,5 +49,4 @@ prompt-injection safety check on triage.
 ## Feedback
 
 This is an early **0.2.0**. Send issues, rough edges, and ideas to the repo
-(`boezelaere/sidekick`). Once we're happy with it, we'll move it to an
-organization plugin and consider opening the repo.
+(`SolidbricksNL/sidekick`).

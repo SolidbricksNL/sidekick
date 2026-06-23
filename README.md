@@ -64,11 +64,11 @@ changes are confirmed.
 
 ## Install in Cowork
 
-Sidekick installs from its **private GitHub repo** (`boezelaere/sidekick`),
+Sidekick installs from its **public GitHub repo** (`SolidbricksNL/sidekick`),
 which is its own **marketplace** (it ships `.claude-plugin/marketplace.json`):
 
 1. **Add the marketplace**, then **install the plugin**. Point Cowork at the
-   GitHub repo `boezelaere/sidekick` as a marketplace, then install the
+   GitHub repo `SolidbricksNL/sidekick` as a marketplace, then install the
    **`sidekick`** plugin from it. (Adding a plugin repo directly fails — Cowork
    adds *marketplaces*, which then list installable plugins.)
 2. **New to Sidekick? Run `/sidekick-guide`** for an interactive tour of the

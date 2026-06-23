@@ -1,10 +1,8 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "sidekick",
   "owner": {
     "name": "Solidbricks"
-  },
-  "metadata": {
-    "description": "Sidekick — role-adaptive personal advisor plugin for Claude Cowork."
   },
   "plugins": [
     {

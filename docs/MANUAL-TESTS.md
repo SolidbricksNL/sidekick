@@ -22,7 +22,7 @@ release.
 Cowork adds **marketplaces**, not bare plugin repos. The repo is its own
 marketplace (`.claude-plugin/marketplace.json`):
 
-1. **Add the marketplace** pointing at the GitHub repo `boezelaere/sidekick`. If
+1. **Add the marketplace** pointing at the GitHub repo `SolidbricksNL/sidekick`. If
    you added it under an older name, **remove and re-add it** (marketplace name
    is `sidekick`).
 2. **Install the `sidekick` plugin** from it. Uninstall any earlier version

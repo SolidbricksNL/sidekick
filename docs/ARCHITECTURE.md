@@ -142,6 +142,61 @@ self-heals it on session start if it is missing (existing workspaces created
 before this layer). Keep it small — it is loaded every session and is subject to
 the same ~15808 B install/read truncation cliff as the skills.
 
+Because it is the only auto-loaded layer, the contract must **front-load an
+explicit override of the host file-write default** (the Cowork system prompt
+tells the model to save deliverables to the selected-folder root and to reach
+for `pptx`/`docx`/`xlsx`/`pdf` skills directly). Two competing "default write
+locations" exist; Sidekick's only wins if its override is loaded *and* placed
+before the truncation cliff. The template therefore states, near the top, that
+**document/output skills must write into `projects/<slug>/output/`, never the
+workspace root**, and that the **project is determined first** — plus a one-line
+preflight the model satisfies before any output write (settings read? project
+chosen? path under `projects/<slug>/`?).
+
+### 3.0b Failure mode: the host default wins on a legacy or leaky root
+
+Observed (2026-06-23): on a workspace with `sidekick.settings.md` but **no root
+`CLAUDE.md`** (a legacy workspace, pre-§3.0a), a session wrote `.pptx`
+deliverables straight to the workspace root with no project detection. The
+causal chain — and why no single fix is enough:
+
+1. The root `CLAUDE.md` was absent, so the always-on contract never loaded.
+2. So `sidekick-core` was never invoked (skills are model-discretionary; Cowork
+   fires no hooks — the root file is the only reliable trigger).
+3. So project detection never ran, and the **host default** ("save to the
+   selected-folder root") plus the Sidekick-unaware document skills won unopposed.
+4. The in-skill self-heal for the missing root `CLAUDE.md` is gated **behind the
+   very file it heals** (chicken-and-egg) — it never fired.
+
+Pre-emptive 100 % enforcement is impossible here (no hooks, model-discretionary
+skills, a competing host default, third-party document skills). The failure is
+instead made **improbable and self-correcting** by four layered guards:
+
+- **A — harden the contract (template).** The root `CLAUDE.md` front-loads the
+  host-default override + the preflight (§3.0a).
+- **B — guarantee the contract exists (init).** `/sidekick-init` (re)writes the
+  root `CLAUDE.md` on **every** run and repairs the legacy "settings present,
+  `CLAUDE.md` absent" state without nagging — `init` is the entry point that
+  breaks the chicken-and-egg (it does not depend on the missing file).
+- **C — redundant signal (core).** `sidekick-core` treats `sidekick.settings.md`
+  (and `projects/`) as a secondary "this is a Sidekick workspace" signal, makes
+  **project determination a precondition** for invoking any output/document
+  skill, and states that writing to the workspace root is forbidden **even when a
+  document skill defaults to it** — and offers to recreate a missing root
+  `CLAUDE.md`. (The gate still keys on the settings file: a foreign surface with
+  neither settings nor Cowork tools stands down silently, §1b.)
+- **D — root-hygiene guard (defense in depth).** A cheap after-the-fact scan of
+  the workspace root for files other than `sidekick.settings.md` + `CLAUDE.md`
+  and folders other than `projects/`, `_triage/`, `_archive/`. Run at session
+  start and in `/sidekick-status`, `/sidekick-checkin`, `/sidekick-triage`.
+  Read-only skills (status, triage) **report**; acting skills (core session-start,
+  check-in) **offer a tappable relocation** into the right project's
+  `output/`/`log/`. **Never deletes.** Single source of truth:
+  `skills/sidekick-core/references/root-hygiene.md`.
+
+None of A–D alone is sufficient; together the leak is caught before it happens
+(A–C) or relocated right after (D).
+
 ### 3.0 Project scaffold
 
 When a new project is created, Sidekick scaffolds the full structure:
@@ -1279,6 +1334,33 @@ Resolved:
   **reinstall**, and an already-broken workspace heals only once a chat invokes
   `sidekick-core` (or the root `CLAUDE.md` is dropped in by hand). plugin.json →
   0.20.0.
+- **Root-leak hardening: host-default override + legacy heal + root-hygiene
+  guard (2026-06-25, v1.1.0).** Real incident: on a workspace with
+  `sidekick.settings.md` but **no root `CLAUDE.md`** (legacy, pre-v0.20.0), a
+  session invoked the `pptx` skill and wrote two `.pptx` decks **loose to the
+  workspace root** with no project detection. Root cause (§3.0b): the only
+  auto-loaded layer was absent → `sidekick-core` never fired → the **host
+  file-write default** ("save to the selected-folder root") + the Sidekick-unaware
+  document skills won unopposed, and the in-skill self-heal was gated behind the
+  very file it heals. Pre-emptive 100 % enforcement is impossible on Cowork (no
+  hooks, model-discretionary skills, a competing host default), so the fix is
+  four layered guards (A–D, §3.0a/§3.0b): **(A)** the root-`CLAUDE.md` template
+  now front-loads an **explicit override of the host default** — pptx/docx/xlsx/
+  pdf and any output MUST go to `projects/<slug>/output/`, project determined
+  first — plus a one-line preflight (settings read? project chosen? path under
+  `projects/<slug>/`?). **(B)** `/sidekick-init` (re)writes the root `CLAUDE.md`
+  on **every** run and one-tap-repairs the legacy "settings present, `CLAUDE.md`
+  absent" state (init is the entry point that breaks the chicken-and-egg; it does
+  not depend on the missing file). **(C)** `sidekick-core` makes **project
+  determination a precondition** for any output/document skill, forbids root
+  writes even when a document skill defaults there, and treats `settings.md` /
+  `projects/` as a secondary workspace signal (net-neutral byte edit — the file
+  is at the ~15.8 KB cap). **(D)** a new **root-hygiene guard**
+  (`references/root-hygiene.md`): scan the root for stray files/folders at session
+  start + in status/checkin/triage; read-only skills report, acting skills offer
+  a **tappable relocation** into the right project, never delete. Reaches a
+  workspace only on **reinstall**, and a broken legacy workspace heals on the next
+  `/sidekick-init` (or once a chat invokes `sidekick-core`). plugin.json → 1.1.0.
 - **Distribution as a marketplace** — Cowork adds *marketplaces*, not bare
   plugin repos. The repo ships `.claude-plugin/marketplace.json` (self-
   referencing, `source: "./"`) so it installs cleanly. Discovered during the

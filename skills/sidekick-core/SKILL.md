@@ -37,17 +37,28 @@ replace gatekeeper confirmations — it is *how* you ask them. Full guidance:
 
 ## Session-start protocol
 
-1. **Read settings** (above). If the workspace-root `CLAUDE.md` is **missing**
-   (older workspace), offer to create it from
+1. **Read settings** (above). Treat `sidekick.settings.md` (or, in Cowork, a
+   `projects/` folder) as the signal you are in a Sidekick workspace — the
+   disciplines apply even if the root `CLAUDE.md` failed to load; the gate above
+   still governs foreign surfaces. If that root `CLAUDE.md` is
+   **missing** (older workspace), offer to create it from
    `../sidekick-init/references/workspace-claude-template.md` — the contract
    Cowork auto-loads. One-tap; don't nag.
-2. **Determine the project** (see "Project detection").
+2. **Determine the project** (see "Project detection"). This is a **precondition
+   for invoking any output or document skill** (`pptx`/`docx`/`xlsx`/`pdf`):
+   pick the project first, then write under `projects/<slug>/output/`. **Never
+   write a deliverable to the workspace root — even when a document skill or the
+   host defaults there.**
 3. **Read the project's `CLAUDE.md` and the brain files it points to**,
    plus `agenda.md`, so you have context without the user re-explaining.
 4. **If Output sync is on**, call **`reconcile_output`** (with the **absolute**
    project path — see Discipline 3) before working, to start from the latest
    deliverables. Skip silently otherwise.
-5. Proceed with the work, applying the three write disciplines.
+5. **Root-hygiene scan.** Check the root for strays (allow-list: files
+   `sidekick.settings.md`+`CLAUDE.md`, folders `projects/`/`_triage/`/`_archive/`);
+   if any, **offer a tappable relocation** into a project's `output/`/`log/`,
+   never delete — `references/root-hygiene.md`.
+6. Proceed with the work, applying the three write disciplines.
 
 ## Project detection
 
@@ -125,11 +136,9 @@ ASK** rather than guess. The four intent routes: `references/write-disciplines.m
 | A structured-data **structure** change (new table/column) | `data/` | **Ask for confirmation in plain language.** |
 
 Populating existing tables with records that fit the existing columns is
-**free** — that is normal use, not a structure change. All data access
-goes through `scripts/data.py` — never read or edit the JSON by hand.
-Insert a whole sheet in **one** `insert --json '[…]'` call (it takes an
-array). If the helper *genuinely* fails on an environment problem (e.g. a
-sandbox permission error), use the emergency fallback in
+**free** (normal use, not a structure change); insert a whole sheet in **one**
+`insert --json '[…]'` call. If the helper *genuinely* fails on an environment
+problem (e.g. a sandbox permission error), use the emergency fallback in
 `references/data-discipline.md` and tell the user — don't get stuck.
 
 ### Showing data → ALWAYS the `sidekick-report` skill (hard rule)
@@ -199,27 +208,17 @@ lines** rather than stacking contradictory versions.
 **Output** (`output/`): confirm before creating/editing/deleting any deliverable;
 generate in the default output language; never produce documents here unprompted.
 
-**Output sync (optional, two-way).** If `sidekick.settings.md` has **Output
-sync: Yes** *and* an **Output sync base path** is set, keep this project's
-`output/` **and `artifacts/`** in step both ways with
-`<base path>/<slug>/{output,artifacts}/`, via the bundled **`sidekick-sync` MCP
-server** (it runs *natively*, so its copies reach the storage client — a shell
-copy from the sandbox does not). Pass **paths only** — never base64 a file
-through yourself. After a confirmed output write, at session start, and at the
-check-in, call **`reconcile_output`** (`project`, `base`); on `conflicts` ASK
-via the picker then call **`resolve_output`**; on errors, tell the user and
-continue (never block a local write).
-
-- **Always pass the ABSOLUTE project path** — `<workspace root>/projects/<slug>`
-  (e.g. `C:\Claude Cowork\Sidekick\projects\finance`). The server runs in its own
-  process; a relative path resolves against the wrong dir (a Cowork scratchpad)
-  and **silently syncs nothing**. Workspace root = the dir holding
-  `sidekick.settings.md` (your file context knows it, or `pwd`). A `warnings`
-  entry about a missing local dir means a wrong/relative path — fix and retry.
-
-Full protocol (incl. the CLI fallback when the tools don't load):
-`references/sync-discipline.md`. When Output sync is No or no base path is set,
-skip all of this.
+**Output sync (optional, two-way).** Only if `sidekick.settings.md` has **Output
+sync: Yes** *and* an **Output sync base path** is set: keep this project's
+`output/` + `artifacts/` in step both ways with `<base>/<slug>/{output,artifacts}/`
+via the bundled **`sidekick-sync` MCP server** (native — its copies reach the
+storage client; a sandbox shell copy does not). Pass **the ABSOLUTE project path**
+(`<workspace root>/projects/<slug>`, the dir holding `sidekick.settings.md`) and
+**paths only** (never base64) — a relative path **silently syncs nothing**. Call
+**`reconcile_output`** after a confirmed write, at session start, and at check-in;
+on `conflicts` ASK then **`resolve_output`**; on errors, tell the user and
+continue. Full protocol + CLI fallback: `references/sync-discipline.md`. Skip
+entirely when sync is off / no base path.
 
 **Structured-data structure** (`data/`): see `references/data-discipline.md`.
 Ask for confirmation in plain, non-technical language before any structure
@@ -227,21 +226,21 @@ change (new table, new column). Never present SQL or jargon as the question.
 
 ## The data store, in brief
 
-Structured data lives in **plain JSON files** under `projects/<slug>/data/`; a
-shared spreadsheet/CSV/table is the trigger to propose a table. **All access
-goes through `scripts/data.py`** — never the `sqlite3` CLI, ad-hoc `python`, or
-a raw read/edit. Resolve the dir first (`$CLAUDE_PLUGIN_ROOT` is unset in the
-shell): `SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
-then `python3 "$SK/data.py" <cmd> --project projects/<slug> …`. **Answer any
-question about stored data with `data.py query`** (never read/`grep` the JSON);
-check a category column's exact values (`data.py info`) before filtering. Extend
-existing tables before adding new. Full protocol: `references/data-discipline.md`.
+Structured data lives in **plain JSON** under `projects/<slug>/data/` (a shared
+spreadsheet/CSV/table is the trigger to propose a table); **all access goes
+through `scripts/data.py`** — never the `sqlite3` CLI, ad-hoc `python`, or a raw
+read/edit. Resolve the dir (`$CLAUDE_PLUGIN_ROOT` is unset in the shell):
+`SK="$(find ~ -ipath '*/sidekick-core/scripts' -type d 2>/dev/null | head -1)"`,
+then `python3 "$SK/data.py" <cmd> --project projects/<slug> …`. **Answer any data
+question with `data.py query`** (never read/`grep` the JSON; run `data.py info`
+for exact column/category values first); extend existing tables before adding new.
+Full protocol: `references/data-discipline.md`.
 
 ## What to keep out of the chat
 
 The chat is the steering wheel; the disk is the workbench — every substantive
-write lands in a `projects/<slug>/` folder per the table above. **Nothing
-loose in the workspace root.**
+write lands in a `projects/<slug>/` folder per the table above. **Nothing loose
+in the workspace root** — including deliverables from document skills.
 
 ## Related skills
 
@@ -251,7 +250,6 @@ loose in the workspace root.**
 - `/sidekick-archive` — archive a project.
 - `/sidekick-status` — read-only cross-project overview.
 - `/sidekick-find` — read-only cross-project recall/search; route spanning
-  recall questions ("where did we decide X?") here rather than searching ad-hoc.
-- `/sidekick-report` — present a project's `data/` as reports + HTML dashboards.
-  Any "see / dashboard / chart / breakdown" request goes here (the hard rule in
-  "Showing data" above), never a hand-built view.
+  recall ("where did we decide X?") here rather than searching ad-hoc.
+- `/sidekick-report` — present a project's `data/` as reports + dashboards; any
+  "see / dashboard / chart / breakdown" goes here (the "Showing data" hard rule).

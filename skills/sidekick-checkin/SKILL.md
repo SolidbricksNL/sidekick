@@ -36,6 +36,10 @@ itself. This is the plugin-wide interaction style — see
    note that there are no new triage findings.
 4. If a calendar is connected, fetch upcoming items in the near term
    (e.g. next 7–14 days). Read-only.
+5. **Root-hygiene scan.** List the **top level** of the workspace root and note
+   any strays — anything but the files `sidekick.settings.md` + `CLAUDE.md` and
+   the folders `projects/`/`_triage/`/`_archive/`. Handle them in "Relocating
+   stray root files" below. Spec: `../sidekick-core/references/root-hygiene.md`.
 
 ## Per-project walk
 
@@ -89,6 +93,16 @@ For triage items in the "Unassigned / new project?" group, present them
 together and ask whether to start a new project (then hand off to the
 normal scaffolding, exactly as the `sidekick` skill does) or attach them
 to an existing one — or ignore them.
+
+## Relocating stray root files
+
+For each stray found in the precondition scan, **offer a tappable relocation**
+(never just report, never delete): pick the destination **project** (best-guess
+existing first, plus "New project" / "Leave it"), then the **discipline** — a
+finished deliverable → `output/` (confirm), a draft/scratch/note/script →
+`log/`. **Move** it (verify the copy before removing the original), then log one
+line in that project's `log/`. If the user declines, leave it in place. Full
+rules: `../sidekick-core/references/root-hygiene.md`.
 
 ## Acting on approvals
 

@@ -74,6 +74,17 @@ findings. The **check-in** is what detects and distills the actual logs (it scan
 across multiple triage runs. Counting is read-only; you never write to `brain/`
 or `log/`.
 
+## Note stray root files (heads-up only)
+
+List the **top level** of the workspace root and note anything **loose** that
+shouldn't be there — anything but the files `sidekick.settings.md` + `CLAUDE.md`
+and the folders `projects/`/`_triage/`/`_archive/` (e.g. a `.pptx`/`.docx` a
+document skill wrote to the root). Record them in the findings file as a short
+heads-up ("Stray in root: `Sidekick-Overview.pptx` — belongs in a project; run
+`/sidekick-checkin` to relocate"). **Report only — move nothing, delete
+nothing** (you write solely to `_triage/`); the check-in does the relocation.
+Spec: `../sidekick-core/references/root-hygiene.md`.
+
 ## How to decide relevance
 
 A finding is relevant if it plausibly touches an existing project

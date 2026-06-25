@@ -22,6 +22,11 @@ is a glance, not a decision point. (The check-in is where actions happen.)
    separate projects. Never descend into a project looking for more projects.
 3. If a calendar is connected, fetch upcoming items in the near term
    (e.g. next 7–14 days). **Read-only.**
+4. **Root-hygiene check (read-only).** Glance at the **top level** of the
+   workspace root for strays — anything but the files `sidekick.settings.md` +
+   `CLAUDE.md` and the folders `projects/`/`_triage/`/`_archive/`. Just note
+   them; **move nothing** (relocation happens in `/sidekick-checkin`). Spec:
+   `../sidekick-core/references/root-hygiene.md`.
 
 ## Per-project read
 
@@ -45,7 +50,8 @@ For **each** non-archived project, gather (without writing anything):
 Give a **short prose summary** in the chat language — one compact line or two
 per project. **No proposal cards, no pickers** (you decide nothing). Surface
 cross-project flags worth attention: a deadline cluster, a project gone quiet,
-a pile of undistilled logs.
+a pile of undistilled logs, or **stray files loose in the workspace root** (name
+them; they belong in a project — point to `/sidekick-checkin` to relocate).
 
 End with a single nudge if action is clearly due, e.g. *"3 logs wachten op
 distillatie en BPD heeft een deadline donderdag — `/sidekick-checkin` draaien?"*

@@ -8,12 +8,13 @@
       "per-subflow-expansion",
       "per-node-documentation",
       "cross-link",
-      "validate-and-compile"
+      "validate-and-compile",
+      "commit-back"
     ],
     "errors": [],
-    "currentPass": "commit-back",
+    "currentPass": null,
     "startedAt": 1781438069000,
-    "lastUpdatedAt": 1781447192840,
+    "lastUpdatedAt": 1781447278628,
     "tokenSnapshots": {
       "per-subflow-expansion": {
         "startedAt": 1781438604807,

@@ -11,6 +11,10 @@
 /_archive/
 /projects/
 
+# A full demo workspace (476 KB) generated locally for reference — useful to
+# look at, but not plugin source and not needed in git. Kept local only.
+/examples/
+
 # --- OS cruft ---
 # macOS
 .DS_Store

@@ -24,6 +24,13 @@ free-form answers like the role or a project name.
     short summary of the current settings, and ask whether they want to
     **re-configure** (re-run the questionnaire and overwrite) or **keep**
     the current settings. Only proceed on a clear answer.
+  - **Legacy-workspace repair (settings present, root `CLAUDE.md` absent).**
+    This is a workspace made before the always-on contract existed — the very
+    state that lets deliverables leak into the root. **Even if the user keeps
+    their settings**, write the root `CLAUDE.md` from
+    `references/workspace-claude-template.md` (one-tap confirm, default Yes —
+    don't nag, don't require a full re-configure). Say plainly it adds the
+    standing rules that keep every future chat structured.
 - Communicate in the user's language. If you don't yet know it (no
   settings), ask the chat-language question first and switch to that
   language for the rest of the setup.
@@ -97,8 +104,11 @@ On confirmation, write **two** files to the Cowork root:
    (no placeholders to fill). This is the **always-on workspace contract**:
    Cowork auto-loads it into every session, so it is what keeps later chats
    structured even when the `sidekick-core` skill doesn't self-trigger — without
-   it, work leaks into the root. If a `CLAUDE.md` already exists in the root,
-   show its content and ask before overwriting.
+   it, work leaks into the root. **(Re)write it on every init run** so an
+   outdated or missing contract is always refreshed to the current template:
+   if it is **absent**, just write it; if one **already exists**, show it and
+   ask in one tap before refreshing (default Yes — this restores the canonical
+   contract; preserve any deliberate user edits they point out).
 
 **Important:** init does **not** turn any connector on. It only records
 what the user wants. Actually enabling a connector (email, chat, storage,

@@ -6,6 +6,20 @@
 This is a **Sidekick** workspace. All work is structured into projects;
 nothing loose accumulates in the root.
 
+## Overrides the default save location (read this first)
+
+**This instruction overrides any default to save deliverables to the
+selected-folder root.** Document and output skills — `pptx`, `docx`, `xlsx`,
+`pdf`, and anything that produces a file — **MUST write into
+`projects/<slug>/output/`, never the workspace root.** Determine the project
+**first** (sidekick-core project detection) *before* invoking any document or
+output skill. If no project fits, **ask** (tappable choice) — never default to
+the root.
+
+**Preflight — satisfy all three before the first output write:** settings read?
+project chosen? path under `projects/<slug>/`? If any is "no", stop and resolve
+it first.
+
 ## Before doing any work
 
 1. Read `sidekick.settings.md` (role, chat language, default output language)
